@@ -24,8 +24,10 @@ ein Absichtssignal, und die Mediathek hat zwei brauchbare:
 MUSS AUS Terminal.app LAUFEN.  Aus Claude Code heraus liest ein eingebettetes
 Bundle (com.anthropic.claude-code) ohne Festplattenvollzugriff.
 
-Gelesen werden weiterhin NUR Zeitstempel, Koordinaten und das Favoritenflag -
-keine Dateinamen, keine Inhalte, keine Beschreibungen, keine Albennamen.
+Gelesen werden: Zeitstempel, Koordinaten, Favoritenflag und ALBUMNAMEN.
+Keine Dateinamen, keine Bildinhalte, keine Beschreibungen, keine Personen.
+(Die Albumnamen sind seit der Erweiterung um das Absichtssignal noetig - der
+frueherer Satz "keine Albennamen" an dieser Stelle war danach falsch.)
 """
 import json
 import os
