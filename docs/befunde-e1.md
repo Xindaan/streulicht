@@ -672,3 +672,66 @@ Score auf null zwingt, gibt die RH-Rechnung noch eine Abstufung her.
 
 **Damit ist die niveauaufgeloeste Klimatologie (gfs_global, Druckflaechen)
 der naechste Lauf, nicht das feinere Gitter und nicht der erweiterte Faecher.**
+
+## 15 Fotos angesehen: drei Fehlerklassen (14.08.2026)
+
+Sechs der schlechtesten Albumabende mit dem Foto verglichen.
+
+| Abend | Rang | Foto | Diagnose |
+|---|---|---|---|
+| 2023-04-24 | 0.17 | schwere Decke, oranger Schlitz am Horizont | **Daten** — ERA5 high 0 %, GFS-Feuchte 300 hPa 96 %, eigene Diagnostik 58 % |
+| 2022-09-20 | 0.19 | ganzer Himmel voll angeleuchteter Wolken | **Daten** — ERA5 meldet nirgends im Faecher etwas |
+| 2023-06-13 | 0.44 | dichte Decke, oranges Band darunter | **Daten** — ERA5 0/11/0, eigene Diagnostik 14 % |
+| 2024-05-03 | 0.14 | Makrelenhimmel, spektakulaer | **Modell** — Wolken vorhanden, Wegterm auf exakt null |
+| 2024-09-15 | 0.34 | Himmel brennt tiefrot | **Modell** — Sichtterm toetet es (100 % tief ueber Berlin); auf dem Foto ist genau diese Decke das, was brennt |
+| 2025-06-25 | 0.22 | Sonne am Horizont, duenner Cirrus, viel Blau | **Label** — huebsch, nicht aussergewoehnlich |
+
+### 15.1 Die Datenkette wurde vorher geprueft
+
+Drei Fehltreffer hintereinander rochen nach eigenem Bug.  Geprueft und
+verworfen:
+
+- **Off-by-one im Datum:** Nachbartage zeigen andere Werte, der Fototag ist
+  wirklich der gemeldete.
+- **Falsche Zuordnung bei Mehrfachort-Abfragen:** raeumliche Korrelation
+  benachbarter Zellen r = +0.863 (0.5 Grad), +0.775 (1.0 Grad), +0.412 (weit),
+  zeitlich Lag-1 r = +0.352.  Genau das Muster echter Felder - bei
+  vertauschten Antworten laege alles bei 0.
+- **Systematischer Bias:** mittlere Gesamtbedeckung ueber Berlin 65 %, exakt
+  die DWD-Klimatologie.
+
+**Die Kette ist sauber.  ERA5 sieht diese Wolken wirklich nicht.**
+
+### 15.2 Warum das die Prioritaet bestaetigt
+
+An den Fehlschlaegen selbst gemessen, nicht nur statistisch:
+
+| Abend | GFS-RH 400/300/250/200 | eigene Diagnostik | ERA5 high |
+|---|---|---|---|
+| 2023-04-24 | 33 / **96** / 27 / 5 | **58 %** | **0 %** |
+| 2023-06-13 | 70 / 38 / 20 / 3 | 14 % | 0 % |
+| 2025-06-25 | 20 / 28 / **82** / 50 | 24 % | 0 % |
+| 2024-05-03 | 92 / **100** / 89 / 38 | 94 % | 72 % |
+
+Die Wolke steckt im Feuchtefeld.  ERA5s Bedeckungsfeld hat sie verworfen.
+
+### 15.3 Der Sichtterm ist falsch konstruiert
+
+Er behandelt tiefe Bewoelkung ausschliesslich als Sichtblockade.  Der
+15.09.2024 zeigt, dass eine von unten angestrahlte tiefe Decke DAS EREIGNIS
+sein kann - 100 % tief ueber Berlin, Score 0.028, und auf dem Foto brennt
+genau diese Decke.
+
+Der frueherer Test "low als Schirm zulassen" hatte global verschlechtert
+(0.674 -> 0.615).  Der Effekt ist also real, aber selten; wholesale
+hinzuzufuegen bringt mehr Rauschen als Signal.  Was fehlt, ist die
+Unterscheidung "tiefe Decke im Licht" gegen "tiefe Decke im Schatten" - und
+die haengt daran, ob der Weg auf 1.2 km Hoehe (D = 143 km) frei ist.
+
+### 15.4 Das Album ist keine Liste von Ausnahmen
+
+Mindestens einer von sechs angesehenen Abenden ist ein normal schoener
+Sonnenuntergang.  Das Album heisst "Sonnenuntergaenge", nicht "spektakulaere
+Sonnenuntergaenge".  Die gemessene Trefferquote von 9 % bei 18 Alarmen/Jahr
+ist damit zu pessimistisch: ein Teil der Messlatte gehoert gar nicht in die
+obersten 5 %.
