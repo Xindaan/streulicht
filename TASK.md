@@ -24,8 +24,10 @@ fuer die Terminal-App in den Systemeinstellungen.
 - Skript: `skripte/fotos_zaehlen.py`
 
 ### T-0006 Ablation 3-Schicht gegen niveauaufgeloest
-**BLOCKIERT bis morgen:** Tageskontingent erschoepft.  Skript und beide Scores
-stehen, Blockcache leer, `python3 skripte/ablation.py` setzt fort.
+**ENTBLOCKT (14.08.2026):** `historical-forecast-api` ist wieder frei.
+**Vorher war das Skript verzerrt** — es zaehlte Abende ohne Daten als 0.0,
+wo BEIDE Verfahren uebereinstimmen, was rho nach oben trieb und damit genau
+auf 'die Rangfolgen fallen zusammen' zeigte. Behoben, siehe Befunde 27b.
 Load-bearing: s* kommt aus der 3-Schicht-Klimatologie, der Betrieb laeuft
 niveauaufgeloest. Laufen die Rangfolgen auseinander, ist s* nicht uebertragbar.
 - [ ] Spearman rho und Top-15-%-Ueberlappung ueber 42 Abende
@@ -65,6 +67,16 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
 - T-0011 Aerosol als Partialkorrelation pruefen (CAMS, nur Vorlauf <= 5 d)
 - T-0012 Kondensstreifen: RH_eis 100..130 % auf 250/200 hPa als Zusatzsignal
 - T-0013 s\*-Portabilitaet ueber 3-5 Ankerorte pruefen (streut s\* < 15 %?)
+- T-0017 Fensterterm-Umbau — **ERLEDIGT DURCH MESSUNG, nicht gebaut**
+  (14.08.2026). Die harte Null trifft 0 von 70 Albumabenden und 17 % der
+  uebrigen (Befunde 26). Der Term funktioniert; der notierte Umbau haette
+  ihn verschlechtert.
+- T-0018 Beleuchtete tiefe Decke als Ereignis statt als Hindernis. Genau ein
+  Albumabend hat guten Schirm bei totem Fenster (2024-09-15, A 0.87,
+  B 0.032). n = 1 — erst angehen, wenn ein zweiter Fall auftaucht.
+- T-0019 MSG/MTG-Infrarot als Beobachtungswahrheit (3 km, 15 min, kostenlos).
+  Beantwortet fuer jeden Albumabend, ob die Wolke ueberhaupt da war — die
+  Frage, die am 14.08. fuenfmal von Hand am Foto beantwortet wurde.
 
 ## Done
 

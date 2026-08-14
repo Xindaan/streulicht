@@ -1,7 +1,7 @@
 # STATE
 
-Stand: 14.08.2026 (Score validiert, Produktseite gestaltet, naechster Lauf
-priorisiert)
+Stand: 14.08.2026 abends (Aufloesungstest gegen ICON-D2 gerechnet,
+drei Fehler derselben Klasse behoben, einer davon im Betrieb)
 
 ## Ziel
 
@@ -93,13 +93,14 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
 
 ## Next actions
 
-1. **T-0001b Absichtssignal** — `fotos_detail.py` aus Terminal.app.
-   Ohne das bleibt der Abbruchtest unentschieden.
-2. **T-0006 Ablation** — blockiert bis morgen (Tageskontingent erschoepft).
-   `python3 skripte/ablation.py` setzt am Cache fort. Entscheidet, ob s*
-   auf den Betriebsscore uebertragbar ist.
-3. **T-0003 Archivierung** als Cron einrichten — ebenfalls kontingentblockiert,
-   aber ab morgen taeglich noetig.
+1. **T-0006 Ablation** — jetzt entblockt (`historical-forecast-api` frei) UND
+   entzerrt: das Skript zaehlte Abende ohne Daten als 0.0, wo beide Verfahren
+   uebereinstimmen. `python3 skripte/ablation.py` setzt am Cache fort.
+2. **T-0003 Archivierung** als Cron — `ensemble-api` war am 14.08. nachmittags
+   erschoepft, morgens frei. Vor dem Einrichten `--trocken` pruefen.
+3. **T-0019 MSG/MTG-Infrarot** — Beobachtung statt Modell, als Antwort auf
+   die Datenluecke. Prioritaet haengt am Ausgang des Aufloesungstests
+   (Befund 28): traegt ICON-D2, ist das der billigere Weg.
 
 ## Letzte Done
 

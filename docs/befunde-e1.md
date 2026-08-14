@@ -1291,3 +1291,43 @@ ueber 5 von 166 Abenden nicht hinaus, bei voller Tagesquote.
 Frage ist nie "ist der Schluessel da", sondern immer "wie viele Werte sind
 nicht None" - und die Antwort gehoert in die Ausgabe, nicht in eine
 Bedingung.
+
+## 28 T-0001b: das Absichtssignal traegt in die richtige Richtung, aber zu schwach
+
+Der urspruengliche Presence-Only-Test verglich Abende MIT Fotos gegen alle
+uebrigen - und mass damit vor allem, ob Andre draussen war.  Konfundiert.
+
+Sauberer Aufbau: nur die **768 Draussen-Abende** in Berlin (Fotos innerhalb
++/- 45 min um den Sonnenuntergang, 2015-2025).  Innerhalb dieser Menge ist
+"war er ueberhaupt draussen" konstant.  Uebrig bleibt die Absicht - hat er
+ein Bild als Favorit markiert?  86 Abende mit, 682 ohne.
+
+| | Favorit (n=86) | ohne (n=682) |
+|---|---|---|
+| Median S | 0.0625 | 0.0460 |
+| Mittel S | 0.1876 | 0.1398 |
+| saisonaler Mittelrang | 0.558 | 0.515 |
+
+A = 0.545 auf Raengen (z = +1.35), 5 von 8 Jahrgaengen mit A > 0.5,
+KI [0.31, 0.86].  **Nicht signifikant.**
+
+**Und das heisst hier ausdruecklich nicht "kein Effekt".**  Der Test hat bei
+86 gegen 682 eine Nachweisgrenze von A = 0.593 (Power 80 %, alpha 0.05).
+Ein echter Effekt von 0.545 liegt darunter - fuer den Nachweis braeuchte es
+rund 364 Favoritenabende.  Das Ergebnis ist mit "kein Zusammenhang" und mit
+"schwacher Zusammenhang" gleichermassen vertraeglich.
+
+**Die eigentliche Erkenntnis ist eine ueber das Messinstrument.**  Dasselbe
+Modell erreicht gegen das kuratierte Album z = +5.61.  Der Favoritenstern ist
+ein viel verrauschteres Label - man markiert ein Bild auch wegen der Personen
+darauf, wegen des Anlasses, wegen der Schaerfe.  Das kuratierte Album ist
+nicht der schwaechere Ersatz fuer ein "objektives" Signal, sondern das
+schaerfere Instrument.
+
+Pruefbefehl: `python3 skripte/absicht.py`
+
+Nebenbefund zur Sorgfalt: die erste Fassung beschriftete A in die
+Gegenrichtung (`mannwhitney(ohne, favorit)` liefert P(ohne > Favorit), die
+Prosa behauptete das Gegenteil).  Die Jahrgangstabelle haette damit "3 von 8"
+statt "5 von 8" gemeldet - ein Vorzeichenfehler in der Beschriftung, nicht in
+der Rechnung, und genau deshalb keiner, den ein Testlauf findet.
