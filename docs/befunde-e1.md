@@ -396,3 +396,61 @@ Alarm).
 
 **Alles hier steht auf n = 11.**  Ein Album mit der vollstaendigen Suchliste
 wuerde es auf n = 50-80 bringen und die Produktentscheidung tragfaehig machen.
+
+## 10 Raumwinkelgewichtung des Schirmterms (14.08.2026)
+
+**Ausgeloest durch einen Gegenfall von Andre:** der 29.03.2025 war
+"spektakulaer", der Score gab 0.212.  Was ERA5 sah:
+
+| d [km] | hoch | mittel | tief |
+|---|---|---|---|
+| **0** | 0 % | **90 %** | 20 % |
+| 60 | 14 % | 0 % | 0 % |
+| 120 | 43 % | 0 % | 3 % |
+| 180–420 | ~0 % | 0 % | ~0 % |
+
+Eine mittelhohe Decke direkt ueber Berlin, freier Westen bis 400 km - das
+Lehrbuchbild.  **Term A mittelte sie weg:** ein 90-%-Wert bei d=0 und zehn
+Nullen bei d=60/120 ergeben 8 %, weil jeder Fanpunkt gleich zaehlte und d=0
+nur 1/11 des Gewichts hatte.
+
+### 10.1 Die Korrektur folgt aus Geometrie, nicht aus Fitting
+
+Eine Wolkenschicht in Hoehe h traegt zum sichtbaren Himmel mit ihrem
+Raumwinkel bei.  Die Raumwinkeldichte ist proportional zu
+d·h/(d²+h²)^{3/2}, mit Maximum bei d = h/√2 und Abfall wie 1/d².
+Integriert ueber die von jeder Stuetzstelle vertretenen Ringe:
+
+| Schirmhoehe | d=0 | d=60 | d=120 |
+|---|---|---|---|
+| 4.2 km (mid) | **0.886** | 0.095 | 0.019 |
+| 9.5 km (high) | **0.745** | 0.210 | 0.045 |
+
+Kein freier Parameter.
+
+### 10.2 Wirkung, gegen die kuratierten Abende gemessen
+
+| Gewichtung | Mittelrang n=11 | z | Treffer bei 18/37/73 Alarmen | 29.03.2025 |
+|---|---|---|---|---|
+| punkt (bisher) | 0.677 | +2.04 | 0 / 1 / 5 | S 0.212, Rang 0.81 |
+| ring | 0.700 | +2.30 | 0 / 1 / 6 | S 0.263, Rang 0.83 |
+| **raumwinkel** | **0.737** | **+2.72** | **0 / 3 / 7** | **S 0.699, Rang 0.96** |
+
+**Leave-one-out** ohne den Abend, an dem die Korrektur gefunden wurde (n=10):
+punkt 0.664 (z +1.80) → raumwinkel 0.715 (z +2.35), Treffer bei 37/Jahr
+1 → 2.  Der Gewinn ist also kein Artefakt des Fundfalls.
+
+*Fallstrick beim Messen:* Der erste Vergleich reproduzierte die gespeicherte
+Klimatologie nicht (Abweichung 0.238), weil "uniform" versehentlich als
+"jeder RING gleich" implementiert war statt "jeder PUNKT gleich" - das ist
+selbst schon ein halber Fix.  Erst die Dreiteilung punkt/ring/raumwinkel mit
+exakter Gegenprobe machte den Vergleich belastbar.
+
+### 10.3 Folgen
+
+- **s\* neu: 0.7065** (95. Perzentil, 18.5 Ausloesungen/Jahr).
+  Alter Wert 0.6325 gilt nur fuer GEWICHTUNG="punkt".
+- Beide Schirme loesen weiterhin aus (high 35, mid 39) - der mid-Schirm
+  gewinnt jetzt sogar oefter, weil ueberkopfstehende Decken nicht mehr
+  wegge­mittelt werden.
+- Die Luecke zum Produkt bleibt: bei 18 Alarmen/Jahr immer noch 0 von 11.

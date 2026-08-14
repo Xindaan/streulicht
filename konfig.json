@@ -1,7 +1,7 @@
 {
   "_hinweis": "ntfy-Topics sind durch Namens-Obskuritaet geschuetzt, nicht durch Auth. Nicht oeffentlich posten.",
   "modell": "ecmwf_ifs025",
-  "schwelle_score": 0.6325,
+  "schwelle_score": 0.7065,
   "schwelle_wahrscheinlichkeit": 0.5,
   "vorlauf_tage": 10,
   "advektion": true,
@@ -15,5 +15,6 @@
       "ntfy_alarm": "su-berlin-a7k2m9x4",
       "ntfy_bewertung": "su-bewertung-a7k2m9x4"
     }
-  ]
+  ],
+  "_hinweis_schwelle": "s* gilt fuer GEWICHTUNG='raumwinkel', Faecher 5x8, Gitter 0.5 Grad, 3-Schicht-Variante. Aendert sich eines davon, ist s* ungueltig."
 }

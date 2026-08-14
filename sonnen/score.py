@@ -35,6 +35,24 @@ FAECHER_AZIMUTE = (-24.0, -12.0, 0.0, 12.0, 24.0)
 DISTANZEN_KM = (0.0, 60.0, 120.0, 180.0, 240.0, 300.0, 360.0, 420.0)
 SIGMA_AZIMUT_GRAD = 15.0   # Gaussgewicht fuer den Beleuchtungsweg
 NAHBEREICH_KM = 120.0      # bis hierher zaehlt der Schirm
+
+# Gewichtung der Schirmpunkte im Nahbereich.  DREI Modi, und die Unterscheidung
+# zwischen den ersten beiden ist nicht akademisch: sie war der erste Anlauf
+# eines Vergleichs, der deshalb die gespeicherte Klimatologie nicht reproduzierte.
+# "punkt"      - jeder Fanpunkt gleich; war die urspruengliche Wahl und ist
+#                nachweislich falsch: eine Wolkendecke, die nur ueber dem
+#                Standort steht, wird mit zehn Nullen weggemittelt.  Realfall
+#                29.03.2025: 90 % Mittelbewoelkung ueber Berlin, freier Westen
+#                bis 400 km - Term A kam auf 8 % (d=0 hat nur 1/11 Gewicht).
+# "ring"       - jeder Entfernungsring gleich, Azimute teilen sich den Ring.
+#                d=0 bekommt damit 1/3 statt 1/11.
+# "raumwinkel" - Gewicht = Raumwinkel, den der von der Stuetzstelle vertretene
+#                Ring am Himmel einnimmt.  Fuer eine Schicht in Hoehe h ist die
+#                Raumwinkeldichte proportional zu d*h/(d^2+h^2)^{3/2}, mit
+#                Maximum bei d = h/sqrt(2) und Abfall wie 1/d^2.  Der Punkt
+#                ueber dem Kopf bekommt damit rund 89 % statt 9 %.
+#                Aus Geometrie hergeleitet, nicht gefittet.
+GEWICHTUNG = "raumwinkel"
 SICHT_KM = 60.0            # bis hierher zaehlt die Sichtblockade
 K_SEGMENT = 1.0
 
@@ -83,6 +101,28 @@ def _gewicht(az_versatz):
     return math.exp(-0.5 * (az_versatz / SIGMA_AZIMUT_GRAD) ** 2)
 
 
+def _nahdistanzen():
+    return [d for d in DISTANZEN_KM if d <= NAHBEREICH_KM]
+
+
+def _schirmgewichte(hoehe_km):
+    """Raumwinkel je Stuetzstelle, integriert ueber den vertretenen Ring."""
+    nah = _nahdistanzen()
+    if GEWICHTUNG == "punkt":
+        # d=0 zaehlt einmal, jede weitere Distanz mit allen Azimuten
+        return {d: (1.0 if d == 0.0 else float(len(FAECHER_AZIMUTE))) for d in nah}
+    if GEWICHTUNG == "ring":
+        return {d: 1.0 for d in nah}
+    g = {}
+    for i, d in enumerate(nah):
+        d0 = 0.0 if i == 0 else 0.5 * (nah[i - 1] + d)
+        d1 = 0.5 * (d + nah[i + 1]) if i + 1 < len(nah) else d + 30.0
+        g[d] = (1.0 / math.sqrt(d0 * d0 + hoehe_km * hoehe_km)
+                - 1.0 / math.sqrt(d1 * d1 + hoehe_km * hoehe_km))
+    summe = sum(g.values())
+    return {d: v / summe for d, v in g.items()}
+
+
 def score(hole):
     """hole(d_km, az_versatz, schicht) -> Bedeckung 0..1  (oder None).
 
@@ -93,9 +133,10 @@ def score(hole):
     for name, hoehe in SCHIRME:
         d_tan = tangentendistanz_km(hoehe)
 
-        # --- Term A: Schirm im Nahbereich
+        # --- Term A: Schirm im Nahbereich, raumwinkelgewichtet
         # d == 0 ist fuer alle Faecherazimute derselbe Punkt (der Standort) und
         # wuerde sonst fuenffach zaehlen.
+        gw = _schirmgewichte(hoehe)
         werte, gew = 0.0, 0.0
         for dv in FAECHER_AZIMUTE:
             for d in DISTANZEN_KM:
@@ -104,8 +145,9 @@ def score(hole):
                 c = hole(d, dv, name)
                 if c is None:
                     continue
-                werte += c
-                gew += 1.0
+                w = gw[d] / (1.0 if d == 0.0 else len(FAECHER_AZIMUTE))
+                werte += w * c
+                gew += w
         if gew == 0.0:
             continue
         a = werte / gew
