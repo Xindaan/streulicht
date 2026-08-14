@@ -1,6 +1,6 @@
 # STATE
 
-Stand: 14.08.2026 (Klimatologie gerechnet)
+Stand: 14.08.2026 (E2 gebaut, Kontingent blockiert)
 
 ## Ziel
 
@@ -27,10 +27,21 @@ zeigen.
   Januar: null Ausloesungen in 124 Abenden (P = 0.002, kein Rauschen).
   r(A,B) = -0.259 — der Fensterterm traegt eigene Information.
 
+## Offenes Risiko: API-Kontingent
+
+Die Ensemble-API scheint mit der MEMBERZAHL zu gewichten (Hypothese, noch
+nicht bestaetigt).  Dann kostet ein Alarmlauf 75 Zellen x 9 Variablen x 51
+Member = 34 425 gewichtete Calls bei 5000/Stunde und 10 000/Tag - der
+Betrieb passt dann NICHT ins Gratiskontingent.  Meine fruehere Aussage
+"Betrieb passt, nur der Backfill nicht" beruhte auf einer Schaetzung ohne
+Member und ist damit hinfaellig.  Eine saubere Skalierungsmessung steht aus.
+
 ## Next actions
 
-1. **T-0001 Fotogate** — blockiert, braucht Festplattenvollzugriff (Andre).
-   Ohne dieses Gate gibt es keinen Abbruchtest fuer E1.
+1. **T-0001 Fotogate** — Spotlight-Weg liefert 33 Abende (18 Berlin), knapp
+   ueber der Grenzwertigkeit. Mehr gibt es nur aus der Mediathek, und die
+   braucht einen Lauf aus Terminal.app (nicht aus Claude Code: dort liest
+   das eingebettete Bundle com.anthropic.claude-code, das keine Freigabe hat).
 2. **T-0006 Ablation** — blockiert bis morgen (Tageskontingent erschoepft).
    `python3 skripte/ablation.py` setzt am Cache fort. Entscheidet, ob s*
    auf den Betriebsscore uebertragbar ist.
