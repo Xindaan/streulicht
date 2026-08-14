@@ -1448,3 +1448,48 @@ scheitern kann).
 
 Gefunden wurde er nicht beim Bau der Produktseite, sondern beim
 **Uebertragen derselben Pruefung auf eine zweite Seite**.
+
+## 31 T-0006 Ablation: s* ist NICHT uebertragbar - und der Test hat ein Loch
+
+Load-bearing, weil s* = 0.6325 aus der **3-Schicht**-Klimatologie stammt.
+Falls der Betrieb je auf die niveauaufgeloeste Variante wechselt, muss die
+Rangfolge dieselbe sein - sonst bedeutet der Schwellwert dort etwas anderes.
+
+Gerechnet auf `gfs_global`, das als einziges Archiv Druckflaechen UND natives
+low/mid/high fuer denselben Zeitpunkt liefert.  Beide Scores sehen damit exakt
+denselben Modellzustand.  42 Abende, 15.09. bis 26.10.2025, 67 Zellen,
+23 Variablen.  **Kein Abend wurde wegen fehlender Daten uebersprungen** - die
+Entzerrung aus Befund 27b hat hier also nichts veraendert, haette es aber,
+sobald Luecken auftreten.
+
+| | Median | p75 | p90 | Max |
+|---|---|---|---|---|
+| 3-Schicht | 0.0000 | 0.0030 | 0.1094 | 0.3919 |
+| niveauaufgeloest | 0.0090 | 0.0619 | 0.1644 | 0.4591 |
+
+Spearman **rho = +0.697**, 95 %-KI [0.499, 0.826].
+Top-15-%-Ueberlappung: **4 von 6**.
+
+**Antwort: nein.**  Rho 0.70 heisst deutlicher Zusammenhang, aber nicht
+austauschbar - dafuer braeuchte es 0.95 aufwaerts.  Zwei von sechs Spitzen-
+abenden unterscheiden sich, und die Verteilung liegt niveauaufgeloest
+durchweg hoeher (Median 0.0090 gegen 0.0000, p90 um die Haelfte).  Ein
+Perzentilschwellwert aus der einen Verteilung bedeutet in der anderen etwas
+anderes.  **Bei einem Wechsel muss s\* neu hergeleitet werden.**
+
+Praktisch ist gerade nichts kaputt: `alarm.py` rechnet auf `sonnen/score.py`,
+also derselben Variante, aus der s\* stammt.  Die Warnung in der README war
+richtig.
+
+**Das Loch im Test, und es ist gross.**  In diesen 42 Herbstabenden erreicht
+**kein einziger** Abend s\* = 0.6325 - die Maxima liegen bei 0.39 und 0.46.
+Das Fenster enthaelt also null Ereignisse.  Gemessen wurde damit die
+Uebereinstimmung im **Mittelfeld**, waehrend der Alarm ausschliesslich im
+**Schwanz** lebt.  Ueber die Rangfolge dort sagt rho = 0.697 nichts.
+
+Ein aussagekraeftiger Test braucht ein Fenster mit Ereignissen - also Mai bis
+August, wo die Klimatologie die Ausloesungen haeuft.  Bis dahin gilt die
+Antwort "nicht uebertragbar" als **untere Schranke**: schon im Mittelfeld
+laufen die Rangfolgen auseinander.
+
+Pruefbefehl: `python3 skripte/ablation.py`

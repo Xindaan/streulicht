@@ -24,7 +24,12 @@ fuer die Terminal-App in den Systemeinstellungen.
 - Skript: `skripte/fotos_zaehlen.py`
 
 ### T-0006 Ablation 3-Schicht gegen niveauaufgeloest
-**ENTBLOCKT (14.08.2026):** `historical-forecast-api` ist wieder frei.
+**GERECHNET 14.08.2026, Antwort: NEIN (Befund 31).** rho = +0.697
+[0.499, 0.826], Top-15-%-Ueberlappung 4 von 6, Verteilungen verschoben.
+s\* muss bei einem Wechsel neu hergeleitet werden. **ABER:** das Fenster
+(15.09.-26.10.) enthaelt null Ereignisse - gemessen wurde das Mittelfeld,
+der Alarm lebt im Schwanz. Wiederholung mit einem Sommerfenster noetig.
+Historisch: `historical-forecast-api` war frei.
 **Vorher war das Skript verzerrt** — es zaehlte Abende ohne Daten als 0.0,
 wo BEIDE Verfahren uebereinstimmen, was rho nach oben trieb und damit genau
 auf 'die Rangfolgen fallen zusammen' zeigte. Behoben, siehe Befunde 27b.
