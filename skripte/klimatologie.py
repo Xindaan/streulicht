@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sonnen.geometrie import sonnenuntergang  # noqa: E402
 from sonnen.score import faecherpunkte, score  # noqa: E402
 
-GITTER = 0.25
+GITTER = float(os.environ.get('WETTER_GITTER', '0.5'))
 SCHICHTEN = ("low", "mid", "high")
 VARIABLEN = ",".join("cloud_cover_%s" % s for s in SCHICHTEN)
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -58,41 +58,35 @@ def punktbedarf(von, bis, breite, laenge):
     return zellen, proTag
 
 
-# Open-Meteo drosselt auf 5000 gewichtete Calls je STUNDE (Fehlertext:
-# "Hourly API request limit exceeded"), daneben 10000 je Tag.  Empirisch
-# (14.08.2026) wiegt ein Request mit 60 Orten x 3 Variablen x 1 Jahr rund
-# 400 Calls: 13 solche Requests rissen das Stundenlimit.  Also selbst
-# drosseln statt blind zu verdoppeln - exponentielles Backoff hilft hier
-# nicht, weil das Kontingent erst zur vollen Stunde zurueckgesetzt wird.
-REQUESTS_PRO_STUNDE = 10
-_zaehler = {"stunde": None, "n": 0}
+class KontingentErschoepft(Exception):
+    pass
 
 
-def _warte_auf_naechste_stunde(grund):
-    jetzt = time.time()
-    bis = (int(jetzt // 3600) + 1) * 3600 + 30
-    print("      %s - warte %.0f min bis zum Kontingent-Reset"
-          % (grund, (bis - jetzt) / 60), flush=True)
-    time.sleep(max(0, bis - jetzt))
-    _zaehler["stunde"], _zaehler["n"] = int(time.time() // 3600), 0
-
-
-def _mit_drossel(u, versuche=6):
+# Open-Meteo drosselt gewichtet (Orte x Variablen x Zeitraum), und ich habe die
+# Formel zweimal falsch geschaetzt - erst 400 Calls je Request, dann 2500, beides
+# unvereinbar mit dem beobachteten Verhalten.  Also nicht mehr modellieren:
+# nehmen was geht, jeden Block cachen, bei 429 sauber aussteigen.  Der naechste
+# Lauf setzt am Cache an.  Ein Skript, das das Kontingent RAET, ist schlimmer als
+# eines, das es ertastet - es wartet Stunden auf ein Limit, das anders liegt.
+def _hole(u, versuche=4):
+    """Open-Meteo hat DREI Limits (minuetlich / stuendlich / taeglich) und sagt
+    im Fehlertext, welches griff.  Nur das minuetliche lohnt Warten - 60 s.
+    Beim stuendlichen oder taeglichen sauber aussteigen; der Blockcache haelt
+    den Fortschritt, der naechste Lauf setzt dort an."""
     for n in range(versuche):
-        std = int(time.time() // 3600)
-        if _zaehler["stunde"] != std:
-            _zaehler["stunde"], _zaehler["n"] = std, 0
-        if _zaehler["n"] >= REQUESTS_PRO_STUNDE:
-            _warte_auf_naechste_stunde("Selbstdrosselung")
         try:
-            _zaehler["n"] += 1
             with urllib.request.urlopen(u, timeout=600) as f:
                 return json.load(f)
         except urllib.error.HTTPError as e:
-            if e.code != 429 or n == versuche - 1:
+            if e.code != 429:
                 raise
-            _warte_auf_naechste_stunde("429")
-    raise RuntimeError("unerreichbar")
+            grund = json.loads(e.read()).get("reason", "429")
+            if "inutely" in grund and n < versuche - 1:
+                print("      Minutenlimit, warte 65 s ...", flush=True)
+                time.sleep(65)
+                continue
+            raise KontingentErschoepft(grund) from None
+    raise KontingentErschoepft("Minutenlimit blieb bestehen")
 
 
 def hole_jahr(zellen, jahr, gesucht, block=60):
@@ -110,7 +104,7 @@ def hole_jahr(zellen, jahr, gesucht, block=60):
     os.makedirs(cachedir, exist_ok=True)
     for i in range(0, len(liste), block):
         teil = liste[i:i + block]
-        cache = os.path.join(cachedir, "%d_%04d.json" % (jahr, i))
+        cache = os.path.join(cachedir, "g%g_%d_%04d.json" % (GITTER, jahr, i))
         if os.path.exists(cache):
             with open(cache) as f:
                 for k, v in json.load(f).items():
@@ -124,7 +118,7 @@ def hole_jahr(zellen, jahr, gesucht, block=60):
              "&hourly=%s&start_date=%d-01-01&end_date=%d-12-31"
              % (",".join("%.4f" % m[0] for m in mitten),
                 ",".join("%.4f" % m[1] for m in mitten), VARIABLEN, jahr, jahr))
-        d = _mit_drossel(u)
+        d = _hole(u)
         if isinstance(d, dict):
             d = [d]
         teilaus = {}
@@ -160,9 +154,9 @@ def main():
     von, bis = date(a.von, 1, 1), date(a.bis, 12, 31)
     zellen, proTag = punktbedarf(von, bis, a.breite, a.laenge)
     print("Zeitraum %s..%s, %d Abende" % (von, bis, len(proTag)))
-    print("benoetigte 0.25-Grad-Zellen: %d" % len(zellen))
+    print("Gitter %g Grad, benoetigte Zellen: %d" % (GITTER, len(zellen)))
 
-    ziel = os.path.join(BASIS, "daten", "score_%s_%d_%d.json" % (a.name, a.von, a.bis))
+    ziel = os.path.join(BASIS, "daten", "score_%s_g%g_%d_%d.json" % (a.name, GITTER, a.von, a.bis))
     if os.path.exists(ziel):
         print("bereits vorhanden: %s" % ziel)
         return
@@ -176,7 +170,13 @@ def main():
             std, _ = sonnenuntergang(t, a.breite, a.laenge)
             gesucht[str(t)] = "%sT%02d:00" % (t, int(round(std)) % 24)
         print("   %d laden (%d Abende) ..." % (jahr, len(gesucht)), flush=True)
-        feld = hole_jahr(zellen, jahr, gesucht)
+        try:
+            feld = hole_jahr(zellen, jahr, gesucht)
+        except KontingentErschoepft as e:
+            print("   Kontingent erschoepft (%s).  %d Jahre fertig, Rest beim "
+                  "naechsten Lauf - der Blockcache bleibt." % (e, jahr - a.von),
+                  flush=True)
+            break
 
         for tag, karte in ((str(t), proTag[t]) for t in tage(
                 date(jahr, 1, 1), date(jahr, 12, 31)) if t in proTag):
@@ -193,9 +193,15 @@ def main():
                              "A": det["A"] if det else None,
                              "B": det["B"] if det else None}
         del feld
-    with open(ziel, "w") as f:
+    if not ergebnis:
+        print("nichts gerechnet - Kontingent war sofort erschoepft.")
+        return
+    teil = os.path.join(BASIS, "daten", "score_%s_g%g_teil.json" % (a.name, GITTER))
+    fertig = len(ergebnis) >= len(proTag) * 0.99
+    with open(ziel if fertig else teil, "w") as f:
         json.dump(ergebnis, f)
-    print("geschrieben: %s (%d Abende)" % (ziel, len(ergebnis)))
+    print("geschrieben: %s (%d von %d Abenden)"
+          % (ziel if fertig else teil, len(ergebnis), len(proTag)))
 
 
 if __name__ == "__main__":

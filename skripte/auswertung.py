@@ -32,7 +32,7 @@ def main():
     a = ap.parse_args()
 
     pfad = a.datei or os.path.join(BASIS, "daten",
-                                   "score_%s_2022_2025.json" % a.name)
+                                   "score_%s_g0.5_2022_2025.json" % a.name)
     if not os.path.exists(pfad):
         raise SystemExit("Klimatologie fehlt: %s\n"
                          "Erst skripte/klimatologie.py laufen lassen." % pfad)
@@ -122,11 +122,11 @@ def plot(werte, s_stern, roh, proMonat, trefferMonat, name, jahre):
 
     ax1.hist(werte, bins=60, color="#58a6ff", alpha=0.85)
     ax1.axvline(s_stern, color="#f0883e", lw=2)
-    ax1.annotate("s* = %.3f\n%.0f Abende/Jahr" % (s_stern, sum(
-        1 for x in werte if x >= s_stern) / jahre),
-        xy=(s_stern, 0), xytext=(s_stern + 0.04, ax1.get_ylim()[1] * 0.6),
-        color="#f0883e", fontsize=10)
     ax1.set_yscale("log")
+    ax1.text(s_stern + 0.02, ax1.get_ylim()[1] * 0.25,
+             "s* = %.3f\n%.1f Abende/Jahr" % (s_stern,
+                 sum(1 for x in werte if x >= s_stern) / jahre),
+             color="#f0883e", fontsize=11, va="top")
     ax1.set_xlabel("Score", color="#e6edf2")
     ax1.set_ylabel("Abende (log)", color="#e6edf2")
     ax1.set_title("Score-Verteilung %s, %.1f Jahre" % (name, jahre),
@@ -138,7 +138,7 @@ def plot(werte, s_stern, roh, proMonat, trefferMonat, name, jahre):
     ax2.set_xticks(range(1, 13))
     ax2.set_xticklabels(MONATE, color="#8b949e")
     ax2.set_ylabel("Ausloesungen %", color="#e6edf2")
-    ax2.set_title("Saisonale Schieflage bei absolutem Schwellwert",
+    ax2.set_title("Saisonale Schieflage - Januar: 0 von 124 Abenden",
                   color="#e6edf2", fontsize=10)
 
     fig.tight_layout()
