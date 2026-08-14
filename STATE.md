@@ -34,14 +34,23 @@ Die Memberzahl multipliziert NICHT.  Gemessen: 10x3, 25x3 und 10x9 Variablen
 liefen nacheinander durch - unter der Member-Hypothese waeren das kumulativ
 9945 gewichtete Calls gewesen und der zweite Test haette scheitern muessen.
 
-Die Limits gelten aber **endpunktuebergreifend**.  Die frueheren Fehlschlaege
-des Alarmlaufs waren Kollateralschaden des Klimatologie-Backfills, nicht ein
-Problem des Alarms.  Pass 1 (75 Zellen x 9 Variablen) laeuft sauber durch;
-Pass 2 braucht 147 zusaetzliche Zellen und passt ins Tagesbudget, solange am
-selben Tag kein Backfill laeuft.
+**KORREKTUR 14.08.2026 nachmittags: die Limits gelten NICHT
+endpunktuebergreifend.**  Hier stand das Gegenteil.  Zweimal in
+entgegengesetzter Richtung gemessen, was Zufall ausschliesst:
 
-**Regel fuer den Betrieb: Kalibrierungslaeufe nie am selben Tag wie der
-Alarmlauf.**
+| Wann | `archive` / `historical-forecast` | `ensemble` |
+|---|---|---|
+| vormittags | gesperrt | laeuft |
+| nachmittags | laeuft | gesperrt |
+
+Die Budgets sind getrennt.  Die Betriebsregel bleibt trotzdem bestehen,
+aber aus einem anderen Grund: der Alarm laeuft auf `ensemble-api`, die
+Kalibrierung auf den historischen - sie behindern sich nicht, aber jeder
+Topf ist fuer sich schnell leer.
+
+**Ausserdem: 429 ist nicht gleich 429.**  Derselbe Code steht fuer "zu viele
+gleichzeitig" (warten), "Minutenlimit" (warten) und "Kontingent" (Schluss).
+Wer alle drei gleich behandelt, bricht bei voller Quote ab - siehe README.
 
 ## Abbruchtest: unentschieden, Label konfundiert
 
@@ -56,9 +65,15 @@ also MIT Term B und GEGEN Term A; im Produkt heben sich beide auf.  Kein
 leeres Label, ein konfundiertes.  Kein Trend ueber die Fotozahl, die
 Verduennungshypothese traegt also nicht allein.
 
-Aufloesung nur durch Vergleich INNERHALB der Draussen-Abende - dafuer
-`skripte/fotos_detail.py` aus Terminal.app laufen lassen (Favoriten und
-Minutenabstand als Absichtssignal).
+**Aufgeloest am 14.08.2026 (Befund 28), Ergebnis: unentschieden bleibt
+unentschieden.**  `fotos_detail.py` ist gelaufen.  Innerhalb der 768
+Draussen-Abende scoren Favoritenabende hoeher (Mittelrang 0.558 gegen 0.515,
+A = 0.545), aber nicht signifikant - und die Nachweisgrenze dieses Tests
+liegt bei A = 0.593, es braeuchte 364 statt 86 Favoritenabende.
+
+Die Erkenntnis liegt woanders: dasselbe Modell erreicht gegen das kuratierte
+Album z = +5.61.  **Das Album ist das schaerfere Instrument, nicht der
+Notbehelf.**  `python3 skripte/absicht.py`
 
 ## Oberflaeche: E3 gestalterisch fertig (14.08.2026)
 
@@ -78,14 +93,20 @@ kein Remote, also auch keinen Pages-Zweig. Erst danach ist E3 zu.
 
 ## Naechster Lauf, wenn Kontingent zurueck ist
 
-**Niveauaufgeloeste Klimatologie auf gfs_global (Druckflaechen, ab 2022).**
-Begruendung nicht aesthetisch, sondern gemessen: ERA5s cloud_cover saettigt
-bei 23 % der Stunden auf exakt 100 % und zwingt den Score dort auf null; die
-eigene RH-Diagnostik liefert doppelt so oft einen Zwischenwert (50 % statt
-25 % im Mittelbereich).  Genau dort liegen die Fehlschlaege des Albums.
+**HINFAELLIG (Befund 25, 14.08.2026).**  Hier stand die niveauaufgeloeste
+Klimatologie als naechster grosser Lauf, begruendet mit der Saettigung von
+ERA5s Bedeckungsfeld.  Ueber Berlin allein stimmt das (0/5/5 im Feld gegen
+0/61/46 aus der Feuchte), ueber den ganzen Faecher nicht: dort sieht auch die
+Feuchte nur A = 0.04 bis 0.30.  Der Score steigt an vier von fuenf
+Problemabenden - von praktisch null auf praktisch null.
 
-Danach erst: feineres Gitter (0.25 Grad), erweiterter Faecher (700 km),
-Wolkenfelder zur Folgestunde.  Alle drei brauchen je einen eigenen Lauf.
+Der Aufloesungstest (Befund 29) hat danach ICON-D2 mit 2.2 km geprueft und
+das vorab gesetzte Kriterium knapp verfehlt (+0.064, KI [-0.037, +0.165]).
+
+**Damit sind Darstellung und Aufloesung beide durch.  Offen bleibt
+Beobachtung statt Modell (T-0019, MSG/MTG-Infrarot).**  Feineres Gitter,
+erweiterter Faecher und Folgestunde bleiben moeglich, aber ohne Befund,
+der sie priorisiert.
 
 Entscheidung 14.08.: kein kommerzielles Kontingent, es dauert eben laenger.
 Ebenfalls gestrichen: die Sichtbarkeitszeile im Alarm - Andre geht zur Not
