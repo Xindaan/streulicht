@@ -43,7 +43,8 @@ dem 15z-Schritt, also 11 km.
 
 | Zweck | Quelle | Tiefe |
 |---|---|---|
-| Klimatologie, s\*, Saisonzyklus | `historical-forecast-api`, `gfs_global` | **≥ 2022** |
+| Klimatologie, s\*, Saisonzyklus | `archive-api` ERA5, 3 Schichten | 1940+ (genutzt: 2022-2025) |
+| Druckflaechen historisch (fuer T-0006) | `historical-forecast-api`, `gfs_global` | **≥ 2022** |
 | Gegenprobe Wolkenfeld | `archive-api` ERA5, nur `cloud_cover_low/mid/high` | 1940+ |
 | Dispersion, Skill ueber Vorlauf | `ensemble-api`, `past_days` | **nur 93 Tage** |
 
@@ -173,8 +174,17 @@ Tangentendistanzen (R_eff = 4/3 R): 600 hPa 267 km · 500 308 · 400 349 ·
 - **Fotogate blockiert:** macOS verweigert den Zugriff auf die Fotomediathek
   (TCC). Braucht Festplattenvollzugriff fuer die Terminal-App.
   Ohne dieses Gate gibt es keinen Abbruchtest.
-- Klimatologie auf `gfs_global` (4 Jahre) → s\* — noch nicht gerechnet.
-- Taegliche Ensemble-Archivierung — noch nicht eingerichtet.
+- T-0005 Interpolationsexperiment: Skript steht, noch nicht gelaufen.
+- T-0006 Ablation 3-Schicht gegen niveauaufgeloest: entscheidet, ob s* aus
+  Abschnitt 6 auf den Betriebsscore uebertragbar ist.
+- T-0003 taegliche Ensemble-Archivierung: Skript steht, Cron noch nicht
+  eingerichtet.
+
+*Korrektur gegenueber einer frueheren Fassung dieses Dokuments:* hier stand,
+die Klimatologie laufe auf `gfs_global`.  Sie laeuft auf ERA5 als
+3-Schicht-Variante — `gfs_global` haette Druckflaechen, aber das Kontingent
+traegt keine vier Jahre mit 20 Variablen je Punkt.  `gfs_global` bleibt die
+Quelle fuer die Ablation T-0006.
 
 ## 6 Klimatologie und Schwellwert (T-0002, gerechnet 14.08.2026)
 
