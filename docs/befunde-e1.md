@@ -175,3 +175,79 @@ Tangentendistanzen (R_eff = 4/3 R): 600 hPa 267 km · 500 308 · 400 349 ·
   Ohne dieses Gate gibt es keinen Abbruchtest.
 - Klimatologie auf `gfs_global` (4 Jahre) → s\* — noch nicht gerechnet.
 - Taegliche Ensemble-Archivierung — noch nicht eingerichtet.
+
+## 6 Klimatologie und Schwellwert (T-0002, gerechnet 14.08.2026)
+
+ERA5, 2022-2025, 1461 Abende, 3-Schicht-Variante, 0.5-Grad-Gitter (118 Zellen),
+ausgewertet zur naechstliegenden vollen Stunde am Sonnenuntergang.
+
+### 6.1 Die Zahl
+
+    s* = 0.6325   (95. Perzentil)   ->   18.5 Ausloesungen/Jahr
+
+74 Ereignisse in 4 Jahren; Poisson-Standardfehler sqrt(74)/74 = 12 %, also
+18.5 +/- 2.2 pro Jahr.  Zielband des Auftrags war 10-25 - das haelt auch am
+Rand des Konfidenzintervalls.
+
+| Perzentil | s | Abende/Jahr |
+|---|---|---|
+| 90 | 0.4444 | 36.8 |
+| 93.2 | 0.5376 | 25.0 |
+| **95** | **0.6325** | **18.5** |
+| 97.3 | 0.7560 | 10.0 |
+| 99 | 0.9046 | 3.8 |
+
+21.1 % aller Abende ergeben exakt S = 0 (geschlossene tiefe Decke oder voellig
+klarer Himmel - beides korrekt eine Null).
+
+### 6.2 Saisonalitaet: eine echte Ueberraschung
+
+| Monat | Jan | Feb | Mrz | Apr | Mai | Jun | Jul | Aug | Sep | Okt | Nov | Dez |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Ausloesungen | **0** | 5 | 5 | 6 | 8 | **10** | 8 | 3 | 9 | 9 | 6 | 5 |
+
+**Januar: null Ausloesungen in 124 Abenden.**  Unter Gleichverteilung waeren
+6.2 zu erwarten, P(0) = e^-6.2 = 0.002.  Das ist kein Rauschen, sondern ein
+Befund: die winterliche Hochdruck-Stratusdecke ueber Norddeutschland schliesst
+sowohl den Schirm als auch das Fenster.
+
+Sonst ist die Verteilung **viel flacher als in E0 vorhergesagt**.  Erwartet
+war ein Doppelmaximum April/Mai und September/Oktober; beobachtet ist
+September/Oktober (je 9) bestaetigt, April/Mai nicht besonders, und das
+Maximum liegt im **Juni** (10).  Fuer die Entscheidung D1 (absoluter
+Schwellwert) ist das die gute Nachricht: die Demo-Saison im Sommer wird
+nicht ausgehungert, im Gegenteil.
+
+### 6.3 Traegt der Fensterterm? Ja.
+
+    r(A, B) = -0.259     (E0-Erwartung: -0.3 bis -0.5)
+
+Negativ und stabil (ueber 1 Jahr: -0.246, ueber 4 Jahre: -0.259), aber
+schwaecher als vorhergesagt.  Die Antikorrelation ist der Grund, warum das
+Produkt trennscharf ist: vor der Warmfront Cirrus ohne Fenster, hinter der
+Kaltfront Fenster mit Restbewoelkung.  Der Score ist damit KEIN Term zu viel.
+
+Beide Schirmniveaus loesen aus (high 42, mid 32) - das Maximum ueber
+Schirmniveaus leistet also Arbeit und faellt nicht auf eines zurueck.
+
+### 6.4 Kontingent: drei Limits, nicht eines
+
+Open-Meteo drosselt minuetlich (600), stuendlich (5000) und taeglich (10000)
+und nennt im Fehlertext das jeweils greifende.  **Nur das minuetliche lohnt
+Warten.**  Zwei Versuche, die Gewichtungsformel zu schaetzen (400 bzw. 2500
+Calls je Request), waren beide falsch - deshalb ertastet das Skript das
+Kontingent jetzt, statt es zu modellieren: nehmen was geht, Block cachen,
+sauber aussteigen, naechster Lauf setzt am Cache an.
+
+### 6.5 Was diese Zahl noch nicht ist
+
+- **0.5-Grad-Gitter statt 0.25.**  Vom Kontingent erzwungen (0.25 Grad ueber
+  4 Jahre = 73 572 gewichtete Calls, also 7 Tagesbudgets).  ERA5 hat effektiv
+  ~31 km Aufloesung, 0.5 Grad sind 34 x 56 km - vertretbar, aber nicht
+  identisch mit dem Betriebsscore.
+- **3-Schicht-Variante.**  Keine Dickenstrafe in Term A moeglich; eine dicke
+  Mittelschichtdecke wird als eigener Schirm ohne Abzug gewertet.  Die
+  Ablation T-0006 muss zeigen, ob sich s* auf die niveauaufgeloeste Variante
+  uebertraegt.
+- **Keine Schoenheitsvalidierung.**  Das Fotogate ist blockiert (TCC).  s*
+  sagt bis dahin nur: "so selten wie gewuenscht", nicht "trifft das Richtige".

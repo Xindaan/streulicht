@@ -1,6 +1,6 @@
 # STATE
 
-Stand: 14.08.2026
+Stand: 14.08.2026 (Klimatologie gerechnet)
 
 ## Ziel
 
@@ -22,15 +22,19 @@ zeigen.
   gewaehlt ist eine nukleationsfoermige Schwelle. Gegen ERA5 erreicht sie
   r 0,768 — mehr als GFS' eigenes Wolkenschema (0,730).
 - **ERA5 auf Open-Meteo hat keine Druckflaechen.** Klimatologie laeuft
-  stattdessen auf `gfs_global` (ab 2022). Ensemble-Archiv nur 93 Tage tief.
+  deshalb als 3-Schicht-Variante auf ERA5. Ensemble-Archiv nur 93 Tage tief.
+- **s\* = 0.6325 → 18.5 Ausloesungen/Jahr** (4 Jahre, 74 Ereignisse, +/-12 %).
+  Januar: null Ausloesungen in 124 Abenden (P = 0.002, kein Rauschen).
+  r(A,B) = -0.259 — der Fensterterm traegt eigene Information.
 
 ## Next actions
 
 1. **T-0001 Fotogate** — blockiert, braucht Festplattenvollzugriff (Andre).
    Ohne dieses Gate gibt es keinen Abbruchtest fuer E1.
-2. **T-0003 Taegliche Ensemble-Archivierung** einrichten — haengt an nichts,
-   jeder Tag Wartezeit ist ein verlorener Kalibrierungstag.
-3. **T-0002 Klimatologie** auf `gfs_global`, 4 Jahre, Berlin → s\*.
+2. **T-0005 Interpolationsexperiment** — Euler gegen Semi-Lagrange, Skript
+   steht, braucht nur Kontingent.
+3. **T-0006 Ablation** 3-Schicht gegen niveauaufgeloest — entscheidet, ob s*
+   auf den Betriebsscore uebertragbar ist.
 
 ## Letzte Done
 

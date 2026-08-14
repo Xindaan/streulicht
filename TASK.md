@@ -16,13 +16,6 @@ fuer die Terminal-App in den Systemeinstellungen.
 - [ ] n >= 40 komfortabel, n >= 20 grenzwertig, darunter faellt der Test aus
 - Skript: `skripte/fotos_zaehlen.py`
 
-### T-0002 Klimatologie und Schwellwert s\*
-Score ueber 4 Jahre `gfs_global` (Druckflaechen, stuendlich) fuer Berlin,
-ausgewertet zur exakten Sonnenuntergangsstunde.
-- [ ] Verteilung des Scores, nach Monat aufgeschluesselt
-- [ ] s\* aus dem 95. Perzentil (Ziel 10-25 Ausloesungen/Jahr)
-- [ ] Quantilabbildung GFS -> ECMWF ueber die 93 Tage Ueberlappung
-
 ### T-0003 Taegliche Ensemble-Archivierung
 Das Ensemble-Archiv reicht nur 93 Tage zurueck und wandert. Ein Cron, der
 nichts tut ausser den Tagesabzug wegschreiben. Haengt an keiner Entscheidung.
@@ -67,5 +60,9 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   entfernungsabhaengige Niveauzuordnung, semi-Lagrangesche Interpolation,
   Validierungsplan. Korrekturen: Juni-Sonnenuntergang 19:33 statt 17:30 UTC;
   Fensterband 200-400 km statt 100-200 km.
+- **T-0002 Klimatologie und Schwellwert** (14.08.2026) — ERA5 2022-2025,
+  1461 Abende, 3-Schicht auf 0.5-Grad-Gitter. **s\* = 0.6325 → 18.5
+  Ausloesungen/Jahr.** Januar null von 124. r(A,B) = -0.259. Offen bleibt die
+  Quantilbruecke auf ECMWF (haengt an T-0006).
 - **Gates E1** (14.08.2026) — Modellverifikation, Wolkendiagnostik kalibriert,
   Geometrie gegen unabhaengige Quelle geprueft. Siehe `docs/befunde-e1.md`.
