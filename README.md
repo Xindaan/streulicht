@@ -73,11 +73,12 @@ zusammenfallen.
 ```
 
 **Kontingent beachten.** Open-Meteo drosselt minuetlich (600), stuendlich
-(5000) und taeglich (10000), und zwar **endpunktuebergreifend**. Ein voller
-Alarmlauf mit Advektion braucht 75 + 147 Zellen und passt ins Tagesbudget —
-aber nur, wenn am selben Tag kein Backfill laeuft. Kalibrierungslaeufe
-(`klimatologie.py`, `ablation.py`) deshalb nie am selben Tag wie der Betrieb,
-oder vorher `--trocken` pruefen.
+(5000) und taeglich (10000). Die **historischen** Endpunkte (`archive-api`,
+`historical-forecast-api`) teilen sich ein Budget; `ensemble-api`,
+`forecast-api` und `air-quality-api` haben ein eigenes — gemessen am
+14.08.2026, als die historischen gesperrt waren und die uebrigen liefen.
+Der taegliche Alarmlauf wird von Kalibrierungslaeufen also **nicht**
+blockiert.
 
 ## Troubleshooting
 

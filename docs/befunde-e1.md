@@ -735,3 +735,45 @@ Sonnenuntergang.  Das Album heisst "Sonnenuntergaenge", nicht "spektakulaere
 Sonnenuntergaenge".  Die gemessene Trefferquote von 9 % bei 18 Alarmen/Jahr
 ist damit zu pessimistisch: ein Teil der Messlatte gehoert gar nicht in die
 obersten 5 %.
+
+## 16 Kontingent: die Limits sind NICHT endpunktuebergreifend (14.08.2026)
+
+Fruehere Behauptung in Abschnitt 6.4 und in der README: die Limits gaelten
+endpunktuebergreifend.  **Falsch.**  Gemessen um 11:17 UTC, nachdem das
+Tageslimit gerissen war:
+
+| Endpunkt | Status |
+|---|---|
+| `archive-api` (ERA5) | gesperrt |
+| `historical-forecast-api` | gesperrt |
+| `ensemble-api` | **frei** |
+| `forecast-api` | **frei** |
+| `air-quality-api` (CAMS) | **frei** |
+
+Die historischen Endpunkte teilen sich ein Budget, der Betrieb hat ein
+eigenes.  **Praktische Folge: der taegliche Alarmlauf wird von
+Kalibrierungslaeufen NICHT blockiert.**  Die Betriebsregel aus der README
+("Kalibrierung nie am selben Tag wie der Alarm") war unnoetig streng.
+
+## 17 Aerosol: Entscheidung richtig, Begruendung falsch (14.08.2026)
+
+CAMS ueber `air-quality-api` reicht bis 04.08.2022 zurueck - 1246 Abende
+Ueberlappung mit der Klimatologie, davon 33 im Album.
+
+| | AOD Median | p10 | p90 |
+|---|---|---|---|
+| Albumabende | **0.230** | 0.100 | 0.390 |
+| uebrige | 0.140 | 0.050 | 0.330 |
+
+E0 argumentierte: klare Luft gibt gesaettigte Farben, gute Abende muessten
+also WENIG Aerosol haben.  Gemessen ist es umgekehrt.  Nach Saisonbereinigung
+(+/-21-Tage-Rang) bleibt Mittelrang 0.552, z = +1.04 - **nicht signifikant**.
+Der Rohunterschied ist fast vollstaendig Jahreszeit.
+
+E0 nannte drei Gruende gegen den Term: (1) CAMS reicht nur 5 Tage voraus,
+(2) deterministisch, zerstoert die Memberstruktur, (3) teilredundant zur
+bodennahen Feuchte.  (1) und (2) gelten weiter.  **(3) ist widerlegt:**
+r(S, AOD) = +0.158, also nahezu unabhaengig.
+
+Die Entscheidung war richtig, die Begruendung nicht.  Der Term traegt kein
+Schoenheitssignal - weder in die eine noch in die andere Richtung.
