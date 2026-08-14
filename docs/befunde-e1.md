@@ -261,3 +261,35 @@ sauber aussteigen, naechster Lauf setzt am Cache an.
   uebertraegt.
 - **Keine Schoenheitsvalidierung.**  Das Fotogate ist blockiert (TCC).  s*
   sagt bis dahin nur: "so selten wie gewuenscht", nicht "trifft das Richtige".
+
+## 7 Zeitinterpolation (T-0005, gemessen 14.08.2026)
+
+ECMWF ENS, nativ 3-stuendig, auf 6 h ausgeduennt, Mittelpunkte rekonstruiert
+und gegen die echten 3-h-Werte geprueft.  Wahrheit ist das Modell selbst.
+Berlin, 64 native Schritte, 3 Member, n = 93 Faelle je Niveau.
+
+| Niveau | Verschiebung 3 h (Median / p90) | Euler | Semi-Lagrange | Gewinn RMSE |
+|---|---|---|---|---|
+| 850 hPa | 102 / 153 km (6 Zellen) | RMSE 6.32, r 0.961 | RMSE 5.32, r 0.973 | 16 % |
+| **300 hPa** | **338 / 504 km (20 Zellen)** | RMSE 19.76, **r 0.667** | RMSE 11.50, **r 0.904** | **42 %** |
+
+**Semi-Lagrange ist auf Schirmniveau Pflicht, auf Fensterniveau Kuer.**  Das
+folgt direkt der Physik: Hoehenwind ist rund dreimal staerker, die Verschiebung
+entsprechend groesser, und ab ~20 Gitterzellen sind die zwei umschliessenden
+Felder praktisch unabhaengige Stichproben - lineares Mitteln daempft dann genau
+die Extreme weg, auf die der Alarm zielt (Euler r 0.667 heisst: 44 % der
+Varianz erklaert).
+
+E0 hatte r 0.4-0.6 (Euler) und 0.8-0.9 (Semi-Lagrange) geschaetzt; gemessen
+sind 0.667 und 0.904.
+
+Einschraenkungen: Die 6-h-Luecke ist der WeatherNext-Fall und damit
+konservativ - ECMWF hat im Betrieb 3 h, dort faellt der Gewinn kleiner aus.
+n = 93 sind 3 Member x 31 Schritte, also nicht unabhaengig; der Effekt ist
+aber weit groesser als jedes plausible Rauschen.
+
+Nebenbefund: Der Versuch nutzt das **Zwei-Pass-Verfahren** aus E0 (erst Mitte
+holen fuer den Wind, dann nur die stromauf/-abwaerts liegenden Punkte).  Ein
+Gitter, das 60-m/s-Jetwind abdeckt, braeuchte bei 0.25 Grad 47x47 = 2209
+Punkte; Zwei-Pass kam mit 370 aus.  Die Betriebsmechanik ist damit
+mitvalidiert.
