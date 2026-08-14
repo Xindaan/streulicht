@@ -293,3 +293,30 @@ holen fuer den Wind, dann nur die stromauf/-abwaerts liegenden Punkte).  Ein
 Gitter, das 60-m/s-Jetwind abdeckt, braeuchte bei 0.25 Grad 47x47 = 2209
 Punkte; Zwei-Pass kam mit 370 aus.  Die Betriebsmechanik ist damit
 mitvalidiert.
+
+## 8 Traegt der Fensterterm? (offline, 14.08.2026)
+
+Unabhaengig von der Schoenheitsfrage: aendert B ueberhaupt die Rangfolge?
+
+| | |
+|---|---|
+| rho(S, A) | +0.399 |
+| rho(S, B) | **+0.594** |
+| rho(A, B) | −0.246 |
+| Top-5-%-Ueberlappung S gegen A | **7 von 73 = 10 %** |
+| Abende mit A ≥ s\*, von B unter s\* gedrueckt | **419 von 494 = 85 %** |
+| B bei hohem A | Median 0.15, p10 0.00, p90 0.83 |
+
+**Der Fensterterm ist nicht dekorativ.** S und A waehlen nahezu disjunkte
+Mengen; 66 der 73 besten Abende nach S kaemen nach A gar nicht vor.  B legt
+bei 85 % der Abende mit gutem Schirm ein Veto ein.
+
+**Korrektur der Lesart von Abschnitt 7b:** Aus "S schlaegt A im Fototest nicht"
+(+0.066 gegen +0.063) hatte ich geschlossen, die Zweiterm-Konstruktion
+verdiene sich nichts.  Das war falsch.  S und A sind in ihrer Auswahl fast
+orthogonal - dass beide dieselbe schwache Anreicherung auf dem Fotolabel
+zeigen, ist eine Aussage ueber das LABEL, nicht ueber die Terme.
+
+**Ueberraschung:** rho(S,B) > rho(S,A).  Der Score wird staerker vom Fenster
+getrieben als vom Schirm.  Bei einem Rueckbau auf einen Term waere B zu
+behalten, nicht A - das Gegenteil der Intuition.
