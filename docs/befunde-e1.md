@@ -787,3 +787,39 @@ r(S, AOD) = +0.158, also nahezu unabhaengig.
 
 Die Entscheidung war richtig, die Begruendung nicht.  Der Term traegt kein
 Schoenheitssignal - weder in die eine noch in die andere Richtung.
+
+## 18 Zwei Faehigkeiten, nur eine gemessen (14.08.2026)
+
+Acht Albumfotos angesehen und mit dem Rang verglichen:
+
+| Rang | Eindruck |
+|---|---|
+| 0.14 | spektakulaer (Makrelenhimmel) |
+| 0.17 | dramatisch (Decke mit Horizontschlitz) |
+| 0.19 | spektakulaer (voller angeleuchteter Himmel) |
+| 0.22 | mild |
+| 0.34 | spektakulaer (Himmel brennt tiefrot) |
+| 0.44 | dramatisch |
+| 0.95 | spektakulaer (Magenta ueber die Kuppel) |
+| 0.99 | mild (spaete Daemmerung, schmales Band) |
+
+**Die beiden Aussagen sind verschieden, und nur eine ist belegt:**
+
+1. *Albumabende scoren hoeher als zufaellige Abende.*  Gemessen, n = 43,
+   z = +3.95, p = 0.0001.  Steht.
+2. *Innerhalb guter Abende bedeutet hoeherer Score besseren Sonnenuntergang.*
+   **Nie getestet** - und nach diesen acht Bildern zweifelhaft.
+
+Fuer den Alarm zaehlt (2).  Er feuert auf die obersten 5 %; unterscheidet er
+dort nicht mehr, waehlt er unter den guten Abenden zufaellig aus.  Die
+Anreicherung aus (1) waere dann trotzdem echt - sie kommt daher, dass der
+Score die VOELLIG schlechten Abende zuverlaessig aussortiert, und das ist
+eine schwaechere Leistung als sie klingt.
+
+**Was das entscheiden wuerde:** eine Qualitaetsordnung INNERHALB des Albums.
+Nicht "war es schoen" (das sagt schon die Albumzugehoerigkeit), sondern "wie
+schoen im Vergleich zu den anderen".  Meine eigene Einschaetzung aus acht
+Fotos taugt dafuer nicht - sie ist subjektiv und zu klein.
+
+*Vorsicht bei der Interpretation dieser Tabelle: acht Fotos, mein Urteil,
+keine Verblindung.  Sie ist ein Warnsignal, kein Befund.*
