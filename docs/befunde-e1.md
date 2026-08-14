@@ -1487,9 +1487,46 @@ Das Fenster enthaelt also null Ereignisse.  Gemessen wurde damit die
 Uebereinstimmung im **Mittelfeld**, waehrend der Alarm ausschliesslich im
 **Schwanz** lebt.  Ueber die Rangfolge dort sagt rho = 0.697 nichts.
 
-Ein aussagekraeftiger Test braucht ein Fenster mit Ereignissen - also Mai bis
-August, wo die Klimatologie die Ausloesungen haeuft.  Bis dahin gilt die
-Antwort "nicht uebertragbar" als **untere Schranke**: schon im Mittelfeld
-laufen die Rangfolgen auseinander.
+### 31.1 Nachgeholt am selben Abend: das Sommerfenster
+
+Das Loch war in einer Stunde zu schliessen.  Gewaehlt wurde 01.06.-12.07.2023,
+das ereignisreichste 42-Tage-Fenster der Klimatologie (8 Ausloesungen).
+
+| Fenster | rho | 95 %-KI | Top-6 gemeinsam | Max 3-Schicht | Max niveau |
+|---|---|---|---|---|---|
+| Herbst, 0 Ereignisse | +0.697 | [0.498, 0.826] | 4 von 6 | 0.392 | 0.459 |
+| **Sommer, 8 Ereignisse** | **+0.504** | [0.236, 0.701] | **1 von 6** | 0.757 | 0.488 |
+
+Die Intervalle ueberschneiden sich, der Unterschied ZWISCHEN den Fenstern ist
+also selbst nicht gesichert.  Entscheidend ist der Absolutwert im Sommer:
+**rho 0.50 und genau ein gemeinsamer Spitzenabend von sechs.**  Dort, wo der
+Alarm lebt, sind sich die beiden Varianten praktisch uneinig darueber, welche
+Abende die besten sind.
+
+**Und die Zahl, die es endgueltig entscheidet.**  Im selben Sommerfenster,
+mit demselben s\* = 0.6325:
+
+    3-Schicht          3 Ausloesungen   (Maximum 0.757)
+    niveauaufgeloest   0 Ausloesungen   (Maximum 0.488)
+
+Das Maximum der niveauaufgeloesten Variante liegt **unter der Schwelle**.
+Derselbe Schwellwert erzeugt auf der einen Variante Alarme und auf der
+anderen keinen einzigen - das ist kein Randfall, das sind zwei Massstaebe.
+Fuer dieselbe Ausloeserate muesste s\* dort bei rund **0.4224** liegen, also
+33 % niedriger.
+
+**T-0006 ist damit klar beantwortet: nicht uebertragbar, und zwar am
+staerksten genau dort, wo es zaehlt.**  Ein Wechsel auf die
+niveauaufgeloeste Variante ist ohne eigene Klimatologie und eigenes s\*
+nicht moeglich - was den Aufwand dieses Wechsels erheblich erhoeht und ihn
+gegenueber Befund 25 (der ihm ohnehin keinen Gewinn bescheinigt) endgueltig
+nach hinten schiebt.
+
+Nebenbefund zur Werkzeugpflege: `ablation.py` schrieb immer nach
+`daten/ablation.json` und haette den Herbstlauf still ueberschrieben - zwei
+Ergebnisse mit verschiedenem Zeitraum haetten hinterher wie eines ausgesehen.
+Der Dateiname traegt jetzt das Fenster.
+
+Pruefbefehl: `python3 skripte/ablation.py --von 2023-06-01 --bis 2023-07-12`
 
 Pruefbefehl: `python3 skripte/ablation.py`

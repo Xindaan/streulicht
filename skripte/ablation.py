@@ -201,7 +201,11 @@ def main():
     print("\nnur 3-Schicht:      %s" % ", ".join(sorted(top3 - topN)) or "-")
     print("nur niveauaufgel.:  %s" % ", ".join(sorted(topN - top3)) or "-")
 
-    ziel = os.path.join(BASIS, "daten", "ablation.json")
+    # Dateiname traegt das Fenster.  Vorher hiess die Datei immer
+    # "ablation.json" - der zweite Lauf mit einem anderen Zeitraum
+    # ueberschrieb den ersten stillschweigend, und zwei Ergebnisse mit
+    # verschiedenem n sahen hinterher aus wie eines.
+    ziel = os.path.join(BASIS, "daten", "ablation_%s.json" % a.von)
     with open(ziel, "w") as f:
         json.dump({"tage": tage_, "s3": s3, "sN": sN}, f)
     print("\ngeschrieben: %s" % ziel)
