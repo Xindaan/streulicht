@@ -27,21 +27,42 @@ zeigen.
   Januar: null Ausloesungen in 124 Abenden (P = 0.002, kein Rauschen).
   r(A,B) = -0.259 — der Fensterterm traegt eigene Information.
 
-## Offenes Risiko: API-Kontingent
+## Kontingent: geklaert (14.08.2026)
 
-Die Ensemble-API scheint mit der MEMBERZAHL zu gewichten (Hypothese, noch
-nicht bestaetigt).  Dann kostet ein Alarmlauf 75 Zellen x 9 Variablen x 51
-Member = 34 425 gewichtete Calls bei 5000/Stunde und 10 000/Tag - der
-Betrieb passt dann NICHT ins Gratiskontingent.  Meine fruehere Aussage
-"Betrieb passt, nur der Backfill nicht" beruhte auf einer Schaetzung ohne
-Member und ist damit hinfaellig.  Eine saubere Skalierungsmessung steht aus.
+Die Memberzahl multipliziert NICHT.  Gemessen: 10x3, 25x3 und 10x9 Variablen
+liefen nacheinander durch - unter der Member-Hypothese waeren das kumulativ
+9945 gewichtete Calls gewesen und der zweite Test haette scheitern muessen.
+
+Die Limits gelten aber **endpunktuebergreifend**.  Die frueheren Fehlschlaege
+des Alarmlaufs waren Kollateralschaden des Klimatologie-Backfills, nicht ein
+Problem des Alarms.  Pass 1 (75 Zellen x 9 Variablen) laeuft sauber durch;
+Pass 2 braucht 147 zusaetzliche Zellen und passt ins Tagesbudget, solange am
+selben Tag kein Backfill laeuft.
+
+**Regel fuer den Betrieb: Kalibrierungslaeufe nie am selben Tag wie der
+Alarmlauf.**
+
+## Abbruchtest: unentschieden, Label konfundiert
+
+272 Berliner Fotoabende 2022-2025.  S: Mittelrang 0.510, z +0.57 - nichts.
+Aber die Terme einzeln zeigen den Grund:
+
+    Term B (freier Westen)  Fotoabende 0.466 vs 0.398  z = +2.77  signifikant
+    Term A (hohe Wolken)               0.413 vs 0.454  z = -1.76
+
+Das Label misst "war draussen".  Draussen sein korreliert mit klarem Himmel,
+also MIT Term B und GEGEN Term A; im Produkt heben sich beide auf.  Kein
+leeres Label, ein konfundiertes.  Kein Trend ueber die Fotozahl, die
+Verduennungshypothese traegt also nicht allein.
+
+Aufloesung nur durch Vergleich INNERHALB der Draussen-Abende - dafuer
+`skripte/fotos_detail.py` aus Terminal.app laufen lassen (Favoriten und
+Minutenabstand als Absichtssignal).
 
 ## Next actions
 
-1. **T-0001 Fotogate** — Spotlight-Weg liefert 33 Abende (18 Berlin), knapp
-   ueber der Grenzwertigkeit. Mehr gibt es nur aus der Mediathek, und die
-   braucht einen Lauf aus Terminal.app (nicht aus Claude Code: dort liest
-   das eingebettete Bundle com.anthropic.claude-code, das keine Freigabe hat).
+1. **T-0001b Absichtssignal** — `fotos_detail.py` aus Terminal.app.
+   Ohne das bleibt der Abbruchtest unentschieden.
 2. **T-0006 Ablation** — blockiert bis morgen (Tageskontingent erschoepft).
    `python3 skripte/ablation.py` setzt am Cache fort. Entscheidet, ob s*
    auf den Betriebsscore uebertragbar ist.

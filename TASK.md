@@ -8,6 +8,13 @@ E2 Alarm · E3 Oberflaeche.
 
 ## Doing
 
+### T-0001b Absichtssignal fuer den Abbruchtest
+Der Presence-Only-Test scheiterte an einem konfundierten Label (siehe STATE).
+Favoriten und Minutenabstand extrahieren, dann INNERHALB der Draussen-Abende
+vergleichen statt gegen alle Abende.
+- [ ] `skripte/fotos_detail.py` aus Terminal.app
+- [ ] Test: Favoritenabende gegen Nicht-Favoritenabende, beide "draussen"
+
 ### T-0001 Fotoarchiv-Gate
 Zaehlen, wie viele geotaggte Abendfotos (SU ±30 min) in der Mediathek liegen.
 Entscheidet, ob der Presence-Only-Abbruchtest aus E0 existiert.
@@ -67,5 +74,12 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
 - **T-0005 Interpolation** (14.08.2026) — Semi-Lagrange senkt RMSE auf
   300 hPa um **42 %** (r 0.667 -> 0.904), auf 850 hPa um 16 %. Zwei-Pass-
   Verfahren aus E0 dabei mitvalidiert.
+- **T-0001 Fotogate** (14.08.2026) — Mediathek liefert 1199 Abende, 701
+  Berlin. Abbruchtest gelaufen, Ergebnis unentschieden wegen konfundiertem
+  Label; Aufloesung ueber T-0001b.
+- **E2 gebaut** (14.08.2026) — Alarmlauf mit Zwei-Pass-Advektion, ntfy-Push,
+  blinde Bewertungsseite, Rueckkanal, Idempotenz, README, Cron-Vorlage.
+  Pass 1 verifiziert (75 Zellen, 50 Member, 88 native Schritte); ein
+  vollstaendiger Lauf steht aus.
 - **Gates E1** (14.08.2026) — Modellverifikation, Wolkendiagnostik kalibriert,
   Geometrie gegen unabhaengige Quelle geprueft. Siehe `docs/befunde-e1.md`.
