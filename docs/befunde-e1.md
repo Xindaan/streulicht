@@ -454,3 +454,62 @@ exakter Gegenprobe machte den Vergleich belastbar.
   gewinnt jetzt sogar oefter, weil ueberkopfstehende Decken nicht mehr
   wegge­mittelt werden.
 - Die Luecke zum Produkt bleibt: bei 18 Alarmen/Jahr immer noch 0 von 11.
+
+## 11 Albumtest, n = 43 (14.08.2026)
+
+Andre hat die semantische Suche "sonnenuntergang" in ein Album gelegt.
+80 Abende in Berlin, 43 davon in der Klimatologie 2022-2025.  Drei Abende
+aus der Score-Balken-Durchsicht sind als zirkulaer ausgeschlossen.
+
+| | Mittelrang | z | p |
+|---|---|---|---|
+| **S = Schirm x Fenster** | **0.674** | **+3.95** | **0.0001** |
+| A nur Schirm | 0.623 | +2.80 | 0.0052 |
+| B nur Fenster | 0.515 | +0.33 | 0.74 |
+
+**S schlaegt A deutlich.**  B allein traegt nichts - und das ist die Rolle,
+die der Fensterterm haben SOLL: er sagt nicht vorher, er filtert.  Abende mit
+gutem Schirm aber verbautem Westen fallen raus, und die stehen nicht im Album.
+
+### 11.1 Trefferquote (Wilson-Intervall, weil n klein bleibt)
+
+| Alarmrate | Schwelle | Treffer |
+|---|---|---|
+| 18/Jahr | S ≥ 0.707 | 4 von 43 = 9 % [4–22 %] |
+| 25/Jahr | 0.640 | 5 = 12 % [5–24 %] |
+| 37/Jahr | 0.498 | 10 = 23 % [13–38 %] |
+| 55/Jahr | 0.371 | 16 = 37 % [24–52 %] |
+| 73/Jahr | 0.273 | 20 = 47 % [33–61 %] |
+
+### 11.2 Der strukturelle Fehler: der Schirm darf entfernt stehen
+
+Die zehn schlechtesten Albumabende waren ueber Berlin nahezu **wolkenfrei**
+(hoch 0-26 %, mittel 0-25 %, tief 0-16 %).  Erste Hypothese - eine tiefe,
+von unten angestrahlte Decke, die der Score nur als Blocker kennt - ist
+widerlegt: 0 von 10 hatten ueber 40 % tiefe Bewoelkung.
+
+**Aber 8 von 10 hatten ueber 50 % Bewoelkung im Band 180-360 km West.**
+
+Physikalisch ist das ein Standardfall: 250 km westlich geht die Sonne rund
+15 Minuten spaeter unter (3.7 Grad Laenge).  Zum Berliner Sonnenuntergang
+steht sie dort noch ueber dem Horizont und beleuchtet die Wolkenbank, die
+man von Berlin aus bei 1-2 Grad Elevation genau in Blickrichtung glaenzen
+sieht.
+
+**Der Score zaehlt diese Wolke ausschliesslich als Blocker.**  Term A tastet
+nur bis 120 km ab und ist seit der Raumwinkelgewichtung noch staerker auf
+d = 0 konzentriert.  Das, was man tatsaechlich ansieht, kommt darin nicht vor.
+
+### 11.3 Vorgeschlagene Verallgemeinerung (noch nicht gebaut)
+
+Statt "Schirm nah, Fenster fern" ein Schirm in Entfernung d_s:
+
+    S = max ueber (Niveau h, Entfernung d_s) von [ A(h, d_s) * B(h, d_s) ]
+
+wobei B nur noch den Weg JENSEITS von d_s bewertet.  Der heutige Score ist
+der Spezialfall d_s = 0.
+
+Offene Designfrage dabei: eine ferne Bank nimmt wenig Raumwinkel ein, steht
+aber genau in Blickrichtung.  Reine Raumwinkelgewichtung wuerde sie
+unterschaetzen - es braucht vermutlich einen Richtungsanteil.  Das ist ein
+Entwurf, kein Handgriff, und wird nicht nebenbei gemacht.
