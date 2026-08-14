@@ -75,12 +75,29 @@ zusammenfallen.
 **Kontingent beachten.** Open-Meteo drosselt minuetlich (600), stuendlich
 (5000) und taeglich (10000). Die **historischen** Endpunkte (`archive-api`,
 `historical-forecast-api`) teilen sich ein Budget; `ensemble-api`,
-`forecast-api` und `air-quality-api` haben ein eigenes — gemessen am
-14.08.2026, als die historischen gesperrt waren und die uebrigen liefen.
-Die Endpunkte hatten dabei unterschiedliche Zustaende, teilen sich also kein
-einziges Konto — aber das schuetzt den Betrieb **nicht**: eine halbe Stunde
-spaeter war auch `ensemble-api` erschoepft. **Vor jedem groesseren Lauf
+`forecast-api` und `air-quality-api` haben ein eigenes. Zweimal in
+entgegengesetzter Richtung gemessen, was den Zufall ausschliesst:
+
+| Wann | `archive` / `historical-forecast` | `ensemble` |
+|---|---|---|
+| 14.08.2026 vormittags | gesperrt | laeuft |
+| 14.08.2026 nachmittags | laeuft | gesperrt |
+
+Das schuetzt den Betrieb aber **nicht**: am Vormittag war eine halbe Stunde
+nach der Messung auch `ensemble-api` erschoepft. **Vor jedem groesseren Lauf
 `--trocken` pruefen statt auf eine Theorie ueber das Kontingent zu bauen.**
+
+**429 ist nicht gleich 429.** Derselbe Statuscode traegt drei verschiedene
+Bedeutungen, und nur eine ist terminal — im `reason`-Feld nachsehen:
+
+| `reason` enthaelt | heisst | richtige Antwort |
+|---|---|---|
+| `Too many concurrent requests` | zu viele gleichzeitig | kurz warten, wenige Faeden |
+| `Minutely ... exceeded` | Minutenfenster voll | 20-65 s warten |
+| `Hourly` / `Daily ... exceeded` | Kontingent | abbrechen, Cache haelt |
+
+Wer alle drei gleich behandelt, bricht bei voller Quote ab: `icond2.py` kam
+so im ersten Lauf ueber 5 von 166 Abenden nicht hinaus.
 
 ## Troubleshooting
 

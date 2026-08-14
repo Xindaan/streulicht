@@ -145,7 +145,7 @@ def main():
 
     feld = hole(zellen, a.von, a.bis, gesucht)
 
-    s3, sN, tage_ = [], [], []
+    s3, sN, tage_, ohne_daten = [], [], [], []
     for tag, karte in proTag.items():
         def hole3(d, dv, schicht, _t=tag, _k=karte):
             z = _k.get((d, dv))
@@ -163,13 +163,31 @@ def main():
             tt = e.get("temperature_%dhPa" % p, {}).get(_t)
             return None if rh is None or tt is None else (rh, tt)
 
-        x, _ = score3(hole3)
-        y, _ = scoreN(holeN)
+        x, dx = score3(hole3)
+        y, dy = scoreN(holeN)
+        # Ein Abend OHNE Daten liefert aus beiden Verfahren 0.0 - sie stimmen
+        # dort also perfekt ueberein und treiben rho nach oben.  Genau das
+        # soll die Ablation aber messen.  Phantomnullen wuerden die Antwort
+        # in die bequeme Richtung biegen ("die Rangfolgen fallen zusammen,
+        # s* ist uebertragbar").  detail is None heisst: nichts war belegt.
+        if dx is None or dy is None:
+            ohne_daten.append((tag, dx is None, dy is None))
+            continue
         s3.append(x)
         sN.append(y)
         tage_.append(tag)
 
     n = len(s3)
+    if ohne_daten:
+        print("\n%d Abende ohne Daten uebersprungen (nicht als Null gewertet):"
+              % len(ohne_daten))
+        for tag, k3, kN in ohne_daten[:8]:
+            print("   %s  3-Schicht %s  niveauaufgeloest %s"
+                  % (tag, "leer" if k3 else "ok", "leer" if kN else "ok"))
+        if len(ohne_daten) > 8:
+            print("   ... und %d weitere" % (len(ohne_daten) - 8))
+    if n < 12:
+        raise SystemExit("nur %d auswertbare Abende - keine Aussage" % n)
     print("\n=== %d Abende ausgewertet" % n)
     print("Spearman rho(3-Schicht, niveauaufgeloest) = %+.3f" % spearman(s3, sN))
     print("Mittel: 3-Schicht %.3f   niveauaufgeloest %.3f"
