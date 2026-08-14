@@ -1227,15 +1227,39 @@ dass gute Abende daran sterben.  **Gemessen, bevor gebaut wurde:**
 | Fenster B == 0 | **0.0 %** [0.0, 5.2] | 9.9 % [9.0, 10.9] |
 | Score s == 0 | **0.0 %** [0.0, 5.2] | 17.0 % [15.9, 18.3] |
 
-Wilson-Intervalle, die sich nicht ueberschneiden.  Die harte Null trifft
-**keinen einzigen** Albumabend und jeden sechsten gewoehnlichen.  Auch knapp
-darueber bleibt die Trennung: B < 0.10 bei 5.7 % im Album gegen 39.6 % sonst.
+**KORREKTUR am selben Abend, im Selbstreview gefunden.**  Der Vergleich oben
+stellt das Album ALLEN uebrigen Abenden gegenueber - auch den Winterabenden.
+Andres Album reicht aber nur von Maerz bis Oktober, Schwerpunkt Juni, und
+zwischen November und Februar liegt **kein einziger** Abend darin.  Genau
+dort wird der Score am haeufigsten null.  Der Vergleich mass also zu einem
+grossen Teil Jahreszeit.
+
+Saisonal gepaart (fuer jeden Albumabend nur sein eigenes +/-21-Tage-Fenster
+ueber alle Jahre, n = 76 nach dem 2026-Nachtrag):
+
+| | beobachtet | saisonal erwartet | z |
+|---|---|---|---|
+| Schirm A = 0 | 1 | 4.1 | -1.59 nicht sig. |
+| Fenster B = 0 | 0 | 2.0 | -1.44 nicht sig. |
+| Score s = 0 | 1 | 6.1 | **-2.19 signifikant** |
+
+Der Effekt bleibt, aber er ist deutlich kleiner als die Rohzahlen suggerieren,
+und fuer die EINZELTERME reicht es nicht mehr.  Belastbar ist nur noch: der
+**Gesamtscore** wird bei Albumabenden seltener null, als die Jahreszeit
+erwarten liesse.
 
 Genau ein Albumabend hat guten Schirm bei totem Fenster (2024-09-15,
 A = 0.87, B = 0.032) - der Fall, der ohnehin als eigene Baustelle notiert
 ist (beleuchtete tiefe Decke als Ereignis statt als Hindernis).
 
-**Der geplante Umbau entfaellt.**  Die Null ist der Term, der funktioniert.
+**Der geplante Umbau entfaellt trotzdem** - und zwar aus dem Befund, der die
+Korrektur ueberlebt: unter 76 Albumabenden stirbt **kein einziger** an einer
+harten Fensternull (0 beobachtet, 2.0 saisonal erwartet).  Der Umbau sollte
+genau diese Faelle retten.  Es gibt sie nicht.
+
+Was NICHT mehr behauptet werden kann: dass die harte Null "jeden sechsten
+gewoehnlichen Abend trifft und keinen Albumabend" ein starker Trennbeleg
+sei.  Das war zum grossen Teil Jahreszeit.
 
 Nebenbefund zur Sorgfalt: die erste Fassung dieser Auswertung behandelte
 fehlende Werte in zwei Zeilen verschieden (`(v["A"] or 0) == 0` zaehlt None
