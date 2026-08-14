@@ -115,7 +115,35 @@ def abfrage(zellen, variablen, modell, tage, block=25):
 
 
 def member_liste(h):
+    """Memberkennungen aus den Schluesselnamen.
+
+    ACHTUNG: das zaehlt Schluessel, nicht Daten.  Ein Member, dessen Reihen
+    durchgehend None sind, steht hier trotzdem drin.  Wer das Ergebnis als
+    "so viele Member haben Werte" liest, unterschaetzt jede daraus gebildete
+    Wahrscheinlichkeit - siehe verdichte().
+    """
     return sorted({k.split("_member")[1] for k in h if "_member" in k})
+
+
+def verdichte(werte, schwelle):
+    """(Score, Detail) je Member -> Wahrscheinlichkeit, Median, bestes Detail.
+
+    Herausgeloest, weil hier der Fehler sass: score() gibt (0.0, None) zurueck,
+    wenn KEINE Faecherzelle Daten hatte, und diese Null lief frueher in den
+    Nenner.  Fehlende Daten stimmten damit still gegen den Sonnenuntergang -
+    kein Fehler, keine Warnung, nur eine zu kleine Zahl und ein Alarm, der
+    nicht ausloest.
+
+    Rueckgabe None, wenn kein einziger Member Daten hatte.
+    """
+    gueltig = [x for x in werte if x[1] is not None]
+    if not gueltig:
+        return None
+    punkte = sorted(x[0] for x in gueltig)
+    return {"p": sum(1 for x in punkte if x >= schwelle) / len(punkte),
+            "median": punkte[len(punkte) // 2],
+            "detail": max(gueltig, key=lambda x: x[0])[1],
+            "n_member": len(gueltig), "n_member_gesamt": len(werte)}
 
 
 def versatz_km(sp_kmh, richtung_grad, stunden):
@@ -226,18 +254,26 @@ def lauf_ort(ort, kfg, zustand, trocken):
                 return r[_i] / 100.0
             s, det = score(hole)
             werte.append((s, det))
-        punkte_s = sorted(x[0] for x in werte)
-        p = sum(1 for x in punkte_s if x >= kfg["schwelle_score"]) / len(punkte_s)
-        med = punkte_s[len(punkte_s) // 2]
-        besterdet = max(werte, key=lambda x: x[0])[1]
+
+        v = verdichte(werte, kfg["schwelle_score"])
+        if v is None:
+            print("   %s: KEIN Member mit Daten - Abend uebersprungen" % t,
+                  flush=True)
+            continue
+        if v["n_member"] < v["n_member_gesamt"]:
+            print("   %s: %d von %d Membern ohne Daten, aus dem Nenner genommen"
+                  % (t, v["n_member_gesamt"] - v["n_member"],
+                     v["n_member_gesamt"]), flush=True)
+
+        besterdet = v["detail"]
         ergebnisse[str(t)] = {
-            "p": p, "median": med, "stunde_utc": info["stunde"],
+            "p": v["p"], "median": v["median"], "stunde_utc": info["stunde"],
             "azimut": info["azimut"], "dt_h": info["dt_h"],
             "schirm": besterdet["schirm"] if besterdet else None,
             "A": besterdet["A"] if besterdet else None,
             "sicht": besterdet["sicht"] if besterdet else None,
             "weg": besterdet["weg"] if besterdet else None,
-            "n_member": len(punkte_s)}
+            "n_member": v["n_member"], "n_member_gesamt": v["n_member_gesamt"]}
     return ergebnisse
 
 
