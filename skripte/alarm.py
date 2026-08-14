@@ -242,15 +242,24 @@ def lauf_ort(ort, kfg, zustand, trocken):
 
 
 def begruendung(e):
+    """Halbsatz fuers Push.
+
+    Bewusst NICHT "klarer Westhorizont": der Score prueft nicht, ob man den
+    Horizont sieht, sondern ob das Licht 200-400 km westlich in 1-2 km Hoehe
+    durchkommt.  Man muss die Sonne gar nicht sehen koennen - und sie darf
+    laengst untergegangen sein, waehrend hohe Wolken noch eine halbe Stunde
+    weiterglueht.  Die alte Formulierung behauptete eine Sichtbedingung, die
+    das Modell nirgends stellt.
+    """
     teile = []
     schirm = {"high": "hohe Wolken", "mid": "mittelhohe Wolken"}.get(e["schirm"], "Wolken")
     teile.append(schirm if (e["A"] or 0) >= 0.35 else "wenig " + schirm)
     if (e["weg"] or 0) >= 0.6:
-        teile.append("klarer Westhorizont")
+        teile.append("Licht kommt von Westen frei durch")
     elif (e["weg"] or 0) >= 0.3:
-        teile.append("Westhorizont teils frei")
+        teile.append("Lichtweg nach Westen teils frei")
     if (e["sicht"] or 1) < 0.5:
-        teile.append("aber tiefe Bewoelkung ueber der Stadt")
+        teile.append("aber tiefe Decke ueber der Stadt")
     return ", ".join(teile)
 
 

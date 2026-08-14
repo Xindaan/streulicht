@@ -118,18 +118,31 @@ Der Score ist ein Produkt zweier Terme, ausgewertet je Ensemble-Member:
 
     S = max ueber Schirmniveau h von [ A_h * B_h ]
 
-**A — Schirm.** Bewoelkung auf Niveau h im Nahbereich. Was angeleuchtet wird.
+**A — Schirm.** Bewoelkung auf Niveau h im Nahbereich, **raumwinkelgewichtet**:
+eine Schicht traegt zum sichtbaren Himmel mit d·h/(d²+h²)^{3/2} bei, der Punkt
+ueber dem Kopf bekommt damit 75-89 % statt 9 %. Ohne diese Gewichtung wird eine
+Decke, die nur ueber dem Standort steht, mit den Fanpunkten weggemittelt.
+
+Schirm sind nur **mid und high**, nicht low - empirisch bestaetigt: tiefe
+Wolken als Schirm zuzulassen senkt den Mittelrang von 0.674 auf 0.615.
 
 **B — Fenster.** Zwei Mechanismen: Wolken zwischen Beobachter und Schirm
 (Sicht) mal Produkt ueber die Segmente des Beleuchtungswegs bis zur
 Tangentendistanz D(h) = sqrt(2·R_eff·h).
+
+Wichtig gegen ein naheliegendes Missverstaendnis: der Score verlangt **keinen
+freien Blick zum Horizont**. Er prueft, ob das Licht 200-400 km westlich in
+1-2 km Hoehe durchkommt. Die Sonne muss nicht sichtbar sein und darf laengst
+untergegangen sein - Cirrus auf 9,5 km glueht noch rund 28 Minuten weiter.
 
 Multiplikativ, weil es eine Konjunktion ist: ohne Schirm kein Bild, ohne
 Fenster kein Licht. Der entscheidende Punkt ist die Geometrie — fuer einen
 Cirrus-Schirm auf 9 km muss das Licht **200 bis 400 km westlich** unter der
 tiefen Bewoelkung durch, nicht ueber Berlin. Deshalb reicht keine Punktabfrage.
 
-Dass beide Terme noetig sind, ist gemessen: r(A, B) = −0.259 ueber vier Jahre.
+Dass beide Terme noetig sind, ist gemessen: r(A, B) = −0.230 ueber vier Jahre,
+und gegen ein kuratiertes Album schlaegt S den Schirmterm allein deutlich
+(Mittelrang 0.674 gegen 0.623, n = 43).
 Die Antikorrelation kommt aus dem Frontenzyklus — vor der Warmfront Cirrus
 ohne Fenster, hinter der Kaltfront Fenster mit Restbewoelkung.
 

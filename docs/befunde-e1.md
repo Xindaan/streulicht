@@ -563,3 +563,70 @@ abgetastet, der Rest gilt als frei und beguenstigt ferne Schirme.
 **Eine Erweiterung der Distanzen auf 600-700 km ist die Voraussetzung dafuer,
 diese Variante ueberhaupt fair zu bewerten.**  Kostet Kontingent und eine
 neue Klimatologie.
+
+## 13 Nachglut-Geometrie und tiefe Wolken als Schirm (14.08.2026)
+
+Andres Einwand: "Ich muss die Sonne nicht sehen koennen.  Spektakulaer
+leuchtende Wolken gehen auch ohne.  Dafuer kann die Sonne sogar schon
+untergegangen sein."
+
+### 13.1 Wie lange bleibt was beleuchtet
+
+Eine Wolke in Hoehe h wird beleuchtet, bis die Sonne um ihren Kimmwinkel
+sqrt(2h/R) unter dem Horizont steht.  Bei Berlins Breite sinkt die Sonne mit
+rund 6.8 Grad/h:
+
+| Hoehe | Kimmwinkel | noch beleuchtet nach SU |
+|---|---|---|
+| 1.2 km | 1.11° | 10 min |
+| 4.2 km | 2.08° | 18 min |
+| **9.5 km** | **3.13°** | **28 min** |
+
+Zum Zeitpunkt "Sonne 1.7 Grad unter Horizont" ist ueber Berlin alles unter
+3.75 km im Schatten, bei 2.3 Grad alles unter 6.8 km.  Tiefe Bewoelkung ist
+dann kein Blocker mehr, sondern **Silhouette**.
+
+### 13.2 Getestet - und die Haelfte der Idee ist nicht testbar
+
+Die geometrische Haelfte (welche Hoehen bekommen noch Licht) laesst sich mit
+vorhandenen Daten pruefen, weil nur die Auswahl der Schirmschichten sich
+aendert.  Ergebnis: zwischen 1.5 und 2.5 Grad Sonnentiefe bewegt sich der
+Mittelrang nicht (0.683 / 0.675 / 0.678), die Trefferquote wackelt zwischen
+4 und 6 - im Rauschen.
+
+**Die zeitliche Haelfte ist damit NICHT getestet.**  Das Wolkenfeld im Cache
+ist das zur Sonnenuntergangsstunde; wie der Himmel 15 Minuten spaeter
+aussieht, steht dort nicht.  Genau darin liegt Andres Beobachtung.  Ein
+echter Test braucht Wolkenfelder zur Folgestunde - neue Klimatologie.
+
+### 13.3 Nebenbefund: tiefe Wolken taugen nicht als Schirm
+
+Beim Umbau habe ich testweise "low" als Schirmschicht zugelassen.  Der
+Mittelrang faellt von 0.674 auf **0.615**.  Die Designentscheidung
+SCHIRME = (high, mid) ist damit erstmals empirisch bestaetigt statt nur
+begruendet - passend zum frueheren Befund, dass 0 von 10 Fehlschlaegen eine
+tiefe Decke ueber Berlin hatten.
+
+### 13.4 Sprachkorrektur im ganzen Projekt
+
+"Klarer Westhorizont" stand im Alarmtext, in der README und in
+Modulkoepfen.  Der Score prueft das nirgends: er verlangt, dass das Licht
+200-400 km westlich in 1-2 km Hoehe durchkommt.  Ob man von seinem Fenster
+den Horizont sieht, ist irrelevant - man muss die Sonne gar nicht sehen.
+Die Formulierung behauptete eine Bedingung, die das Modell nicht stellt, und
+ist ueberall ersetzt.
+
+### 13.5 Grenze des Albums als Messlatte
+
+Andre wohnt mit Blick nach NNW (rund 337 Grad).  Der Sonnenuntergangsazimut
+laeuft von 229 Grad (Dez) bis 312 Grad (Jun) - im Dezember also 108 Grad
+neben dem Fenster.  Die Albumverteilung zeigt das direkt:
+
+    Jan 0 · Feb 0 · Mrz 4 · Apr 10 · Mai 15 · **Jun 25** · Jul 12 · Aug 5
+    Sep 7 · Okt 3 · Nov 0 · Dez 0
+
+Oktober bis Februar zusammen 3 von 81.  Das ist keine Wetteraussage, sondern
+eine Fensteraussage.  **Der Score darf deshalb nicht auf dieses Label
+optimiert werden** - er wuerde ein Detektor fuer sommerliche
+NNW-Sonnenuntergaenge.  Das Album taugt zur Richtungspruefung, nicht zum
+Feinschliff.

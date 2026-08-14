@@ -2,7 +2,7 @@
 
 WARUM das noetig wurde (14.08.2026):
 Der einfache Presence-Only-Test ist an einem KONFUNDIERTEN Label gescheitert.
-An Fotoabenden ist Term B (freier Westhorizont) signifikant erhoeht (+0.068,
+An Fotoabenden ist Term B (freier Lichtweg nach Westen) signifikant erhoeht (+0.068,
 z = +2.77) und Term A (hohe Wolken) erniedrigt (-0.041, z = -1.76) - weil
 "draussen sein" mit schoenem, also klarem Wetter korreliert und damit gegen
 den Schirmterm laeuft.  Im Produkt heben sich beide auf (z = +0.57).
