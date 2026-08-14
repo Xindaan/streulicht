@@ -1214,3 +1214,80 @@ eine andere Variable desselben Modells zu schliessen.  Sie braucht
 Der Hybrid (nur die Zelle ueber Berlin aus der Feuchte, Rest wie bisher)
 bringt marginal: Album-Anreicherung 0.674 -> 0.690, rho gegen Andres Noten
 unveraendert.  Nicht uebernommen.
+
+## 26 Die harten Nullen sind Signal, kein Fehler (14.08.2026)
+
+Notiert war ein Umbau des Fensterterms: 32 % der Abende melden irgendwo
+100 % Bedeckung, und 0^k ist null, egal welcher Exponent.  Der Verdacht war,
+dass gute Abende daran sterben.  **Gemessen, bevor gebaut wurde:**
+
+| | Album (n = 70) | uebrige (n = 3948) |
+|---|---|---|
+| Schirm A == 0 | **0.0 %** [0.0, 5.2] | 8.1 % [7.3, 9.0] |
+| Fenster B == 0 | **0.0 %** [0.0, 5.2] | 9.9 % [9.0, 10.9] |
+| Score s == 0 | **0.0 %** [0.0, 5.2] | 17.0 % [15.9, 18.3] |
+
+Wilson-Intervalle, die sich nicht ueberschneiden.  Die harte Null trifft
+**keinen einzigen** Albumabend und jeden sechsten gewoehnlichen.  Auch knapp
+darueber bleibt die Trennung: B < 0.10 bei 5.7 % im Album gegen 39.6 % sonst.
+
+Genau ein Albumabend hat guten Schirm bei totem Fenster (2024-09-15,
+A = 0.87, B = 0.032) - der Fall, der ohnehin als eigene Baustelle notiert
+ist (beleuchtete tiefe Decke als Ereignis statt als Hindernis).
+
+**Der geplante Umbau entfaellt.**  Die Null ist der Term, der funktioniert.
+
+Nebenbefund zur Sorgfalt: die erste Fassung dieser Auswertung behandelte
+fehlende Werte in zwei Zeilen verschieden (`(v["A"] or 0) == 0` zaehlt None
+mit, `v["B"] == 0.0` nicht).  Nachgeprueft: die Klimatologie enthaelt keinen
+Eintrag ohne Daten, die Zahlen aendern sich dadurch nicht.  Der Einwand war
+richtig, die Zahlen waren es auch.
+
+Pruefbefehl: siehe `skripte/termanalyse.py` bzw. die Auswertung im
+Sessionprotokoll vom 14.08.
+
+## 27 Eine Fehlerklasse, vier Fundorte - einer davon im Betrieb
+
+Beim ICON-Abruf meldete meine Deckungspruefung 100 % fuer Abende, deren
+Druckflaechen durchgehend `None` waren: sie fragte, ob das Wertedict der
+Zelle nicht leer ist, und das trug ja die drei Schichten.  Ein Test, der
+bestanden aussieht, ohne etwas geprueft zu haben - dieselbe Klasse wie bei
+der Modellauswahl im Juli ("Schluessel vorhanden" als "Daten vorhanden").
+
+Der faellige Isomorphie-Check hat drei weitere Stellen gefunden:
+
+**(a) `alarm.py` - Betriebspfad, stille Fehlrichtung.**  `member_liste()`
+zaehlt Member an ihren SCHLUESSELNAMEN.  Ein Member ohne Daten steht damit in
+der Liste, `score()` gibt fuer ihn sauber `(0.0, None)` zurueck, und diese
+Null lief in den **Nenner** der Wahrscheinlichkeit `p = Anteil ueber s*`.
+Fehlende Daten wirkten also wie eine Stimme gegen den Sonnenuntergang.  Bei
+2 von 10 datenlosen Membern wird aus p = 3/8 = 0.375 eine 0.300 - kein
+Fehler, keine Warnung, nur ein Alarm, der nicht ausloest.
+
+Behoben durch `verdichte()`, herausgeloest weil die Aggregation vorher
+zwischen zwei Netzabfragen sass und nicht pruefbar war.
+Regressionstest `skripte/test_member.py`, 11 Pruefungen.
+
+Der Test prueft nicht nur die Arithmetik, sondern den **Diskriminator**:
+`score()` liefert `detail is None` genau dann, wenn nichts belegt war.  Ein
+Fall lief dabei auf FEHL, und die Erwartung war falsch, nicht der Code - ohne
+Daten im Nahbereich ist Term A **undefiniert**, nicht null.  Solche Member
+gehoeren aus dem Nenner.
+
+**(b) `ablation.py` - Verzerrung in die bequeme Richtung.**  Jeder Score
+wurde angehaengt, auch die Nullen datenloser Abende.  Dort liefern *beide*
+Verfahren exakt 0.0, stimmen also perfekt ueberein und treiben Spearman nach
+oben - waehrend die Ablation genau diese Uebereinstimmung messen soll.  Die
+Verzerrung zeigte auf "die Rangfolgen fallen zusammen, s* ist uebertragbar",
+also auf das Ergebnis, das weniger Arbeit macht.  T-0006 waere mit einer
+zu freundlichen Zahl abgeschlossen worden.
+
+**(c) `icond2.py` - 429 ist nicht gleich 429.**  Open-Meteo verwendet den
+Code fuer "Too many concurrent requests", fuer das Minutenlimit und fuer
+erschoepfte Kontingente.  Alle drei als terminal gelesen: der erste Lauf kam
+ueber 5 von 166 Abenden nicht hinaus, bei voller Tagesquote.
+
+**Merksatz:** Ein Test, der nicht scheitern kann, ist kein Test.  Die
+Frage ist nie "ist der Schluessel da", sondern immer "wie viele Werte sind
+nicht None" - und die Antwort gehoert in die Ausgabe, nicht in eine
+Bedingung.
