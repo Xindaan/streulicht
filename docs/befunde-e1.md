@@ -871,3 +871,63 @@ Score-Verbesserung.
 
 Sie ersetzt Andres eigenes Urteil nicht - sie liefert eine zweite, unabhaengige
 Ordnung, und ihre Uebereinstimmung mit seiner waere selbst eine Messung wert.
+
+## 20 Zwei Bewerter, ein Score - und die eigentliche Obergrenze (14.08.2026)
+
+Andre hat 80 Abende selbst benotet (2014-2026), 46 davon liegen in der
+Klimatologie, 40 ueberlappen mit meiner Blindbewertung.
+
+### 20.1 Die Betrachter sind sich uneinig
+
+    rho(ich, Andre) = +0.243   n = 40   z = +1.52   NICHT signifikant
+    exakt gleiche Note: 14 von 40 (35 %)
+    hoechstens 1 daneben: 34 von 40 (85 %)
+    Mittel: ich 3.00, Andre 3.55 - ich benote strenger
+
+**Das ist der wichtigste Wert des ganzen Projekts.**  Zwei Betrachter, dieselben
+Fotos, kein Zeitdruck - und die Rangfolge stimmt kaum ueberein.
+
+### 20.2 Der Score gegen beide Bewerter
+
+| Gegen | alle | ohne belegte Datenfehler |
+|---|---|---|
+| Andre | rho +0.106 (n=46) | **rho +0.205** (n=43) |
+| ich | rho +0.074 (n=41) | **rho +0.257** (n=37) |
+
+Keiner signifikant.  Aber: **der Score sagt Andres Urteil fast so gut vorher
+wie ich es tue** (0.205 gegen 0.243) - und ich hatte die Fotos vor Augen.
+
+### 20.3 Die Obergrenze
+
+Wenn zwei Betrachter mit rho = 0.24 uebereinstimmen, kann ein PERFEKTES Modell
+mit einem einzelnen Betrachter hoechstens rho = sqrt(0.24) = **0.49**
+erreichen.  Der Score liegt bei 0.205, also bei **42 % des theoretisch
+Moeglichen**.
+
+Minderungskorrigiert waere rho gegen ein rauschfreies Ziel etwa 0.42.
+*Vorsicht:* rho(ich, Andre) ist selbst nur mit n = 40 geschaetzt und nicht
+signifikant (KI etwa −0.07 bis +0.52).  Die Korrektur ist eine
+Groessenordnung, keine Zahl.  Und der Vergleich zweier nicht signifikanter
+Korrelationen traegt wenig - was traegt, ist das Argument ueber die
+Obergrenze, und das gilt unabhaengig von Signifikanz.
+
+### 20.4 Was das fuer das Produkt heisst
+
+"Wird es ein toller Sonnenuntergang?" ist bei der Praezision, die ein Alarm
+braucht, **keine wohldefinierte Frage** - zwei Menschen beantworten sie
+unterschiedlich, mit dem Foto vor Augen.
+
+Was der Score belegbar kann: aussergewoehnliche Abende von gewoehnlichen
+trennen (Anreicherung, n = 43, p = 0.0001).
+Was er nicht kann: unter den guten die besseren finden - und ein zweiter
+Mensch kann das auch nicht.
+
+**Die ehrliche Produktaussage ist damit nicht "das wird spektakulaer",
+sondern "heute ist ungewoehnlich, schau hin".**  Bei dieser Formulierung ist
+eine hoehere Alarmrate kein Fehler, sondern angemessen: 37 Alarme im Jahr
+fangen 23 % der Albumabende, und mehr Trennschaerfe gibt das Ziel nicht her.
+
+### 20.5 Der Nachtlauf ist wieder wertvoller geworden
+
+Andres Noten in der jetzigen Klimatologie (2022-2025): 46.
+Im Bereich des Nachtlaufs (2015-2025): **72** - plus 57 %.
