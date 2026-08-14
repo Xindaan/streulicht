@@ -29,28 +29,30 @@ DICKE_VOLL_KM, DICKE_MAX_KM, DICKE_BODEN = 1.5, 4.0, 0.3
 SAT_SCHWELLE = 0.30   # ab hier zaehlt ein Niveau als "gesaettigt"
 
 
-def _niveaus_im_bereich(z_unten, z_oben):
+def _niveaus_im_bereich(z_unten, z_oben, hoehen=NIVEAU_HOEHE_KM):
     """Druckflaechen, deren Hoehe im Intervall liegt; sonst die naechstgelegene."""
+    niveaus = tuple(sorted(hoehen, reverse=True))
     lo, hi = min(z_unten, z_oben), max(z_unten, z_oben)
-    treffer = [p for p in ALLE_NIVEAUS if lo <= NIVEAU_HOEHE_KM[p] <= hi]
+    treffer = [p for p in niveaus if lo <= hoehen[p] <= hi]
     if treffer:
         return treffer
     mitte = 0.5 * (lo + hi)
-    return [min(ALLE_NIVEAUS, key=lambda p: abs(NIVEAU_HOEHE_KM[p] - mitte))]
+    return [min(niveaus, key=lambda p: abs(hoehen[p] - mitte))]
 
 
-def _dicke_km(profil, h):
+def _dicke_km(profil, h, hoehen=NIVEAU_HOEHE_KM):
     """Maechtigkeit der zusammenhaengenden gesaettigten Schicht um h herum."""
-    idx = ALLE_NIVEAUS.index(h)
+    niveaus = tuple(sorted(hoehen, reverse=True))
+    idx = niveaus.index(h)
     if profil.get(h, 0.0) < SAT_SCHWELLE:
         return 0.0
     u = o = idx
-    while u > 0 and profil.get(ALLE_NIVEAUS[u - 1], 0.0) >= SAT_SCHWELLE:
+    while u > 0 and profil.get(niveaus[u - 1], 0.0) >= SAT_SCHWELLE:
         u -= 1
-    while o < len(ALLE_NIVEAUS) - 1 and \
-            profil.get(ALLE_NIVEAUS[o + 1], 0.0) >= SAT_SCHWELLE:
+    while o < len(niveaus) - 1 and \
+            profil.get(niveaus[o + 1], 0.0) >= SAT_SCHWELLE:
         o += 1
-    return abs(NIVEAU_HOEHE_KM[ALLE_NIVEAUS[o]] - NIVEAU_HOEHE_KM[ALLE_NIVEAUS[u]])
+    return abs(hoehen[niveaus[o]] - hoehen[niveaus[u]])
 
 
 def _strafe(dicke):
@@ -62,15 +64,34 @@ def _strafe(dicke):
     return 1.0 - f * (1.0 - DICKE_BODEN)
 
 
-def score(hole, mit_dickenstrafe=True):
-    """hole(d_km, az_versatz, druck_hpa) -> (rh_prozent, t_celsius) oder None."""
+def score(hole, mit_dickenstrafe=True, direkt=False, hoehen=None,
+          schirm_niveaus=None):
+    """Score aus Druckflaechendaten.
+
+    hole(d_km, az_versatz, druck_hpa) liefert normalerweise (rh_prozent,
+    t_celsius); die Bedeckung wird daraus diagnostiziert.  Mit direkt=True
+    liefert hole stattdessen die Bedeckung 0..1 unmittelbar - dafuer gebaut,
+    dass ICON-D2 sein EIGENES Wolkenschema je Druckflaeche mitliefert und
+    dann nichts zu diagnostizieren ist.
+
+    hoehen/schirm_niveaus erlauben einen anderen Flaechensatz als den des
+    Projekts.  Ohne diese Parameter waere die ICON-Auswertung an 900 und
+    800 hPa gescheitert: die Projekttabelle kennt 925 und 850.
+    """
+    hoehen = NIVEAU_HOEHE_KM if hoehen is None else hoehen
+    alle = tuple(sorted(hoehen, reverse=True))
+    schirme = (tuple(p for p in SCHIRM_NIVEAUS if p in hoehen)
+               if schirm_niveaus is None else tuple(schirm_niveaus))
+
     def c(d, dv, p):
         w = hole(d, dv, p)
-        return None if w is None else bedeckung(w[0], w[1], p)
+        if w is None:
+            return None
+        return w if direkt else bedeckung(w[0], w[1], p)
 
     bestes, detail = 0.0, None
-    for h in SCHIRM_NIVEAUS:
-        d_tan = tangentendistanz_km(NIVEAU_HOEHE_KM[h])
+    for h in schirme:
+        d_tan = tangentendistanz_km(hoehen[h])
 
         # Term A: Schirm im Nahbereich (d == 0 nur einmal zaehlen)
         werte = []
@@ -86,11 +107,11 @@ def score(hole, mit_dickenstrafe=True):
         a = sum(werte) / len(werte)
 
         if mit_dickenstrafe:
-            profil = {p: c(0.0, 0.0, p) or 0.0 for p in ALLE_NIVEAUS}
-            a *= _strafe(_dicke_km(profil, h))
+            profil = {p: c(0.0, 0.0, p) or 0.0 for p in alle}
+            a *= _strafe(_dicke_km(profil, h, hoehen))
 
         # Term B (a): Sichtfaktor - alles UNTER dem Schirm im Nahbereich
-        unter = [p for p in ALLE_NIVEAUS if p > h]
+        unter = [p for p in alle if p > h]
         sicht_w = []
         for dv in FAECHER_AZIMUTE:
             for d in DISTANZEN_KM:
@@ -111,7 +132,7 @@ def score(hole, mit_dickenstrafe=True):
         for i in range(len(stuetzen) - 1):
             d_nah, d_fern = stuetzen[i], stuetzen[i + 1]
             niv = _niveaus_im_bereich(strahlhoehe_km(d_fern, d_tan),
-                                      strahlhoehe_km(d_nah, d_tan))
+                                      strahlhoehe_km(d_nah, d_tan), hoehen)
             zc = zg = 0.0
             for dv in FAECHER_AZIMUTE:
                 cs = [c(d_fern, dv, p) for p in niv]
@@ -130,7 +151,7 @@ def score(hole, mit_dickenstrafe=True):
         s = a * sicht * weg
         if s > bestes or detail is None:
             bestes, detail = s, {
-                "schirm": h, "hoehe_km": NIVEAU_HOEHE_KM[h], "d_tangente": d_tan,
+                "schirm": h, "hoehe_km": hoehen[h], "d_tangente": d_tan,
                 "A": a, "B": sicht * weg, "sicht": sicht, "weg": weg,
                 "segmente": segmente}
     return bestes, detail
