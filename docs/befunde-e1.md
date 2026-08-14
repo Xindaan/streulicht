@@ -823,3 +823,51 @@ Fotos taugt dafuer nicht - sie ist subjektiv und zu klein.
 
 *Vorsicht bei der Interpretation dieser Tabelle: acht Fotos, mein Urteil,
 keine Verblindung.  Sie ist ein Warnsignal, kein Befund.*
+
+## 19 Blindbewertung der Albumfotos (14.08.2026)
+
+Andre bat um eine eigene Bewertung.  Durchgefuehrt **blind**: die 41 Bilder
+wurden gemischt, nummeriert und als Kontaktboegen bewertet; die Zuordnung
+Nummer->Datum wurde erst nach der letzten Note geoeffnet.  Ohne das haette
+die Kenntnis des Scores die Noten geankert - dieselbe Disziplin, die die
+Bewertungsseite fuer Andre erzwingt.
+
+Notenverteilung: 1x0, 2x13, 3x15, 4x11, 5x2.
+
+### 19.1 Ordnet der Score innerhalb guter Abende?
+
+| Auswahl | n | Spearman rho | z |
+|---|---|---|---|
+| alle | 41 | **+0.074** | +0.47 |
+| ohne die 4 belegten Datenfehler | 37 | **+0.257** | +1.54 |
+| ohne die zwei Fuenfen | 39 | +0.235 | +1.45 |
+
+Note 4-5 liegt bei Score-Rang 0.770, Note 1-2 bei 0.643 - Differenz +0.127,
+z = +1.60, **nicht signifikant**.
+
+**Beide Fuenfen sind belegte Datenfehler** (22.09.2022 und 15.09.2024): dort
+hatte ERA5 die Wolken nicht.  Der Score kann nicht ordnen, was er nicht sieht.
+Nach deren Ausschluss steigt rho von 0.07 auf 0.26 - fuer Signifikanz braeuchte
+es bei dieser Effektgroesse n ~ 113, vorhanden sind 37.
+
+### 19.2 Was daraus folgt
+
+**Die Frage bleibt offen, aber die Richtung hat sich gedreht.**  Vor der
+Blindbewertung sah es aus, als ordne der Score gar nicht.  Nach Korrektur um
+die Faelle, in denen die Datenbasis fehlte, deutet sich eine schwache
+Ordnung an - zu schwach fuer ein Urteil.
+
+**Nebenbefund mit Gewicht:** 4 von 41 Albumabenden (10 %) sind belegte
+Datenfehler.  Wenn ERA5 an jedem zehnten guten Abend die Wolken nicht hat,
+deckelt das die erreichbare Trefferquote unabhaengig von jeder
+Score-Verbesserung.
+
+### 19.3 Grenzen dieser Bewertung
+
+- Ein Foto je Abend (das alphabetisch erste), nicht das beste.
+- Vorschaubilder, kein Original.
+- Ein Bewerter, konservative Skala (2 von 41 bekamen die Hoechstnote).
+- Blind gegenueber dem Score, aber nicht gegenueber dem Projektziel.
+
+Sie ersetzt Andres eigenes Urteil nicht - sie liefert eine zweite, unabhaengige
+Ordnung, und ihre Uebereinstimmung mit seiner waere selbst eine Messung wert.
