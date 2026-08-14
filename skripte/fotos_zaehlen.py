@@ -48,10 +48,14 @@ def oeffne(pfad):
         except PermissionError:
             shutil.rmtree(tmp, ignore_errors=True)
             raise SystemExit(
-                "Kein Zugriff auf die Fotomediathek (macOS-Datenschutz, TCC).\n"
-                "Systemeinstellungen > Datenschutz & Sicherheit > Festplattenvollzugriff\n"
-                "-> die Terminal-App (bzw. Claude Code) eintragen und aktivieren,\n"
-                "danach die App neu starten und dieses Skript erneut laufen lassen.")
+                "Kein Zugriff auf die Fotomediathek (macOS-Datenschutz, TCC).\n\n"
+                "ACHTUNG, haeufige Fehlspur: eine Freigabe fuer /Applications/Claude.app\n"
+                "genuegt NICHT.  Gelesen wird unter dem eingebetteten Bundle\n"
+                "  ~/Library/Application Support/Claude/claude-code/<version>/claude.app\n"
+                "mit eigener Bundle-ID com.anthropic.claude-code.  Dessen Pfad enthaelt\n"
+                "die Versionsnummer, eine Freigabe dafuer braeche bei jedem Update.\n\n"
+                "Einfachster Weg: dieses Skript einmal in Terminal.app starten,\n"
+                "die hat den Festplattenvollzugriff in der Regel schon.")
         return sqlite3.connect(os.path.join(tmp, "Photos.sqlite")), tmp
 
 
@@ -113,6 +117,16 @@ def main():
     print("Monatsverteilung Berlin (Saisonbias sichtbar machen):")
     mc = Counter(k[0].month for k in berlin)
     print("   " + "  ".join("%02d:%d" % (m, mc.get(m, 0)) for m in range(1, 13)))
+
+    import json
+    ziel = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "daten", "foto_abende_mediathek.json")
+    os.makedirs(os.path.dirname(ziel), exist_ok=True)
+    with open(ziel, "w") as fh:
+        json.dump({"alle": [{"tag": str(k[0]), "lat": k[1], "lon": k[2],
+                             "n_fotos": v} for k, v in sorted(abende.items())],
+                   "berlin": [str(k[0]) for k in sorted(berlin)]}, fh, indent=1)
+    print("\ngeschrieben: %s" % ziel)
 
 
 if __name__ == "__main__":

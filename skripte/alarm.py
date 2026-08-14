@@ -41,7 +41,8 @@ from datetime import date, datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sonnen.geometrie import sonnenuntergang, zielpunkt  # noqa: E402
-from sonnen.score import DISTANZEN_KM, FAECHER_AZIMUTE, score  # noqa: E402
+import sonnen.score as sc  # noqa: E402
+from sonnen.score import score  # noqa: E402
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GITTER = 0.25
@@ -50,6 +51,23 @@ SCHICHTEN = ("low", "mid", "high")
 WINDNIVEAU = {"low": 925, "mid": 600, "high": 300}
 NTFY = "https://ntfy.sh"
 WOCHENTAG = ("Mo", "Di", "Mi", "Do", "Fr", "Sa", "So")
+
+
+def fan_setzen(kfg):
+    """Optionaler Sparfaecher aus der Konfiguration.
+
+    ACHTUNG: s* = 0.6325 gilt fuer den Faecher der Klimatologie (5 Azimute,
+    8 Distanzen).  Ein anderer Faecher liefert eine andere Score-Verteilung
+    und damit einen anderen Schwellwert - wer hier reduziert, MUSS die
+    Klimatologie mit demselben Faecher neu rechnen.  Deshalb steht der
+    Hinweis hier und nicht in der README.
+    """
+    f = kfg.get("faecher")
+    if not f:
+        return False
+    sc.FAECHER_AZIMUTE = tuple(float(x) for x in f["azimute"])
+    sc.DISTANZEN_KM = tuple(float(x) for x in f["distanzen_km"])
+    return True
 
 
 def zelle(lat, lon):
@@ -130,8 +148,8 @@ def lauf_ort(ort, kfg, zustand, trocken):
         if std is None:
             continue
         punkte = {}
-        for dv in FAECHER_AZIMUTE:
-            for d in DISTANZEN_KM:
+        for dv in sc.FAECHER_AZIMUTE:
+            for d in sc.DISTANZEN_KM:
                 p = ((breite, laenge) if d == 0.0
                      else zielpunkt(breite, laenge, (az + dv) % 360.0, d))
                 punkte[(d, dv)] = p
@@ -265,6 +283,10 @@ def main():
 
     with open(a.konfig) as f:
         kfg = json.load(f)
+    if fan_setzen(kfg):
+        print("Sparfaecher aktiv: %d Azimute x %d Distanzen - s* ist damit "
+              "NICHT mehr gueltig, Klimatologie neu rechnen!"
+              % (len(sc.FAECHER_AZIMUTE), len(sc.DISTANZEN_KM)))
     zpfad = os.path.join(BASIS, "daten", "zustand.json")
     zustand = {}
     if os.path.exists(zpfad):
