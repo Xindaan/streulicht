@@ -1,6 +1,6 @@
 # STATE
 
-Stand: 14.08.2026 (E2 gebaut, Kontingent blockiert)
+Stand: 14.08.2026 (Score validiert, naechster Lauf priorisiert)
 
 ## Ziel
 
@@ -58,6 +58,21 @@ Verduennungshypothese traegt also nicht allein.
 Aufloesung nur durch Vergleich INNERHALB der Draussen-Abende - dafuer
 `skripte/fotos_detail.py` aus Terminal.app laufen lassen (Favoriten und
 Minutenabstand als Absichtssignal).
+
+## Naechster Lauf, wenn Kontingent zurueck ist
+
+**Niveauaufgeloeste Klimatologie auf gfs_global (Druckflaechen, ab 2022).**
+Begruendung nicht aesthetisch, sondern gemessen: ERA5s cloud_cover saettigt
+bei 23 % der Stunden auf exakt 100 % und zwingt den Score dort auf null; die
+eigene RH-Diagnostik liefert doppelt so oft einen Zwischenwert (50 % statt
+25 % im Mittelbereich).  Genau dort liegen die Fehlschlaege des Albums.
+
+Danach erst: feineres Gitter (0.25 Grad), erweiterter Faecher (700 km),
+Wolkenfelder zur Folgestunde.  Alle drei brauchen je einen eigenen Lauf.
+
+Entscheidung 14.08.: kein kommerzielles Kontingent, es dauert eben laenger.
+Ebenfalls gestrichen: die Sichtbarkeitszeile im Alarm - Andre geht zur Not
+vor die Tuer und braucht nur zu wissen, ob es gut wird.
 
 ## Next actions
 

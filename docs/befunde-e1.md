@@ -630,3 +630,45 @@ eine Fensteraussage.  **Der Score darf deshalb nicht auf dieses Label
 optimiert werden** - er wuerde ein Detektor fuer sommerliche
 NNW-Sonnenuntergaenge.  Das Album taugt zur Richtungspruefung, nicht zum
 Feinschliff.
+
+## 14 Drei Hypothesen offline getestet, alle widerlegt (14.08.2026)
+
+Ausgangspunkt: Andres 03.05.2024.  Foto zeigt einen angeleuchteten
+Makrelenhimmel mit orangem Horizontband, das Modell HAT die hohen Wolken -
+und der Score gibt S = 0.000, Rang 0.14.  Also kein Datenfehler.
+
+| Hypothese | Test | Ergebnis |
+|---|---|---|
+| Loecher im Feld, bei 0.5 Grad unaufgeloest | Spannweite der tiefen Bewoelkung ueber den Faecher, 240-420 km | kuratierte Abende 0.390 gegen alle 0.392, z −0.02 — **widerlegt** |
+| Wegprodukt zu hart | K_SEGMENT von 0.2 bis 1.5 gegen das Album | K = 1.0 ist bereits optimal (0.674); K = 0.2 bringt den 03.05. nur auf Rang 0.25 — **widerlegt** |
+| Harte Null durch 100-%-Segmente | Transmissionsboden 0.00 bis 0.20 | Mittelrang bleibt 0.674, der 03.05. bleibt bei Rang 0.13-0.16 — **widerlegt** |
+
+Der dritte Test erklaert sich selbst: ein Boden hebt ALLE blockierten Abende
+gleich an, ihre Reihenfolge untereinander bleibt.  Ein Skalierungstrick kann
+keine Information erzeugen, die im Feld nicht steckt.
+
+### 14.1 Wo die Information fehlt
+
+Die Bedeckung im Sperrband ist fast binaer verteilt:
+
+    0-9 %: 1641 Faelle    ...    100 %: 1862 Faelle
+
+**32 % aller Faelle melden 100 %.**  Dort ist der Score per Konstruktion null,
+unabhaengig davon, ob undurchdringlicher Stratocumulus oder duenner
+Altostratus dortsteht.  Open-Meteo liefert die optische Dicke nicht mit.
+
+### 14.2 Warum die niveauaufgeloeste Variante das aufloesen koennte
+
+Gemessen an 26 304 gemeinsamen Stunden Berlin 2023-2025:
+
+| | exakt 100 % | exakt 0 % | dazwischen |
+|---|---|---|---|
+| ERA5 `cloud_cover_high` | 23.0 % | 38.9 % | 25.2 % |
+| eigene RH-Diagnostik | **5.6 %** | 28.7 % | **50.0 %** |
+
+Die eigene Rechnung liefert doppelt so oft einen Zwischenwert.  Das ist ein
+mechanischer Grund, kein aesthetischer: wo ERA5 auf 100 % saettigt und den
+Score auf null zwingt, gibt die RH-Rechnung noch eine Abstufung her.
+
+**Damit ist die niveauaufgeloeste Klimatologie (gfs_global, Druckflaechen)
+der naechste Lauf, nicht das feinere Gitter und nicht der erweiterte Faecher.**
