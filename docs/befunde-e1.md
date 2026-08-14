@@ -1090,3 +1090,73 @@ Bivariat normal angenommen.  Die Auswahl erfolgte nicht rein nach Qualitaet
 Auswahl schwaecht den Einschraenkungseffekt, das wahre rho laege dann
 niedriger als geschaetzt.  Und rho ist gegen ANDRES Note gemessen, die ihre
 eigene Unzuverlaessigkeit hat; gegen ein rauschfreies Ziel waere es hoeher.
+
+## 24 Elf Jahre Klimatologie: alles neu gerechnet (14.08.2026)
+
+Der Nachtlauf ist durch - `score_berlin_g0.5_2015_2025.json`, 4018 Abende.
+Andres Noten darin: **72** statt 46.  Albumabende: **70** statt 43.
+
+### 24.1 Anreicherung, deutlich staerker
+
+| | n = 43 | **n = 70** |
+|---|---|---|
+| S | 0.674, z +3.95 | **0.694, z +5.61** |
+| A | 0.623, z +2.80 | 0.618, z +3.43 |
+| B | 0.515, z +0.33 | 0.556, z +1.64 |
+
+S schlaegt A jetzt deutlicher (0.694 gegen 0.618).
+
+### 24.2 Trefferquote
+
+| Alarmrate | n = 43 | **n = 70** |
+|---|---|---|
+| 18/Jahr | 9 % | **14 %** [8–24] |
+| 25/Jahr | 12 % | 21 % [13–32] |
+| 37/Jahr | 23 % | **31 %** [22–43] |
+| 55/Jahr | 37 % | 41 % [31–53] |
+| 73/Jahr | 47 % | 51 % [40–63] |
+
+Alle Werte gestiegen und die Intervalle enger.  Vergleichbar mit der
+Erwartung aus Abschnitt 23.2 (bei rho 0.45: 22 % bei 18 Alarmen).
+
+### 24.3 Die Ordnung: 2 < 3 < 4 klar, 5 nicht aufloesbar
+
+Mechanisches Ausschlusskriterium, **symmetrisch auf alle Abende angewandt**:
+"Modell sieht keinen Schirm" = max(A) < 0.15.  Trifft 9 von 72, verteilt
+ueber alle Noten (2/2/2/3) - keine Rosinenpickerei.
+
+| Note | n | mittlerer Rang |
+|---|---|---|
+| 2 | 5 | 0.632 |
+| 3 | 28 | 0.741 |
+| 4 | 19 | **0.810** |
+| 5 | 11 | 0.761 |
+
+rho(Note, Rang) steigt von +0.133 auf **+0.207** (z +1.63, p 0.10) - immer
+noch nicht signifikant, aber passend zur Varianzeinschraenkung aus 23.
+
+### 24.4 Warum Andres Fuenfen einbrechen
+
+Die 14 Fuenfen zerfallen sauber:
+
+**Acht mit Rang 0.73 bis 0.99** - bei allen sieht das Modell substantielle
+Bewoelkung (A = 0.35 bis 0.99).  Wenn die Daten stimmen, setzt der Score
+Andres Fuenfen ganz nach oben.
+
+**Fuenf mit Rang 0.10 bis 0.58**, und die Ursachen sind benannt:
+
+| Abend | A hoch | Ursache |
+|---|---|---|
+| 2018-07-09 | **0.89** | Schirm da, **Weg blockiert** (0.02) |
+| 2022-09-20 | 0.00 | Datenfehler (per Foto belegt) |
+| 2025-09-15 | 0.00 | Datenfehler |
+| 2020-07-12 | 0.01 | Datenfehler |
+| 2024-05-25 | 0.68 | Schirm da, Terme mittel |
+
+Das Foto vom 09.07.2018 zeigt intensiv rosa angeleuchtete Wolken unter einer
+grauen Decke - und das Modell HATTE 85 % hohe Bewoelkung ueber Berlin.  Kein
+Datenfehler, sondern der Fensterterm.
+
+**Datenfehlerquote unter Andres Fuenfen: 3 von 14 = 21 %**, deutlich hoeher
+als die 12.5 % ueber alle bewerteten Abende.  Gerade bei den besten Abenden
+sieht ERA5 am haeufigsten nichts.
