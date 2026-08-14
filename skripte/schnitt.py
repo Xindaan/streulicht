@@ -11,13 +11,34 @@ war.
 
 Datenquelle ist der Klimatologie-Blockcache - echte ERA5-Felder zur
 Sonnenuntergangsstunde, kein Kontingent noetig.
+
+ZWEI FASSUNGEN (T-0010, 14.08.2026).  Gemessen auf dem Telefon: bei
+viewBox-Breite 840 auf 343 px Anzeige schrumpft Grad 11 auf 4.3 px, Grad 9
+auf 3.5 px - das Bild, das "die Idee in einer Sekunde erklaert", war auf dem
+Hauptgeraet unlesbar.  Deshalb:
+
+    kompakt=False   ausfuehrlich, 840x490, alle Diagnosezahlen.
+                    Fuer diagnose.html und rueckschau.html.
+    kompakt=True    420x300, grosse Grade, NUR Bild und Achsen.
+                    Fuer die Produktseite.
+
+Grundsatz dahinter: Text, den man lesen muss, gehoert ins HTML, nicht ins
+SVG.  Im SVG steht nur, was von seiner Position lebt - Achsenzahlen und der
+Ortsname.  Datum, Stufe, S-Wert und der Ueberhoehungshinweis stehen auf der
+Produktseite als echter Text in der Seitentypografie.
+
+Farben kommen ausnahmslos aus stil/tokens.css (siehe skripte/tokens.py).
+Geschrieben wird var(--name, <Fallback>); der Fallback stammt ebenfalls aus
+der Token-Datei und traegt die Seiten, die sie nicht inlinen.
 """
 import argparse
 import json
 import os
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import tokens  # noqa: E402
 from sonnen.geometrie import (NIVEAU_HOEHE_KM, sonnenuntergang,  # noqa: E402
                               strahlhoehe_km, tangentendistanz_km, zielpunkt)
 from sonnen.score import (DISTANZEN_KM, GRENZE_LOW_MID_KM,  # noqa: E402
@@ -26,9 +47,36 @@ from sonnen.score import (DISTANZEN_KM, GRENZE_LOW_MID_KM,  # noqa: E402
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GITTER = 0.5
 BREITE, LAENGE = 52.52, 13.405
-X0, Y0, BR, HO = 70, 40, 700, 380          # Zeichenflaeche
 XMAX, YMAX = 460.0, 12.5                   # km
 WOCHENTAG = ("Mo", "Di", "Mi", "Do", "Fr", "Sa", "So")
+
+# Zeichenflaechen.  vb = viewBox, x0/y0/br/ho = Plotrahmen darin.
+FLAECHEN = {
+    False: dict(vb=(840, 490), x0=70, y0=40, br=700, ho=380,
+                grad=11, grad_klein=10, strich=0.5,
+                hoehen=(0, 2, 4, 6, 8, 10, 12),
+                weiten=(0, 100, 200, 300, 400),
+                sonne=(9, 12, 17)),
+    # grad=15: die Produktseite deckelt das Bild auf --breite-bild und
+    # zeigt es auf dem Telefon auf rund 319 px.  420 -> 319 ist Faktor
+    # 0.76, also landet Grad 15 bei 11.4 px - knapp ueber der Grenze, ab
+    # der Beschriftung anfaengt, Dekoration zu werden.
+    True: dict(vb=(420, 300), x0=40, y0=22, br=350, ho=208,
+               grad=15, grad_klein=13, strich=0.8,
+               hoehen=(0, 4, 8, 12),
+               weiten=(0, 200, 400),
+               sonne=(7, 9, 13)),
+}
+
+
+def farbe(name):
+    """var(--name, <Wert aus stil/tokens.css>).
+
+    Der Fallback ist kein Duplikat von Hand - er wird aus derselben Datei
+    gelesen.  Er traegt diagnose.html und rueckschau.html, die tokens.css
+    nicht inlinen und in denen var(--papier) sonst ins Leere liefe.
+    """
+    return "var(%s, %s)" % (name, tokens.werte()[name])
 
 
 def zelle(lat, lon):
@@ -51,12 +99,15 @@ def lade_feld(tag):
     return feld
 
 
-def px(d_km, z_km):
-    return (X0 + BR * d_km / XMAX, Y0 + HO * (1.0 - z_km / YMAX))
-
-
-def svg(tag, feld):
+def svg(tag, feld, kompakt=False):
     from datetime import date as _d
+    fl = FLAECHEN[bool(kompakt)]
+    X0, Y0, BR, HO = fl["x0"], fl["y0"], fl["br"], fl["ho"]
+    VBW, VBH = fl["vb"]
+
+    def px(d_km, z_km):
+        return (X0 + BR * d_km / XMAX, Y0 + HO * (1.0 - z_km / YMAX))
+
     t = _d.fromisoformat(tag)
     stunde, azimut = sonnenuntergang(t, BREITE, LAENGE)
     punkte = {(d, dv): (la, lo) for d, dv, la, lo in
@@ -73,13 +124,22 @@ def svg(tag, feld):
 
     s, det = score(hole)
 
-    o = ['<svg viewBox="0 0 840 490" xmlns="http://www.w3.org/2000/svg" '
-         'font-family="sans-serif">',
-         '<rect width="840" height="490" fill="#0d1117"/>']
-    for _z in (2, 4, 6, 8, 10, 12):
+    # Die Schrift kommt aus dem Token, nicht als Attribut: so erbt das
+    # eingebettete SVG die Seitentypografie, und die Einzeldatei faellt auf
+    # denselben Stack zurueck.
+    o = ['<svg viewBox="0 0 %d %d" xmlns="http://www.w3.org/2000/svg">'
+         % (VBW, VBH),
+         '<style>text{font-family:%s;fill:%s}</style>'
+         % (tokens.werte()["--schrift"], farbe("--gedaempft")),
+         '<rect width="%d" height="%d" fill="%s"/>'
+         % (VBW, VBH, farbe("--karte"))]
+    for _z in fl["hoehen"]:
+        if _z == 0:
+            continue
         _, _y = px(0, _z)
-        o.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="#30363d" '
-                 'stroke-width="0.5"/>' % (X0, _y, X0 + BR, _y))
+        o.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" '
+                 'stroke-width="%.1f"/>'
+                 % (X0, _y, X0 + BR, _y, farbe("--achse"), fl["strich"]))
 
     # Wolkenbaender: je Schicht ein Polygon aus den Fanwerten laengs d
     # Realistische Teilbaender statt voller Schichtdicke: die 3-Schicht-
@@ -112,14 +172,17 @@ def svg(tag, feld):
         d = 0.0
         while d <= XMAX:
             c = wert(schicht, d) or 0.0
-            stops.append('<stop offset="%.4f" stop-color="#58a6ff" '
-                         'stop-opacity="%.3f"/>' % (d / XMAX, min(0.80, 0.62 * c)))
+            stops.append('<stop offset="%.4f" stop-color="%s" '
+                         'stop-opacity="%.3f"/>'
+                         % (d / XMAX, farbe("--wolke"), min(0.80, 0.62 * c)))
             d += SCHRITT
         if not any('stop-opacity="0.0' not in x for x in stops):
             continue
         defs.append('<linearGradient id="g%d" x1="0" x2="1" y1="0" y2="0">%s'
                     '</linearGradient>' % (nr, "".join(stops)))
-        # vertikale Weichzeichnung der Ober- und Unterkante
+        # vertikale Weichzeichnung der Ober- und Unterkante.  Schwarz/Weiss
+        # sind hier keine Farben, sondern Maskenwerte (0 und 1) - die duerfen
+        # nicht aus der Palette kommen.
         defs.append('<linearGradient id="v%d" x1="0" x2="0" y1="0" y2="1">'
                     '<stop offset="0" stop-color="#000"/>'
                     '<stop offset="0.25" stop-color="#fff"/>'
@@ -134,7 +197,7 @@ def svg(tag, feld):
                  % (X0, px(0, oben)[1], BR, px(0, unten)[1] - px(0, oben)[1],
                     nr, nr))
     if defs:
-        o.insert(1, "<defs>%s</defs>" % "".join(defs))
+        o.insert(2, "<defs>%s</defs>" % "".join(defs))
 
     # Beleuchtungsstrahl. Die HELLIGKEIT je Abschnitt ist die verbleibende
     # Transmission - der Strahl IST das Licht, nicht seine Illustration.
@@ -159,84 +222,125 @@ def svg(tag, feld):
         x0, y0 = px(d, strahlhoehe_km(d, d_tan))
         x1, y1 = px(d1, strahlhoehe_km(d1, d_tan))
         tr = transmission_bei(0.5 * (d + d1))
-        # von hellem Orange (Licht kommt durch) nach dunklem Rot (blockiert)
-        rgb = (int(30 + 210 * tr), int(20 + 116 * tr), int(20 + 42 * tr))
         o.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" '
-                 'stroke="rgb(%d,%d,%d)" stroke-width="%.1f" '
-                 'stroke-linecap="round"/>'
-                 % (x0, y0, x1, y1, rgb[0], rgb[1], rgb[2], 1.4 + 2.2 * tr))
+                 'stroke="%s" stroke-width="%.1f" stroke-linecap="round"/>'
+                 % (x0, y0, x1, y1,
+                    tokens.mischen("--strahl-dunkel", "--strahl-hell", tr),
+                    1.4 + 2.2 * tr))
 
-    # Segmentmarken: wo genau geht wie viel verloren
-    for d_nah, d_fern, _sch, c in det.get("segmente", []):
-        if c < 0.05 or 0.5 * (d_nah + d_fern) > d_tan - 45:
-            continue
-        xm, ym = px(0.5 * (d_nah + d_fern), strahlhoehe_km(0.5 * (d_nah + d_fern), d_tan))
-        o.append('<circle cx="%.1f" cy="%.1f" r="%.1f" fill="none" '
-                 'stroke="#f85149" stroke-width="1.2" opacity="%.2f"/>'
-                 % (xm, ym, 3 + 7 * c, 0.35 + 0.5 * c))
-        o.append('<text x="%.1f" y="%.1f" fill="#f85149" font-size="9" '
-                 'text-anchor="middle">-%.0f%%</text>' % (xm, ym - 12 - 7 * c, 100 * c))
+    # Segmentmarken: wo genau geht wie viel verloren.  Diagnose, nicht
+    # Produkt - auf dem Telefon waeren die Zahlen 3.5 px hoch.
+    if not kompakt:
+        for d_nah, d_fern, _sch, c in det.get("segmente", []):
+            if c < 0.05 or 0.5 * (d_nah + d_fern) > d_tan - 45:
+                continue
+            xm, ym = px(0.5 * (d_nah + d_fern),
+                        strahlhoehe_km(0.5 * (d_nah + d_fern), d_tan))
+            o.append('<circle cx="%.1f" cy="%.1f" r="%.1f" fill="none" '
+                     'stroke="%s" stroke-width="1.2" opacity="%.2f"/>'
+                     % (xm, ym, 3 + 7 * c, farbe("--akzent"), 0.35 + 0.5 * c))
+            o.append('<text x="%.1f" y="%.1f" fill="%s" font-size="9" '
+                     'text-anchor="middle">-%.0f%%</text>'
+                     % (xm, ym - 12 - 7 * c, farbe("--akzent"), 100 * c))
+
+    r_kern, r_innen, r_aussen = fl["sonne"]
     xs, ys = px(d_tan, 0)
-    o.append('<circle cx="%.1f" cy="%.1f" r="9" fill="#f0883e"/>' % (xs, ys))
+    o.append('<circle cx="%.1f" cy="%.1f" r="%d" fill="%s"/>'
+             % (xs, ys, r_kern, farbe("--akzent-tinte")))
     for a in range(0, 360, 45):
         import math
-        o.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="#f0883e" '
+        o.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" '
                  'stroke-width="1.5" opacity=".7"/>'
-                 % (xs + 12 * math.cos(math.radians(a)), ys + 12 * math.sin(math.radians(a)),
-                    xs + 17 * math.cos(math.radians(a)), ys + 17 * math.sin(math.radians(a))))
+                 % (xs + r_innen * math.cos(math.radians(a)),
+                    ys + r_innen * math.sin(math.radians(a)),
+                    xs + r_aussen * math.cos(math.radians(a)),
+                    ys + r_aussen * math.sin(math.radians(a)),
+                    farbe("--akzent-tinte")))
 
     # Boden, Achsen
     gx0, gy = px(0, 0)
     gx1, _ = px(XMAX, 0)
-    o.append('<rect x="%.1f" y="%.1f" width="%.1f" height="10" fill="#21262d" '
-             'stroke="#8b949e" stroke-width="0.7"/>' % (gx0, gy, gx1 - gx0))
-    for z in (0, 2, 4, 6, 8, 10, 12):
+    o.append('<rect x="%.1f" y="%.1f" width="%.1f" height="%d" fill="%s" '
+             'stroke="%s" stroke-width="0.7"/>'
+             % (gx0, gy, gx1 - gx0, 6 if kompakt else 10,
+                farbe("--boden"), farbe("--gitter")))
+    for z in fl["hoehen"]:
         _, y = px(0, z)
-        o.append('<text x="%.1f" y="%.1f" fill="#8b949e" font-size="11" '
-                 'text-anchor="end">%d</text>' % (X0 - 8, y + 4, z))
-    o.append('<text x="%.1f" y="%.1f" fill="#8b949e" font-size="11">km</text>'
-             % (X0 - 30, Y0 - 8))
-    for d in (0, 100, 200, 300, 400):
+        o.append('<text x="%.1f" y="%.1f" font-size="%d" '
+                 'text-anchor="end">%d</text>'
+                 % (X0 - 8, y + 4, fl["grad"], z))
+    o.append('<text x="%.1f" y="%.1f" font-size="%d">km</text>'
+             % (X0 - (22 if kompakt else 30), Y0 - 8, fl["grad"]))
+    y_zahlen = Y0 + HO + (26 if kompakt else 28)
+    y_namen = Y0 + HO + (46 if kompakt else 44)
+    for d in fl["weiten"]:
         x, _ = px(d, 0)
-        o.append('<text x="%.1f" y="%.1f" fill="#8b949e" font-size="11" '
-                 'text-anchor="middle">%d</text>' % (x, Y0 + HO + 28, d))
-    o.append('<text x="%.1f" y="%.1f" fill="#8b949e" font-size="11" '
-             'text-anchor="middle">km westlich</text>' % (X0 + BR + 30, Y0 + HO + 28))
-    o.append('<text x="%.1f" y="%.1f" fill="#e6edf2" font-size="11" '
-             'text-anchor="middle">Berlin</text>' % (X0, Y0 + HO + 44))
+        o.append('<text x="%.1f" y="%.1f" font-size="%d" '
+                 'text-anchor="middle">%d</text>' % (x, y_zahlen, fl["grad"], d))
+    # Kompakt sitzt die Achsenbeschriftung eine Zeile tiefer und rechtsbuendig
+    # am Plotrand - rechts daneben ist im 420er Kasten kein Platz mehr.
+    if kompakt:
+        o.append('<text x="%.1f" y="%.1f" font-size="%d" text-anchor="end">'
+                 'km westlich</text>' % (X0 + BR, y_namen, fl["grad"]))
+    else:
+        o.append('<text x="%.1f" y="%.1f" font-size="%d" '
+                 'text-anchor="middle">km westlich</text>'
+                 % (X0 + BR + 30, y_zahlen, fl["grad"]))
+    o.append('<text x="%.1f" y="%.1f" font-size="%d" fill="%s" '
+             'text-anchor="middle">Berlin</text>'
+             % (X0, y_namen, fl["grad"], farbe("--tinte2")))
 
-    # Beschriftung
-    o.append('<text x="%d" y="26" fill="#e6edf2" font-size="15">%s %s · Azimut %.0f° '
-             '· SU %02d:%02d UTC</text>'
-             % (X0, WOCHENTAG[t.weekday()], t.strftime("%d.%m.%Y"), azimut,
-                int(stunde), round((stunde % 1) * 60)))
-    o.append('<text x="810" y="26" fill="#f0883e" font-size="20" text-anchor="end" '
-             'font-weight="500">S = %.2f</text>' % s)
-    o.append('<text x="810" y="44" fill="#8b949e" font-size="11" text-anchor="end">'
-             'Schirm %s · Sicht %.2f · Weg %.2f</text>'
-             % (det["schirm"], det["sicht"], det["weg"]))
-    o.append('<text x="%.1f" y="%.1f" fill="#f0883e" font-size="11" '
-             'text-anchor="middle">Tangente %.0f km</text>' % (xs, ys - 46, d_tan))
-    o.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="#f0883e" '
-             'stroke-width="0.5" stroke-dasharray="2 2" opacity=".6"/>'
-             % (xs, ys - 40, xs, ys - 20))
-    o.append('<text x="%d" y="482" fill="#484f58" font-size="10">'
-             'Hoehe %.0f-fach ueberhoeht · Wolken aus ERA5, Baenderdicke '
-             'schematisch</text>' % (X0, (HO / YMAX) / (BR / XMAX)))
+    # Beschriftung.  Nur ausfuehrlich - auf der Produktseite steht das alles
+    # als echter Text in der Seitentypografie ueber und unter dem Bild.
+    if not kompakt:
+        o.append('<text x="%d" y="26" fill="%s" font-size="15">%s %s '
+                 '&#183; Azimut %.0f&#176; &#183; SU %02d:%02d UTC</text>'
+                 % (X0, farbe("--tinte"), WOCHENTAG[t.weekday()],
+                    t.strftime("%d.%m.%Y"), azimut,
+                    int(stunde), round((stunde % 1) * 60)))
+        o.append('<text x="810" y="26" fill="%s" font-size="20" '
+                 'text-anchor="end" font-weight="500">S = %.2f</text>'
+                 % (farbe("--akzent-tinte"), s))
+        o.append('<text x="810" y="44" font-size="11" text-anchor="end">'
+                 'Schirm %s &#183; Sicht %.2f &#183; Weg %.2f</text>'
+                 % (det["schirm"], det["sicht"], det["weg"]))
+        o.append('<text x="%.1f" y="%.1f" fill="%s" font-size="11" '
+                 'text-anchor="middle">Tangente %.0f km</text>'
+                 % (xs, ys - 46, farbe("--akzent-tinte"), d_tan))
+        o.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" '
+                 'stroke-width="0.5" stroke-dasharray="2 2" opacity=".6"/>'
+                 % (xs, ys - 40, xs, ys - 20, farbe("--akzent-tinte")))
+        o.append('<text x="%d" y="482" font-size="10">'
+                 'Hoehe %.0f-fach ueberhoeht &#183; Wolken aus ERA5, '
+                 'Baenderdicke schematisch</text>'
+                 % (X0, (HO / YMAX) / (BR / XMAX)))
     o.append("</svg>")
     return "\n".join(o), s, det
+
+
+def ueberhoehung(kompakt=False):
+    """Faktor, um den die Hoehenachse gestreckt ist.
+
+    Die Produktseite schreibt ihn als echten Text unter das Bild - im SVG
+    waere er auf dem Telefon 3.9 px hoch, und ohne ihn behauptet die
+    Zeichnung eine Geometrie, die sie nicht hat.
+    """
+    fl = FLAECHEN[bool(kompakt)]
+    return (fl["ho"] / YMAX) / (fl["br"] / XMAX)
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("tage", nargs="+", help="YYYY-MM-DD")
+    ap.add_argument("--kompakt", action="store_true",
+                    help="kleine Fassung fuer die Produktseite")
     a = ap.parse_args()
     for tag in a.tage:
         feld = lade_feld(tag)
         if not feld:
             print("%s: keine Cachedaten" % tag)
             continue
-        bild, s, det = svg(tag, feld)
+        bild, s, det = svg(tag, feld, kompakt=a.kompakt)
         ziel = os.path.join(BASIS, "daten", "schnitt_%s.svg" % tag)
         with open(ziel, "w") as f:
             f.write(bild)

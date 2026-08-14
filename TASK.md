@@ -53,13 +53,51 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
 ## Backlog
 
 - T-0009 Eigene Bewertungsseite und ntfy-Rueckkanal (E2)
-- T-0010 Streifen + Vertikalschnitt als statische Seite auf GitHub Pages (E3)
+- T-0015 Produktseite auf GitHub Pages ausliefern. Die Seite steht lokal
+  (`web/index.html`, self-contained, 0,3 MB); es fehlt das Repo-Remote und
+  der Pages-Zweig. Erst danach ist E3 wirklich zu.
+- T-0016 Horizontsilhouette aus DEM als zweites Bild neben dem Schnitt.
+  Bewusst zurueckgestellt (T-0010, Entscheidung d): Schnitt und Silhouette
+  beantworten verschiedene Fragen — der Schnitt zeigt WARUM (das Licht muss
+  unter der Decke durch), die Silhouette WAS MAN SAEHE. Fuer Berlin
+  ausserdem fast wirkungslos, das Gelaende nach Westen ist flach. Lohnt erst
+  mit T-0007 (Gelaende im Fensterterm) und freier Ortswahl.
 - T-0011 Aerosol als Partialkorrelation pruefen (CAMS, nur Vorlauf <= 5 d)
 - T-0012 Kondensstreifen: RH_eis 100..130 % auf 250/200 hPa als Zusatzsignal
 - T-0013 s\*-Portabilitaet ueber 3-5 Ankerorte pruefen (streut s\* < 15 %?)
 
 ## Done
 
+- **T-0010 Produktseite auf den Hausstandard** (14.08.2026) — Portierung
+  von Andres Designsprache aus `poisson-dor` und `rezept-grid`, Werte und
+  Herleitung in `docs/ui-referenz.md`. Neu: `stil/tokens.css` als einzige
+  Farb- und Massquelle, von `skripte/tokens.py` gelesen und von `seite.py`
+  in die Seite inlined; `schnitt.py` enthaelt danach keine feste Farbe mehr
+  (nur noch `#000`/`#fff` als Maskenwerte, also Deckkraft 0 und 1).
+  **Gewaehlt:** (a) nur Dunkel, Apple-Neutrale statt GitHub-Blaugrau;
+  (b) eine Akzentfamilie mit drei Zustaenden — selten gefuellt, auffaellig
+  offen, unauffaellig farblos — statt der Ampel Orange/Gold/Grau;
+  (c) Zeitachse mit Schwellenlinien bei 80. und 95. statt Kachelstreifen;
+  (d) Vertikalschnitt behalten, aber telefonfeste Fassung (viewBox 420x300,
+  Grad 15, Diagnosezahlen raus); (e) deutsche Tokennamen.
+  Dazu 44-px-Tastflaechen (ueber dem Hausstandard von 34-40),
+  `prefers-reduced-motion`-Guard (den `rezept-grid` nicht hat) und neutrale
+  statt blauer Wolkenbaender.
+  **Verworfen:** 3D-Ortsmodell — in der Zweitreferenz Mapbox GL, also
+  Fremddienst mit Token, und beim Ansehen selbst mit HTTP 403 ausgefallen;
+  eigene Webfonts — der Hausstandard nutzt den Systemstack plus
+  `tabular-nums`; Hellmodus — waere kein Token-Tausch, sondern ein eigener
+  Entwurf fuer Wolkenbaender und Strahl.
+  **Gemessen vorher/nachher:** Fusstext-Kontrast 2,28:1 -> 7,31:1 (AA
+  verlangt 4,5); Schriftgrade im Bild auf dem Telefon 3,5-4,3 px -> 11,3 px;
+  Tastflaechen 44 px auf 375 px Breite, 63 px am Desktop; kein horizontales
+  Ueberlaufen in beiden Breiten. Der alte Balken war als Fuellstand von null
+  gezeichnet, obwohl die Perzentile ueber zehn Abende zwischen 0,592 und
+  0,971 lagen — die unteren 59 % waren tote Flaeche, und ein Score von 0,072
+  zeigte einen zu 59 % gefuellten Balken.
+  **Nebenbefund, behoben:** HTML-Entities in Zeichenketten, die durch JSON
+  in `textContent` laufen, erscheinen woertlich. Betraf `stufe()` (sofort
+  sichtbar) und `MONAT` mit "Maerz" (waere erst im Maerz aufgefallen).
 - **T-0000 E0 Score-Design** (14.08.2026) — Zweiterm-Score multiplikativ,
   entfernungsabhaengige Niveauzuordnung, semi-Lagrangesche Interpolation,
   Validierungsplan. Korrekturen: Juni-Sonnenuntergang 19:33 statt 17:30 UTC;

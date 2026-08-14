@@ -1,0 +1,108 @@
+/* ==========================================================================
+   Design-Tokens -- einzige Quelle fuer Farbe, Typo, Abstand, Radius, Schatten.
+
+   Herkunft: Andres Hausstandard aus rezept-grid/css/stil.css (Dunkelsatz,
+   aus Apple-Systemfarben abgeleitet) und poisson-dor/assets/tokens.css
+   (Leiter fuer Abstand, Radius, Schatten, Bewegung).  Ausgelesen und
+   begruendet in docs/ui-referenz.md.
+
+   Diese Datei wird von skripte/tokens.py gelesen und von seite.py in den
+   Style-Block der erzeugten Seite inlined -- die Seite bleibt dadurch
+   self-contained: kein Stylesheet-Verweis, kein Netzzugriff.  schnitt.py
+   liest dieselben Werte, damit im SVG keine feste Farbe mehr steht.
+
+   NUR DUNKEL.  Entscheidung 14.08.2026 (T-0010): die Seite wird abends auf
+   dem Telefon angeschaut, und die Bildlogik des Vertikalschnitts lebt davon
+   -- ein Lichtstrahl liest sich als Licht nur gegen Dunkelheit.  Ein
+   Hellsatz waere kein Token-Tausch, sondern ein eigener Entwurf fuer die
+   Wolkenbaender und den Strahl.  Deshalb bewusst kein
+   prefers-color-scheme-Block: er wuerde eine Zweimodigkeit vortaeuschen,
+   die es nicht gibt.
+
+   Namen deutsch nach ~/src/CLAUDE.md Section 7.  Zuordnung zu poisson-dor:
+     --papier = --bg     --karte = --card    --flaeche2 = --bg2
+     --tinte  = --ink    --tinte2 = --ink2   --gedaempft = --muted
+     --linie  = --line2  --achse  = --line    --akzent = --acc
+   ========================================================================== */
+
+:root {
+  /* --- Flaechen ------------------------------------------------------- */
+  --papier: #000000;              /* rezept-grid stil.css:41 (Dunkelsatz) */
+  --karte: #1c1c1e;               /* rezept-grid stil.css:42 */
+  --flaeche2: #2c2c2e;            /* rezept-grid stil.css:43 -- Rille, Chip */
+
+  /* --- Tinte, drei Stufen derselben Familie --------------------------- */
+  --tinte: #f2f2f7;               /* 18.82:1 auf Papier */
+  --tinte2: #d1d1d6;              /* 11.18:1 auf Karte */
+  --gedaempft: #98989d;           /*  7.31:1 auf Papier, 4.85:1 auf Flaeche2 */
+
+  /* --- Linien --------------------------------------------------------- */
+  /* WICHTIG: --linie und --achse sind DEKORATIV (Kartenkanten, Trenner).
+     --achse liegt bei 1.79:1 auf Papier und darf deshalb NIE etwas
+     tragen, das Information fuehrt.  Alles Informationstragende --
+     Schwellenlinien, Diagrammachsen, Achsstriche -- nimmt --gitter
+     (3.51:1, erfuellt WCAG 1.4.11 fuer grafische Objekte). */
+  --linie: #2c2c2e;
+  --achse: #38383a;
+  --gitter: #636366;
+
+  /* --- Akzent: genau EINER, und der ist warm -------------------------- */
+  /* Der Gegenstand ist ein Sonnenuntergang; die Ampel aus Orange/Gold/Grau
+     ist ersetzt durch eine Familie mit drei Zustaenden (T-0010, b):
+       selten       gefuellte Flaeche + helle Tinte
+       auffaellig   nur Tinte, keine Flaeche
+       unauffaellig --gedaempft, gar keine Farbe                        */
+  --akzent: #ff9f0a;              /* rezept-grid --block-ruhe-rand, 10.22:1 */
+  --akzent-tinte: #ffb340;        /* rezept-grid --ruhe-tinte,      11.77:1 */
+  --akzent-flaeche: #332412;      /* rezept-grid --block-ruhe               */
+
+  /* --- Himmel: Farben, die nur der Vertikalschnitt braucht ------------ */
+  /* Wolken sind nicht blau.  Das fruehere #58a6ff war GitHub-Blau und
+     neben einer amberfuehrenden Palette ein Fremdkoerper; ein neutrales
+     Hellgrau mit variabler Deckkraft liegt naeher an der Sache und am
+     Grundsatz "genau ein Akzent". */
+  --wolke: #c7c7cc;
+  --strahl-hell: #ffb340;         /* volle Transmission: Licht kommt durch */
+  --strahl-dunkel: #3a2a12;       /* blockiert -- warm, nicht rot          */
+  --boden: #2c2c2e;
+
+  /* --- Typografie ----------------------------------------------------- */
+  --schrift: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+             "SF Pro Display", "Segoe UI", system-ui, Roboto, sans-serif;
+  --grad-basis: 15px;
+  --zeilen-basis: 1.5;
+  --sperrung-eng: -.022em;        /* Basis */
+  --sperrung-enger: -.03em;       /* ab grossen Graden */
+  --sperrung-label: .06em;        /* Eyebrow, versal */
+
+  /* --- Abstandsleiter (poisson-dor F4) -------------------------------- */
+  --s1: 4px;   --s2: 8px;   --s3: 12px;  --s4: 16px;
+  --s5: 20px;  --s6: 26px;  --s7: 34px;  --s8: 56px;
+
+  /* --- Radien --------------------------------------------------------- */
+  --radius-mikro: 8px;
+  --radius-kachel: 13px;
+  --radius-karte: 18px;
+  --radius-tafel: 22px;
+  --radius-pille: 999px;
+
+  /* --- Schatten. Regel: Ruhe = ruhig, gross nur bei Hover/Overlay ----- */
+  --schatten-ruhe: 0 .5px 1.5px rgba(0, 0, 0, .5), 0 1px 2px rgba(0, 0, 0, .4);
+  --schatten-hover: 0 1px 2px rgba(0, 0, 0, .5), 0 8px 22px rgba(0, 0, 0, .5);
+  --schatten-leiste: 0 2px 8px rgba(0, 0, 0, .5), 0 22px 50px rgba(0, 0, 0, .6);
+
+  /* --- Bewegung ------------------------------------------------------- */
+  --zeit-schnell: .12s;
+  --zeit: .15s;
+  --kurve: cubic-bezier(.2, .7, .2, 1);
+
+  /* --- Layout --------------------------------------------------------- */
+  --breite: 1120px;               /* Hausmass fuer dichte Mehrspalter */
+  --breite-schmal: 720px;         /* Die Produktseite ist einspaltig und hat
+                                     wenig Inhalt; auf 1120 px zerfaellt sie
+                                     in Insel-und-Leere.                  */
+  --breite-bild: 480px;           /* Deckel fuer den Vertikalschnitt, damit
+                                     seine Schriftgrade nicht mitwachsen  */
+  --tastflaeche: 44px;            /* ueber dem Hausstandard (34-40px):
+                                     einhaendige Abendbedienung           */
+}

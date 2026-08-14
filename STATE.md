@@ -1,6 +1,7 @@
 # STATE
 
-Stand: 14.08.2026 (Score validiert, naechster Lauf priorisiert)
+Stand: 14.08.2026 (Score validiert, Produktseite gestaltet, naechster Lauf
+priorisiert)
 
 ## Ziel
 
@@ -59,6 +60,22 @@ Aufloesung nur durch Vergleich INNERHALB der Draussen-Abende - dafuer
 `skripte/fotos_detail.py` aus Terminal.app laufen lassen (Favoriten und
 Minutenabstand als Absichtssignal).
 
+## Oberflaeche: E3 gestalterisch fertig (14.08.2026)
+
+Die Produktseite laeuft auf Andres Hausstandard aus `poisson-dor` und
+`rezept-grid`. Neu: `stil/tokens.css` als einzige Farb- und Massquelle, von
+`seite.py` in die Seite inlined; `schnitt.py` hat danach keine feste Farbe
+mehr. Entscheidungen und Herleitung in `docs/ui-referenz.md`, Ergebnis in
+T-0010.
+
+Drei Sachen waren echte Fehler, keine Geschmacksfragen, und sind behoben:
+der Fusstext lag bei 2,28:1 Kontrast (AA verlangt 4,5), die Beschriftung im
+Vertikalschnitt bei 3,5-4,3 px auf dem Telefon, und der Balken war ein
+Fuellstand von null, obwohl kein Abend je unter das 59. Perzentil faellt.
+
+**Offen bleibt T-0015: die Seite ist nirgends ausgeliefert.** Das Repo hat
+kein Remote, also auch keinen Pages-Zweig. Erst danach ist E3 zu.
+
 ## Naechster Lauf, wenn Kontingent zurueck ist
 
 **Niveauaufgeloeste Klimatologie auf gfs_global (Druckflaechen, ab 2022).**
@@ -94,3 +111,5 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
 - Interpolation gemessen: Semi-Lagrange 42 % besser auf 300 hPa.
 - Beide Score-Varianten implementiert und an Grenzfaellen geprueft.
 - `docs/befunde-e1.md` mit allen Messungen und Pruefbefehlen.
+- T-0010 Produktseite auf den Hausstandard portiert: Token-Datei, Zeitachse
+  statt Balken, telefonfester Vertikalschnitt, alle Kontraste ueber AA.
