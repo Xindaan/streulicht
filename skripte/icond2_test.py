@@ -255,7 +255,7 @@ def main():
         print("   das daempft rho gegenueber der Gesamtheit systematisch.")
 
     with open(os.path.join(BASIS, "daten", "icond2_ergebnis.json"), "w") as f:
-        json.dump({"bloecke": bloecke, "raenge": raenge}, f, indent=1)
+        json.dump({"bloecke": bloecke, "raenge_aufloesung": r_aufl}, f, indent=1)
 
 
 if __name__ == "__main__":

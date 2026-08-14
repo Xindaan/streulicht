@@ -1331,3 +1331,59 @@ Gegenrichtung (`mannwhitney(ohne, favorit)` liefert P(ohne > Favorit), die
 Prosa behauptete das Gegenteil).  Die Jahrgangstabelle haette damit "3 von 8"
 statt "5 von 8" gemeldet - ein Vorzeichenfehler in der Beschriftung, nicht in
 der Rechnung, und genau deshalb keiner, den ein Testlauf findet.
+
+## 29 Aufloesungstest: ICON-D2 gegen ERA5 - knapp am eigenen Kriterium vorbei
+
+Nach Befund 25 (Feuchte statt Bedeckung traegt nicht) blieb die Frage eine
+Ebene tiefer: liegt es an der **Gitterweite**?  ERA5 und GFS rechnen auf
+25-30 km und mitteln genau die Strukturen weg, die das Ereignis ausmachen -
+eine Wolkenbank mit scharfer Westkante, ein Loch im Stratocumulus.
+ICON-D2 rechnet auf 2.2 km.
+
+**Aufbau.**  Gepaart, nicht gegen eine Klimatologie.  Jeder Albumabend ab
+2023 bildet einen Block mit vier Kontrollabenden aus seinem +/- 21-Tage-
+Fenster; gemessen wird sein Rang INNERHALB des Blocks.  Das haelt Jahreszeit,
+Sonnenstand und Tageslaenge konstant.  35 Bloecke, 166 Abende, 5976 Abfragen.
+
+Beide Verfahren rechnen **denselben Score auf derselben Faechergeometrie** -
+es unterscheidet sich nur die Gitterweite der Quelle.
+
+**Gueltigkeitspruefung vorweg:** ERA5 und ICON-D2 stimmen ueber 77
+gemeinsame Abende mit rho = +0.746 ueberein, bei praktisch gleichem Mittel
+(0.230 gegen 0.221).  Die Kette misst Meteorologie, kein Artefakt.
+
+| Verfahren | Mittelrang | 95 %-KI | z |
+|---|---|---|---|
+| ERA5, 25 km | 0.593 | [0.492, 0.693] | +1.81 nicht sig. |
+| **ICON-D2, 2.2 km** | **0.657** | [0.545, 0.769] | **+2.75 signifikant** |
+
+Gepaarte Differenz **+0.064**, KI **[-0.037, +0.165]**.
+Vorzeichen: 13 Bloecke besser mit ICON, 9 schlechter, 13 unentschieden.
+
+**Vorab festgelegt war: Wechsel nur bei >= +0.05 UND Konfidenzintervall ohne
+Null.**  Der Punktschaetzer erfuellt die Schwelle, das Intervall nicht.
+**Also kein Wechsel.**
+
+Bemerkenswert bleibt, dass ICON-D2 als einziges der beiden Verfahren fuer
+sich genommen Signifikanz erreicht - ERA5 verfehlt sie.  Fuer 80 % Power auf
+die Differenz braeuchte es 177 Bloecke statt 35: 885 Abende, rund 32 000
+Abfragen, etwa 3.2 Tagesbudgets.
+
+**Gegenlaeufiger Nebenbefund.**  Innerhalb des Albums ordnet ICON-D2
+schlechter (Spearman gegen Andres Noten +0.259 gegen +0.411 bei ERA5).  Es
+trennt Album von Kontrolle besser und ordnet innerhalb des Albums schlechter.
+Bei n = 34 und der bekannten Varianzeinschraenkung ist dieser Unterschied
+nicht belastbar - aber er passt zu Befund 22: Anreicherung und Ordnung sind
+verschiedene Faehigkeiten.
+
+**Und der Punkt, der den Rest erledigt:** ICON-D2 hat **48 h Vorlauf** und
+existiert nur ueber Mitteleuropa.  Der Alarm braucht 2 bis 10 Tage, und
+Andre will die App fuer Freundinnen und Freunde an beliebigen Orten.  Selbst
+ein klar positives Ergebnis haette den Betriebsscore nicht ersetzen koennen,
+sondern nur als Validierungswerkzeug getaugt.  Die 3.2 Tagesbudgets fuer den
+Nachweis lohnen sich damit nur, wenn man wissen will, WARUM es klemmt - nicht,
+um es zu beheben.
+
+Pruefbefehle:
+`python3 skripte/icond2.py --kontrollen 4` (Abruf, gecacht)
+`python3 skripte/icond2_test.py` (Auswertung)

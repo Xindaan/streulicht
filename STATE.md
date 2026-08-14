@@ -100,7 +100,7 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
    erschoepft, morgens frei. Vor dem Einrichten `--trocken` pruefen.
 3. **T-0019 MSG/MTG-Infrarot** — Beobachtung statt Modell, als Antwort auf
    die Datenluecke. Prioritaet haengt am Ausgang des Aufloesungstests
-   (Befund 28): traegt ICON-D2, ist das der billigere Weg.
+   (Befund 29): ICON-D2 hat das eigene Kriterium knapp verfehlt.
 
 ## Letzte Done
 
