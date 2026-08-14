@@ -1,0 +1,19 @@
+{
+  "_hinweis": "ntfy-Topics sind durch Namens-Obskuritaet geschuetzt, nicht durch Auth. Nicht oeffentlich posten.",
+  "modell": "ecmwf_ifs025",
+  "schwelle_score": 0.6325,
+  "schwelle_wahrscheinlichkeit": 0.5,
+  "vorlauf_tage": 10,
+  "advektion": true,
+  "orte": [
+    {
+      "name": "berlin",
+      "anzeige": "Berlin",
+      "breite": 52.52,
+      "laenge": 13.405,
+      "zeitzone": "Europe/Berlin",
+      "ntfy_alarm": "su-berlin-a7k2m9x4",
+      "ntfy_bewertung": "su-bewertung-a7k2m9x4"
+    }
+  ]
+}
