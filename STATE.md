@@ -114,14 +114,24 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
 
 ## Next actions
 
-1. **T-0006 Ablation** — jetzt entblockt (`historical-forecast-api` frei) UND
-   entzerrt: das Skript zaehlte Abende ohne Daten als 0.0, wo beide Verfahren
-   uebereinstimmen. `python3 skripte/ablation.py` setzt am Cache fort.
-2. **T-0003 Archivierung** als Cron — `ensemble-api` war am 14.08. nachmittags
-   erschoepft, morgens frei. Vor dem Einrichten `--trocken` pruefen.
-3. **T-0019 MSG/MTG-Infrarot** — Beobachtung statt Modell, als Antwort auf
-   die Datenluecke. Prioritaet haengt am Ausgang des Aufloesungstests
-   (Befund 29): ICON-D2 hat das eigene Kriterium knapp verfehlt.
+Alle drei haengen an etwas, das ich nicht selbst entscheiden oder
+beschaffen kann.
+
+1. **T-0015 Seite ausliefern** — braucht ein Repo-Remote, das nur Du anlegen
+   kannst. Die Seite steht lokal, rendert korrekt (nachgesehen 14.08.) und
+   ist self-contained. Danach ist E3 zu.
+2. **T-0003 Archivierung** als Cron auf dem NAS — `ensemble-api` war am
+   14.08. nachmittags erschoepft. Vor dem Einrichten `--trocken` pruefen.
+3. **T-0019 MSG/MTG-Infrarot** — die letzte offene Antwort auf die
+   Datenluecke, nachdem Darstellung (Befund 25) und Aufloesung (Befund 29)
+   beide nichts getragen haben. Braucht vermutlich eine EUMETSAT-Anmeldung,
+   also Deine Entscheidung.
+
+**T-0006 ist erledigt (Befund 31):** s\* ist NICHT uebertragbar. Im
+ereignisreichen Sommerfenster rho = +0.504, nur 1 von 6 Spitzenabenden
+gemeinsam, und mit demselben s\* loest die 3-Schicht dreimal aus, die
+niveauaufgeloeste kein einziges Mal. Der Betrieb laeuft auf der richtigen
+Variante; ein Wechsel braeuchte eine eigene Klimatologie.
 
 ## Letzte Done
 
