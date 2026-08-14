@@ -31,10 +31,11 @@ zeigen.
 
 1. **T-0001 Fotogate** — blockiert, braucht Festplattenvollzugriff (Andre).
    Ohne dieses Gate gibt es keinen Abbruchtest fuer E1.
-2. **T-0005 Interpolationsexperiment** — Euler gegen Semi-Lagrange, Skript
-   steht, braucht nur Kontingent.
-3. **T-0006 Ablation** 3-Schicht gegen niveauaufgeloest — entscheidet, ob s*
+2. **T-0006 Ablation** — blockiert bis morgen (Tageskontingent erschoepft).
+   `python3 skripte/ablation.py` setzt am Cache fort. Entscheidet, ob s*
    auf den Betriebsscore uebertragbar ist.
+3. **T-0003 Archivierung** als Cron einrichten — ebenfalls kontingentblockiert,
+   aber ab morgen taeglich noetig.
 
 ## Letzte Done
 
@@ -42,4 +43,7 @@ zeigen.
 - Sonnenuntergangszeiten gegen Open-Meteo unabhaengig bestaetigt (19:33 UTC
   im Juni — die E0-Korrektur haelt).
 - Kalibrierung Eiszweig: Training 2023-24, Test 2025 ausgehalten.
+- Klimatologie gerechnet, s* = 0.6325 (18.5 Ausloesungen/Jahr).
+- Interpolation gemessen: Semi-Lagrange 42 % besser auf 300 hPa.
+- Beide Score-Varianten implementiert und an Grenzfaellen geprueft.
 - `docs/befunde-e1.md` mit allen Messungen und Pruefbefehlen.

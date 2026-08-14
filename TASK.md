@@ -16,6 +16,13 @@ fuer die Terminal-App in den Systemeinstellungen.
 - [ ] n >= 40 komfortabel, n >= 20 grenzwertig, darunter faellt der Test aus
 - Skript: `skripte/fotos_zaehlen.py`
 
+### T-0006 Ablation 3-Schicht gegen niveauaufgeloest
+**BLOCKIERT bis morgen:** Tageskontingent erschoepft.  Skript und beide Scores
+stehen, Blockcache leer, `python3 skripte/ablation.py` setzt fort.
+Load-bearing: s* kommt aus der 3-Schicht-Klimatologie, der Betrieb laeuft
+niveauaufgeloest. Laufen die Rangfolgen auseinander, ist s* nicht uebertragbar.
+- [ ] Spearman rho und Top-15-%-Ueberlappung ueber 42 Abende
+
 ### T-0003 Taegliche Ensemble-Archivierung
 Das Ensemble-Archiv reicht nur 93 Tage zurueck und wandert. Ein Cron, der
 nichts tut ausser den Tagesabzug wegschreiben. Haengt an keiner Entscheidung.
@@ -23,20 +30,10 @@ nichts tut ausser den Tagesabzug wegschreiben. Haengt an keiner Entscheidung.
 
 ## Next
 
-### T-0004 Score implementieren
-Term A (Schirm) und Term B (Fenster) nach E0, pro Member, pro Schirmniveau.
-- [ ] Fanpunkte: 5 Azimute A+{-24,-12,0,12,24}°, Distanzen 0..450 km
-- [ ] Zwei-Pass-Abfrage fuer die semi-Lagrangesche Advektion
-- [ ] Score pro Member rechnen, nie aus Mittelfeldern (Jensen)
-
-### T-0005 Interpolationsexperiment
-ECMWF native 3 h auf 6 h ausduennen, Mittelpunkte per Euler und per
-Semi-Lagrange rekonstruieren, gegen die echten 3-h-Werte messen.
-Braucht kein ERA5 — die 3-h-Werte sind selbst die Wahrheit.
-
-### T-0006 Ablation volle Niveauzuordnung gegen 3-Schicht-Aggregat
-Entscheidet, ob die Druckflaechen-Maschinerie noetig ist. Load-bearing:
-die Klimatologie kommt aus einem anderen Modell als der Betrieb.
+### T-0014 Score pro Member und Zwei-Pass-Advektion verdrahten
+Die Score-Formeln stehen (`sonnen/score_niveaus.py`), es fehlt die
+Betriebsschleife: pro Member rechnen (nie aus Mittelfeldern, Jensen), Felder
+semi-Lagrangesch auf die Sonnenuntergangszeit advehieren.
 
 ### T-0007 Gelaende in den Fensterterm
 DEM-Freigaengigkeit des Strahls. Ab freier Ortswahl zwingend, nicht optional
@@ -64,5 +61,11 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   1461 Abende, 3-Schicht auf 0.5-Grad-Gitter. **s\* = 0.6325 → 18.5
   Ausloesungen/Jahr.** Januar null von 124. r(A,B) = -0.259. Offen bleibt die
   Quantilbruecke auf ECMWF (haengt an T-0006).
+- **T-0004 Score implementiert** (14.08.2026) — 3-Schicht (`sonnen/score.py`)
+  und niveauaufgeloest (`sonnen/score_niveaus.py`), beide gegen synthetische
+  Grenzfaelle geprueft. Dickenstrafe wirkt (dickes Deck 400-250 hPa auf 0.53).
+- **T-0005 Interpolation** (14.08.2026) — Semi-Lagrange senkt RMSE auf
+  300 hPa um **42 %** (r 0.667 -> 0.904), auf 850 hPa um 16 %. Zwei-Pass-
+  Verfahren aus E0 dabei mitvalidiert.
 - **Gates E1** (14.08.2026) — Modellverifikation, Wolkendiagnostik kalibriert,
   Geometrie gegen unabhaengige Quelle geprueft. Siehe `docs/befunde-e1.md`.
