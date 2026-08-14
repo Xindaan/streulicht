@@ -977,3 +977,54 @@ wohldefinierte Frage") nicht mehr getragen.
   sich selbst ist die obere Schranke fuer jede Vorhersage.  Billig und sauber.
 - **Zweiter Mensch:** jemand, der das Projekt nicht kennt.
 - **Nicht geeignet:** ich - solange ich weiss, worauf der Score schaut.
+
+## 22 Andres Kriterium "Varianz im Himmel" (14.08.2026)
+
+Auf die Frage, was seine 3 von seiner 5 unterscheidet, wenn beide zur Familie
+"goldenes Licht bricht unter einer Decke durch" gehoeren:
+
+> "Es geht auch um Varianz im Himmel. Links hast Du einen duennen Streifen
+> mit Action, und sonst ist es eher monoton."
+
+Das trifft eine echte Luecke: **Term A ist ein Mittelwert ueber den Nahbereich,
+und ein Mittelwert loescht Varianz per Konstruktion.**  Ein duenner heller
+Streifen und ein durchgehend angeleuchteter Himmel koennen denselben
+Mittelwert haben.
+
+### 22.1 Zwei Umsetzungen, beide ohne Gewinn
+
+**Erste Fassung** - Verteilung der WOLKE ueber Elevationsbaender
+(0-5, 5-15, 15-35, 35-90 Grad), gemessen als 1 minus Herfindahl:
+
+    Andre  Score bisher rho +0.205  ->  x Ausdehnung rho +0.193
+    ich    Score bisher rho +0.257  ->  x Ausdehnung rho +0.197
+
+Und bei zwei der drei Paare **identisch** (0.66 gegen 0.66, 0.51 gegen 0.51).
+Fehler in der Umsetzung: gemessen wurde, wo die Wolke ist, nicht wo das Licht
+ist.
+
+**Zweite Fassung** - Verteilung der BELEUCHTETEN Beitraege (aus
+score_distanz, also Wolke x Raumwinkel x Sicht x Weg):
+
+| Paar (links Note 3, rechts Note 5) | Lichtausdehnung |
+|---|---|
+| 2024-07-08 / 2025-05-26 | **0.00 / 0.50** richtig |
+| 2023-06-16 / 2024-05-25 | 0.35 / 0.28 falsch |
+| 2022-06-20 / 2022-08-03 | **0.15 / 0.31** richtig |
+
+Zwei von drei Paaren in der richtigen Richtung - aber ueber alle 43 Abende
+kein Gewinn (rho +0.205 -> +0.200 bei Andre, +0.257 -> +0.182 bei mir).
+
+### 22.2 Warum hier Schluss ist
+
+Die Baseline ist nicht signifikant (z = +1.33).  An einer nicht signifikanten
+Baseline Termformulierungen durchzuprobieren, bis rho steigt, ist
+Rauschenanpassung - und genau das habe ich in Abschnitt 20.4 fuer mich
+ausgeschlossen.  Der dritte Versuch waere der erste gewesen, bei dem ich es
+trotzdem getan haette.
+
+**Das Kriterium bleibt notiert und unerledigt.**  Es ist artikuliert,
+physikalisch sinnvoll und trifft zwei von drei Testfaellen - aber mit n = 43
+an einem Ziel dieser Reliabilitaet nicht entscheidbar.  Wieder aufnehmen,
+wenn (a) der Nachtlauf n auf 72 hebt und (b) Andres Test-Retest die
+Reliabilitaet des Ziels kennt.
