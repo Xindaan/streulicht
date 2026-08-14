@@ -750,10 +750,20 @@ Tageslimit gerissen war:
 | `forecast-api` | **frei** |
 | `air-quality-api` (CAMS) | **frei** |
 
-Die historischen Endpunkte teilen sich ein Budget, der Betrieb hat ein
-eigenes.  **Praktische Folge: der taegliche Alarmlauf wird von
-Kalibrierungslaeufen NICHT blockiert.**  Die Betriebsregel aus der README
-("Kalibrierung nie am selben Tag wie der Alarm") war unnoetig streng.
+Um 11:34 UTC, nach einem CAMS-Zug ueber vier Jahre, war auch `ensemble-api`
+gesperrt - und zwar fuer JEDE Groesse, bis hinunter zu 1 Ort x 1 Variable x
+1 Tag.
+
+**Was daraus sicher folgt:** die Endpunkte hatten um 11:17 unterschiedliche
+Zustaende, teilen sich also kein einziges Konto.  **Was NICHT folgt:** dass
+der Betrieb dadurch geschuetzt waere - das Ensemble-Budget war schlicht
+ebenfalls fast leer und ist es dann geworden.
+
+Ich habe an diesem Tag zweimal eine Theorie ueber dieses Kontingent
+aufgestellt (erst "Memberzahl multipliziert", dann "endpunktuebergreifend")
+und beide Male danebengelegen.  Deshalb steht hier nur noch, was gemessen
+wurde, mit Uhrzeit.  Wer die Kapazitaet fuer einen Lauf wissen will, misst
+sie vorher - `--trocken` genuegt.
 
 ## 17 Aerosol: Entscheidung richtig, Begruendung falsch (14.08.2026)
 

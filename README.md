@@ -77,8 +77,10 @@ zusammenfallen.
 `historical-forecast-api`) teilen sich ein Budget; `ensemble-api`,
 `forecast-api` und `air-quality-api` haben ein eigenes — gemessen am
 14.08.2026, als die historischen gesperrt waren und die uebrigen liefen.
-Der taegliche Alarmlauf wird von Kalibrierungslaeufen also **nicht**
-blockiert.
+Die Endpunkte hatten dabei unterschiedliche Zustaende, teilen sich also kein
+einziges Konto — aber das schuetzt den Betrieb **nicht**: eine halbe Stunde
+spaeter war auch `ensemble-api` erschoepft. **Vor jedem groesseren Lauf
+`--trocken` pruefen statt auf eine Theorie ueber das Kontingent zu bauen.**
 
 ## Troubleshooting
 
