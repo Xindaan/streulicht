@@ -4,3 +4,5 @@ __pycache__/
 .DS_Store
 .claude/
 Album/
+web/rueckschau.html
+web/diagnose.html
