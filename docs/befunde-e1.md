@@ -1028,3 +1028,65 @@ physikalisch sinnvoll und trifft zwei von drei Testfaellen - aber mit n = 43
 an einem Ziel dieser Reliabilitaet nicht entscheidbar.  Wieder aufnehmen,
 wenn (a) der Nachtlauf n auf 72 hebt und (b) Andres Test-Retest die
 Reliabilitaet des Ziels kennt.
+
+## 23 Varianzeinschraenkung - die Frage war falsch gestellt (14.08.2026)
+
+Andre: *"Vielleicht ist es aber so, dass ALLE Sonnenuntergaenge schon ganz gut
+sind.  Sonst haette ich sie nicht ausgewaehlt (oder fotografiert)."*
+
+Das ist Varianzeinschraenkung, und sie erklaert die niedrigen Korrelationen
+aus Abschnitt 20 vollstaendig.  Seine Noten reichen von 2 bis 5 - **keine
+einzige 1**.  Innerhalb einer nach Qualitaet vorausgewaehlten Menge brechen
+Korrelationen systematisch ein, auch wenn der Zusammenhang in der Gesamtheit
+stark ist.
+
+### 23.1 Simulation
+
+Bivariat normal, Auswahl der besten X Prozent nach Qualitaet:
+
+| rho in der Gesamtheit | rho im Album | mittlerer Perzentilrang |
+|---|---|---|
+| 0.30 | 0.13-0.15 | 0.62-0.65 |
+| **0.40** | **0.18-0.20** | **0.66-0.70** |
+| 0.50 | 0.24-0.27 | 0.70-0.75 |
+| 0.60 | 0.29-0.32 | 0.74-0.79 |
+
+Beobachtet: rho im Album **+0.205**, mittlerer Perzentilrang **0.674**.
+
+**Beide Groessen zusammen zeigen auf rho = 0.40-0.50 in der Gesamtheit** - und
+das sind zwei unabhaengige Beobachtungen, die auf denselben Wert deuten, keine
+Anpassung.
+
+### 23.2 Was rho = 0.45 operativ bedeutet
+
+"gut" = die besten 5 % aller Abende (rund 18 im Jahr):
+
+| Alarmrate | faengt davon | davon war gut |
+|---|---|---|
+| 18/Jahr | 22 % | 22 % |
+| 37/Jahr | 35 % | 18 % |
+| 55/Jahr | 45 % | 15 % |
+| 73/Jahr | 54 % | 13 % |
+
+Die reale Messung (37 Alarme fingen 10 von 43 Albumabenden = 23 %) liegt in
+derselben Groessenordnung.
+
+### 23.3 Was das an frueheren Abschnitten korrigiert
+
+- **Abschnitt 18** ("zwei Faehigkeiten, nur eine gemessen"): die zweite
+  Faehigkeit war nicht abwesend, sie war nur nicht messbar, weil das Album
+  eine Vorauswahl ist.
+- **Abschnitt 20.4** ("wird es spektakulaer ist keine wohldefinierte Frage"):
+  hinfaellig.  Die niedrige Korrelation kam aus der Auswahl, nicht aus der
+  Unschaerfe des Ziels.
+- **Abschnitt 9.2** (Trefferquote "zu pessimistisch gerechnet"): jetzt
+  quantifiziert - bei rho 0.45 sind 22 % bei 18 Alarmen im Jahr das
+  Erwartbare, nicht ein Defizit.
+
+### 23.4 Vorbehalte
+
+Bivariat normal angenommen.  Die Auswahl erfolgte nicht rein nach Qualitaet
+(Verfuegbarkeit, Blickrichtung NNW, ueberhaupt zu Hause sein) - unreine
+Auswahl schwaecht den Einschraenkungseffekt, das wahre rho laege dann
+niedriger als geschaetzt.  Und rho ist gegen ANDRES Note gemessen, die ihre
+eigene Unzuverlaessigkeit hat; gegen ein rauschfreies Ziel waere es hoeher.
