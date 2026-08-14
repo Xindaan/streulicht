@@ -1160,3 +1160,57 @@ Datenfehler, sondern der Fensterterm.
 **Datenfehlerquote unter Andres Fuenfen: 3 von 14 = 21 %**, deutlich hoeher
 als die 12.5 % ueber alle bewerteten Abende.  Gerade bei den besten Abenden
 sieht ERA5 am haeufigsten nichts.
+
+## 25 Niveauaufgeloest getestet - die Hypothese ist widerlegt (14.08.2026)
+
+Erwartung aus Abschnitt 14.2: ERA5s Bedeckungsfeld saettigt bei 23 % der
+Stunden auf exakt 100 % und zwingt den Score auf null; die eigene
+RH-Diagnostik liefert doppelt so oft einen Zwischenwert.  **Also muesste die
+niveauaufgeloeste Variante die Fehlschlaege aufloesen.**
+
+### 25.1 Ueber Berlin allein: bestaetigt
+
+GFS-Druckflaechen fuer Berlin, 2022-2025 (35 064 Stunden):
+
+| Abend | GFS-Bedeckungsfeld h/m/t | eigene RH-Diagnostik h/m/t |
+|---|---|---|
+| 2022-09-20 | 0 / 5 / 5 | **0 / 61 / 46** |
+| 2023-04-24 | 9 / 0 / 60 | **58 / 0 / 100** |
+
+Systematisch: in **18 %** der Stunden, in denen das Bedeckungsfeld praktisch
+leer ist (<5 %), sieht die Feuchtediagnostik >= 25 % Wolke.
+
+### 25.2 Ueber den ganzen Faecher: widerlegt
+
+Fanzellen der Problemabende geladen (58 Zellen x 20 Variablen x 5 Tage) und
+`score_niveaus` gegen `score` gerechnet:
+
+| Abend | Note | 3-Schicht S | niveauaufgeloest S |
+|---|---|---|---|
+| 2022-09-20 | 5 | 0.002 | 0.017 |
+| 2023-04-24 | 4 | 0.000 | 0.003 |
+| 2024-05-03 | 3 | 0.000 | 0.003 |
+| 2024-09-15 | - | 0.028 | 0.008 |
+| 2025-09-15 | 5 | 0.013 | 0.062 |
+
+Vier von fuenf besser - **aber von praktisch null auf praktisch null**.
+Die Saettigung ist weg (Weg steigt von 0.00 auf 0.11, A von 0.02 auf 0.17),
+aber das Produkt zweier kleiner Zahlen bleibt klein.
+
+**Ueber den Faecher sieht auch die Feuchte fast nichts** (A = 0.04 bis 0.30).
+Beide Darstellungen desselben Modells verfehlen diese Himmel.
+
+### 25.3 Was das fuer die Prioritaeten heisst
+
+Die Datenluecke ist **nicht** ein Darstellungsproblem und damit nicht durch
+eine andere Variable desselben Modells zu schliessen.  Sie braucht
+
+- **ein anderes Modell** - ICON-D2 mit 2 km loest Strukturen auf, die GFS
+  und ERA5 bei 25-30 km wegmitteln; Vorlauf nur 48 h, fuer den Alarm also
+  nur die letzten zwei Tage, aber fuer die VALIDIERUNG voll brauchbar;
+- **oder Beobachtung statt Modell** - MSG/MTG-Infrarot, 3 km, alle 15 min,
+  kostenlos.  Damit waere pruefbar, ob die Wolke ueberhaupt da war.
+
+Der Hybrid (nur die Zelle ueber Berlin aus der Feuchte, Rest wie bisher)
+bringt marginal: Album-Anreicherung 0.674 -> 0.690, rho gegen Andres Noten
+unveraendert.  Nicht uebernommen.
