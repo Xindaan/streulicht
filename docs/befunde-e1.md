@@ -1387,3 +1387,40 @@ um es zu beheben.
 Pruefbefehle:
 `python3 skripte/icond2.py --kontrollen 4` (Abruf, gecacht)
 `python3 skripte/icond2_test.py` (Auswertung)
+
+## 30 Ein Kontrastwert ohne seine Flaeche ist keine Angabe
+
+Beim Bau des Sitzungsberichts fiel ein Fehler in der ausgelieferten
+Produktseite auf.  `stil/tokens.css` schrieb `--gitter` fuer alles
+Informationstragende vor und bescheinigte dem Wert **3.51:1, erfuellt
+WCAG 1.4.11**.  Diese 3.51:1 gelten gegen `--papier` (#000000).
+
+Die zwei gestrichelten Schwellenlinien im Zeitstreifen liegen aber in
+`.achse-karte`, und die hat `background: var(--karte)` (#1c1c1e).  Dort
+faellt derselbe Wert auf **2.84:1** - unter die 3.0, die WCAG 1.4.11 fuer
+grafische Objekte verlangt.  Und die Linien sind nicht dekorativ: sie
+markieren das 80. und 95. Perzentil, ohne sie ist die Position des Punktes
+so unverankert wie eine nackte Prozentzahl (so steht es im Kommentar des
+Skripts selbst).
+
+| Wert | auf `--papier` | auf `--karte` | auf `--boden` |
+|---|---|---|---|
+| #636366 (alt) | 3.51:1 | **2.84:1** | 2.30:1 |
+| #8e8e93 (neu) | 6.44:1 | 5.22:1 | 4.27:1 |
+
+`--gitter` ist auf `#8e8e93` angehoben (Apple systemGray, dieselbe Familie).
+Der alte Wert bleibt als `--gitter-schwach` fuer rein dekorative Feinlinien.
+Der Done-Eintrag zu T-0010 behauptete "alle Kontraste ueber AA" und ist
+korrigiert.
+
+**Warum das hier steht und nicht nur im Tokenfile:** der Fehler war nicht
+Nachlaessigkeit beim Messen, sondern eine unvollstaendige Angabe.  Eine Zahl
+wie "3.51:1" sieht aus wie ein Faktum und ist in Wahrheit eine Relation
+zwischen zwei Farben.  Wer sie ohne die zweite Farbe notiert, hat sie fuer
+jede andere Flaeche falsch notiert - und merkt es nie, weil die Notiz
+selbstbewusst aussieht.  Dieselbe Form von Fehler wie bei 429 (ein Code,
+drei Bedeutungen) und bei "Schluessel vorhanden" (ein Test, der nicht
+scheitern kann).
+
+Gefunden wurde er nicht beim Bau der Produktseite, sondern beim
+**Uebertragen derselben Pruefung auf eine zweite Seite**.

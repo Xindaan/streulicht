@@ -40,11 +40,23 @@
   /* WICHTIG: --linie und --achse sind DEKORATIV (Kartenkanten, Trenner).
      --achse liegt bei 1.79:1 auf Papier und darf deshalb NIE etwas
      tragen, das Information fuehrt.  Alles Informationstragende --
-     Schwellenlinien, Diagrammachsen, Achsstriche -- nimmt --gitter
-     (3.51:1, erfuellt WCAG 1.4.11 fuer grafische Objekte). */
+     Schwellenlinien, Diagrammachsen, Achsstriche -- nimmt --gitter.
+
+     KORREKTUR 14.08.2026: hier stand "--gitter (3.51:1, erfuellt WCAG
+     1.4.11)".  Die 3.51:1 gelten gegen --papier.  Auf --karte faellt
+     derselbe Wert auf 2.84:1 und verfehlt die 3.0 - und genau dort lagen
+     die Schwellenlinien der Produktseite (.achse-karte hat
+     background:var(--karte)).  Ein Kontrastwert ohne die Flaeche, gegen
+     die er gemessen wurde, ist keine Angabe.
+
+     --gitter ist deshalb auf #8e8e93 angehoben: 6.44:1 auf Papier,
+     5.22:1 auf Karte, erfuellt WCAG 1.4.11 auf BEIDEN Flaechen.  Der
+     alte Wert bleibt als --gitter-schwach fuer rein dekorative
+     Feinlinien, die nichts tragen. */
   --linie: #2c2c2e;
   --achse: #38383a;
-  --gitter: #636366;
+  --gitter: #8e8e93;
+  --gitter-schwach: #636366;
 
   /* --- Akzent: genau EINER, und der ist warm -------------------------- */
   /* Der Gegenstand ist ein Sonnenuntergang; die Ampel aus Orange/Gold/Grau

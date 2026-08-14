@@ -92,6 +92,15 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   (c) Zeitachse mit Schwellenlinien bei 80. und 95. statt Kachelstreifen;
   (d) Vertikalschnitt behalten, aber telefonfeste Fassung (viewBox 420x300,
   Grad 15, Diagnosezahlen raus); (e) deutsche Tokennamen.
+  **NACHTRAG 14.08.2026 abends:** die Behauptung "alle Kontraste ueber AA"
+  war falsch. Die zwei Schwellenlinien im Zeitstreifen tragen Information
+  (80. und 95. Perzentil) und standen mit `--gitter` bei 2.84:1 auf
+  `--karte`; WCAG 1.4.11 verlangt 3.0. Der Tokenkommentar bescheinigte
+  3.51:1 - gemessen gegen `--papier`, nicht gegen die Flaeche, auf der die
+  Linien liegen. `--gitter` ist auf `#8e8e93` angehoben (6.44:1 auf Papier,
+  5.22:1 auf Karte), der alte Wert bleibt als `--gitter-schwach` fuer rein
+  Dekoratives. Gefunden beim Uebertragen derselben Pruefung auf eine neue
+  Seite - nicht beim Bau der Produktseite selbst.
   Dazu 44-px-Tastflaechen (ueber dem Hausstandard von 34-40),
   `prefers-reduced-motion`-Guard (den `rezept-grid` nicht hat) und neutrale
   statt blauer Wolkenbaender.
