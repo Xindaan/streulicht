@@ -931,3 +931,49 @@ fangen 23 % der Albumabende, und mehr Trennschaerfe gibt das Ziel nicht her.
 
 Andres Noten in der jetzigen Klimatologie (2022-2025): 46.
 Im Bereich des Nachtlaufs (2015-2025): **72** - plus 57 %.
+
+## 21 Die Obergrenzen-Rechnung aus 20.3 ist ungueltig (14.08.2026)
+
+Andre vermutete einen Reihenfolgeneffekt in seiner eigenen Bewertung (er ging
+von neu nach alt und koennte strenger geworden sein).  **Nicht bestaetigt:**
+rho(Position, Note) = −0.047, z = −0.42.  Viertel-Mittelwerte 3.65 / 3.55 /
+3.60 / 3.40.
+
+Die groessten Deltas sind dagegen einseitig: Andre hoeher in 20 Faellen, ich
+in 6, gleich in 14.  Die zwei groessten (Delta +3):
+
+- **2025-05-26** - graue Decke mit hellem Spalt, und **Strahlenbuescheln**,
+  die durch die Luecke nach unten faechern.  Ich: Note 2.
+- **2024-05-25** - breites goldenes Licht, weiche Textur, Sonne sichtbar.
+  Ich: Note 2.
+
+**Meine Bewertungskriterien waren Farbsaettigung und Anteil angeleuchteter
+Wolkenflaeche - also Term A, woertlich.**  Ich hatte in Abschnitt 19.3
+befuerchtet, nach den Kriterien des Modells zu bewerten; an diesen beiden
+Bildern ist es belegt.  Strahlenbuescheln, Lichtstruktur und Kontrast kommen
+in meinem Maszstab nicht vor, in Andres offensichtlich schon.
+
+### 21.1 Was das entwertet
+
+Abschnitt 20.3 rechnete: "zwei Betrachter stimmen mit rho = 0.24 ueberein,
+also kann ein perfektes Modell hoechstens sqrt(0.24) = 0.49 erreichen, der
+Score liegt bei 42 % davon."
+
+**Diese Rechnung setzt voraus, dass ich ein UNABHAENGIGER zweiter Betrachter
+bin.  Bin ich nicht.**  Meine Noten sind die Modellkriterien von Hand
+angewandt.  Dass rho(ich, Andre) = 0.243 und rho(Score, Andre) = 0.205 so
+dicht beieinander liegen, ist deshalb kein Zufall, sondern der Beleg: beide
+Zahlen messen ungefaehr dasselbe.
+
+Die Reliabilitaet des Ziels - wie gut zwei MENSCHEN uebereinstimmen - ist
+damit **unbekannt**.  Sie kann deutlich hoeher liegen als 0.24.  Und wenn sie
+das tut, ist auch die Produktaussage aus 20.4 ("wird es spektakulaer ist keine
+wohldefinierte Frage") nicht mehr getragen.
+
+### 21.2 Was einen echten Wert liefern wuerde
+
+- **Test-Retest:** Andre benotet in einigen Wochen dieselben Fotos noch
+  einmal, blind gegenueber seiner ersten Liste.  Die Uebereinstimmung mit
+  sich selbst ist die obere Schranke fuer jede Vorhersage.  Billig und sauber.
+- **Zweiter Mensch:** jemand, der das Projekt nicht kennt.
+- **Nicht geeignet:** ich - solange ich weiss, worauf der Score schaut.
