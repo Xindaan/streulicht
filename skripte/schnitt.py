@@ -136,12 +136,46 @@ def svg(tag, feld):
     if defs:
         o.insert(1, "<defs>%s</defs>" % "".join(defs))
 
-    # Beleuchtungsstrahl des gewaehlten Schirms
+    # Beleuchtungsstrahl. Die HELLIGKEIT je Abschnitt ist die verbleibende
+    # Transmission - der Strahl IST das Licht, nicht seine Illustration.
+    # Ohne das zeichnet man eine gleichmaessig helle Kurve durch eine
+    # geschlossene Wolkendecke und behauptet damit das Gegenteil dessen,
+    # was der Score gerade ausgerechnet hat.
     hoehe = dict(SCHIRME)[det["schirm"]]
     d_tan = tangentendistanz_km(hoehe)
-    pfad = " ".join("%s%.1f %.1f" % ("M" if i == 0 else "L", *px(d, strahlhoehe_km(d, d_tan)))
-                    for i, d in enumerate(range(0, int(d_tan) + 1, 10)))
-    o.append('<path d="%s" fill="none" stroke="#f0883e" stroke-width="2.5"/>' % pfad)
+
+    def transmission_bei(d):
+        """Anteil des Lichts, der von der Tangente bis hierher uebrig ist."""
+        rest = 1.0
+        for d_nah, d_fern, _sch, c in reversed(det.get("segmente", [])):
+            if d >= d_fern:
+                continue
+            rest *= (1.0 - c)
+        return rest
+
+    schritt = 8
+    for d in range(0, int(d_tan), schritt):
+        d1 = min(d + schritt, d_tan)
+        x0, y0 = px(d, strahlhoehe_km(d, d_tan))
+        x1, y1 = px(d1, strahlhoehe_km(d1, d_tan))
+        tr = transmission_bei(0.5 * (d + d1))
+        # von hellem Orange (Licht kommt durch) nach dunklem Rot (blockiert)
+        rgb = (int(30 + 210 * tr), int(20 + 116 * tr), int(20 + 42 * tr))
+        o.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" '
+                 'stroke="rgb(%d,%d,%d)" stroke-width="%.1f" '
+                 'stroke-linecap="round"/>'
+                 % (x0, y0, x1, y1, rgb[0], rgb[1], rgb[2], 1.4 + 2.2 * tr))
+
+    # Segmentmarken: wo genau geht wie viel verloren
+    for d_nah, d_fern, _sch, c in det.get("segmente", []):
+        if c < 0.05 or 0.5 * (d_nah + d_fern) > d_tan - 45:
+            continue
+        xm, ym = px(0.5 * (d_nah + d_fern), strahlhoehe_km(0.5 * (d_nah + d_fern), d_tan))
+        o.append('<circle cx="%.1f" cy="%.1f" r="%.1f" fill="none" '
+                 'stroke="#f85149" stroke-width="1.2" opacity="%.2f"/>'
+                 % (xm, ym, 3 + 7 * c, 0.35 + 0.5 * c))
+        o.append('<text x="%.1f" y="%.1f" fill="#f85149" font-size="9" '
+                 'text-anchor="middle">-%.0f%%</text>' % (xm, ym - 12 - 7 * c, 100 * c))
     xs, ys = px(d_tan, 0)
     o.append('<circle cx="%.1f" cy="%.1f" r="9" fill="#f0883e"/>' % (xs, ys))
     for a in range(0, 360, 45):
@@ -181,8 +215,11 @@ def svg(tag, feld):
     o.append('<text x="810" y="44" fill="#8b949e" font-size="11" text-anchor="end">'
              'Schirm %s · Sicht %.2f · Weg %.2f</text>'
              % (det["schirm"], det["sicht"], det["weg"]))
-    o.append('<text x="%.1f" y="%.1f" fill="#f0883e" font-size="11">Tangente %.0f km'
-             '</text>' % (xs - 100, ys - 22, d_tan))
+    o.append('<text x="%.1f" y="%.1f" fill="#f0883e" font-size="11" '
+             'text-anchor="middle">Tangente %.0f km</text>' % (xs, ys - 46, d_tan))
+    o.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="#f0883e" '
+             'stroke-width="0.5" stroke-dasharray="2 2" opacity=".6"/>'
+             % (xs, ys - 40, xs, ys - 20))
     o.append('<text x="%d" y="482" fill="#484f58" font-size="10">'
              'Hoehe %.0f-fach ueberhoeht · Wolken aus ERA5, Baenderdicke '
              'schematisch</text>' % (X0, (HO / YMAX) / (BR / XMAX)))
