@@ -320,3 +320,79 @@ zeigen, ist eine Aussage ueber das LABEL, nicht ueber die Terme.
 **Ueberraschung:** rho(S,B) > rho(S,A).  Der Score wird staerker vom Fenster
 getrieben als vom Schirm.  Bei einem Rueckbau auf einen Term waere B zu
 behalten, nicht A - das Gegenteil der Intuition.
+
+## 9 Validierung gegen kuratierte Sonnenuntergaenge (14.08.2026)
+
+Andre hat per semantischer Suche ("sonnenuntergang berlin") in der iOS-Fotos-App
+eine Liste echter Sonnenuntergangsaufnahmen geliefert.  Das ist ein
+Absichtslabel, das jede Heuristik schlaegt.
+
+**Vier der genannten Abende stammten aus der Durchsicht hoher Balken in der
+Rueckschau - also vom Score selbst ausgewaehlt und damit zirkulaer.  Sie sind
+ausgeschlossen.**  Es bleiben 11 unabhaengige Abende.
+
+### 9.1 Der Score traegt
+
+| | Mittelrang | z | p |
+|---|---|---|---|
+| S = Schirm x Fenster | **0.677** | +2.04 | **0.042** |
+| A nur Schirm | 0.670 | +1.95 | 0.051 |
+| B nur Fenster | 0.451 | −0.56 | 0.574 |
+
+Zum Vergleich dasselbe Mass auf 272 UNkuratierten Fotoabenden: 0.510 (z +0.57).
+Der Unterschied ist der Wert eines guten Labels.
+
+**S schlaegt jede einfache Alternative** aus denselben Daten:
+
+| Merkmal | Mittelrang | z |
+|---|---|---|
+| **S** | **0.677** | **+2.04** |
+| hohe Wolken nah | 0.582 | +0.94 |
+| hoch + mittel | 0.582 | +0.94 |
+| Buckel "50 % optimal" | 0.549 | +0.56 |
+| tiefe Wolken negiert | 0.543 | +0.49 |
+| freier Westen allein | 0.532 | +0.37 |
+| mittelhohe Wolken | 0.473 | −0.31 |
+
+Damit ist das E0-Abbruchkriterium bestanden.
+
+### 9.2 Aber er ist nicht scharf genug fuer das bestellte Produkt
+
+| Alarmrate | faengt von 11 erinnerten Abenden |
+|---|---|
+| **18/Jahr (s\* wie kalibriert)** | **0** |
+| 37/Jahr | 1 (9 %) |
+| 73/Jahr | 5 (45 %) |
+| 110/Jahr | 7 (64 %) |
+
+Der Score hebt gute Abende von Rang 0.50 auf 0.68.  Ein 5-%-Alarm braucht sie
+bei 0.95.  Obere 95-%-Grenze der wahren Trefferquote bei 0 von 11: **24 %**.
+
+**Andres 29.03.2025** ("spektakulaer"): absolut S = 0.212, saisonal aber
+Rang 0.81.  Der Score hat den Abend erkannt; versenkt hat ihn Entscheidung D1
+(absoluter Schwellwert) - im Maerz sind alle Scores niedrig.
+
+### 9.3 Zwei Erklaerungen geprueft und verworfen
+
+**Parameter.** Sweep ueber die Fensterhaerte K_SEGMENT (0.4 bis 2.0): der
+Mittelrang bewegt sich zwischen 0.660 und 0.705, die Trefferquote bleibt bei
+0-1 von 11.  Um das Produkt zu retten braeuchte es +0.25, nicht +0.03.
+Gegenprobe: bei K = 1.0 reproduziert die Neurechnung die gespeicherte
+Klimatologie auf 1e-6 genau.
+
+**Loecher.** Hypothese: bei 0.5 Grad und 3 Schichten sieht der Score keine
+Risse in einer sonst geschlossenen Decke.  Gemessen an der Spannweite der
+tiefen Bewoelkung quer ueber den Faecher im Band 240-420 km: kuratierte
+Abende 0.390, alle Abende 0.392, z = −0.02.  **Nicht bestaetigt.**
+
+### 9.4 Was daraus folgt
+
+Der Score ist das Beste, was aus diesen Daten zu holen ist, und er ist
+messbar besser als jede Alternative - aber die Luecke zwischen "selten genug"
+und "trifft die guten Abende" bleibt.  Drei Wege, keiner offensichtlich:
+niveauaufgeloeste Variante mit Dickenstrafe (nie gegen Schoenheit getestet),
+Ruecknahme von D1, oder ein anderes Produkt (taegliche Zahl statt seltener
+Alarm).
+
+**Alles hier steht auf n = 11.**  Ein Album mit der vollstaendigen Suchliste
+wuerde es auf n = 50-80 bringen und die Produktentscheidung tragfaehig machen.
