@@ -513,3 +513,53 @@ Offene Designfrage dabei: eine ferne Bank nimmt wenig Raumwinkel ein, steht
 aber genau in Blickrichtung.  Reine Raumwinkelgewichtung wuerde sie
 unterschaetzen - es braucht vermutlich einen Richtungsanteil.  Das ist ein
 Entwurf, kein Handgriff, und wird nicht nebenbei gemacht.
+
+## 12 Distanz-Schirm: Vorab-Kriterien verfehlt (14.08.2026)
+
+**Vorher festgelegt:** Mittelrang > 0.70 bei z > 4.0; Treffer bei 18
+Alarmen/Jahr >= 8 von 43; S muss A weiter schlagen; keine gefitteten Parameter.
+
+| Variante | Mittelrang | z | Treffer 18/37/73 |
+|---|---|---|---|
+| alt (Schirm nah) | 0.674 | +3.95 | 4 / 10 / 20 |
+| Distanz, nur Raumwinkel | 0.650 | +3.40 | 4 / 6 / 14 |
+| Distanz + Phasenfunktion | 0.674 | +3.95 | **7** / 12 / 20 |
+
+**Kriterien nicht erfuellt** (0.674 < 0.70, 7 < 8).  Nicht uebernommen.
+
+### 12.1 Warum die reine Raumwinkelfassung scheitert
+
+Der Ring bei 300 km hat 1/110 des Raumwinkels des Rings ueber dem Kopf.  Die
+ferne Bank kann den Score gar nicht bewegen, egal wie hell sie ist.  Das war
+als Risiko benannt und hat sich bestaetigt.
+
+### 12.2 Warum die Phasenfunktion physikalisch dazugehoert
+
+Wolkentropfen streuen stark vorwaerts.  Am Wolkenort in Entfernung d steht
+die Sonne noch d/R_eff hoch; die Blickrichtung von Berlin trifft die Wolke
+unter arctan(h/d).  Beide Winkel sind fast gleich:
+
+| d [km] | Sonnenhoehe | Blickwinkel | Streuwinkel | HG(g=0.85) |
+|---|---|---|---|---|
+| 0 | 0.00° | 90.00° | 90.00° | 0.0098 |
+| 120 | 0.81° | 4.53° | 3.72° | 5.24 |
+| 250 | 1.69° | 2.18° | **0.49°** | **6.52** |
+
+Verhaeltnis vorwaerts zu quer: 670 zu 1.  Gegen 1/110 Raumwinkel bleibt netto
+Faktor 6 zugunsten der fernen Bank.  g = 0.85 ist Literaturwert fuer
+Wasserwolken, nicht an diese Daten angepasst.
+
+### 12.3 Selbstkritik
+
+Die Phasenfunktion kam NACH dem ersten Fehlschlag.  Die Analyse ist damit
+adaptiv statt vorab festgelegt; der Befund ist entsprechend schwaecher, auch
+wenn die Physik unstrittig ist.
+
+### 12.4 Was den Fall entscheiden wuerde
+
+Die Fanabtastung endet bei 420 km.  Fuer einen Schirm bei 250 km liegt der
+Tangentenpunkt bei 652 km - der Beleuchtungsweg ist nur zu 87 % (Median)
+abgetastet, der Rest gilt als frei und beguenstigt ferne Schirme.
+**Eine Erweiterung der Distanzen auf 600-700 km ist die Voraussetzung dafuer,
+diese Variante ueberhaupt fair zu bewerten.**  Kostet Kontingent und eine
+neue Klimatologie.
