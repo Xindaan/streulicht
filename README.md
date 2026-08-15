@@ -36,9 +36,14 @@ Knoepfe, sonst nichts. Die Seite zeigt bewusst **keine** Prognose: wer vorher
 die Vorhersage sieht, bewertet die Vorhersage statt den Himmel. Erst bewerten,
 dann nachsehen.
 
-**Noch nicht ausgeliefert.** Das Repo ist seit 15.08.2026 oeffentlich, damit
-ist Pages moeglich — eingeschaltet ist es noch nicht (T-0015). Bis dahin
-bleibt `seiten_basis` leer und die Bewertungsaufforderung kommt ohne Link.
+**Ausgeliefert seit 15.08.2026** ueber GitHub Pages:
+<https://xindaan.github.io/streulicht/web/bewerten-berlin.html>
+Die abendliche Aufforderung verlinkt genau dorthin, mit `?a=1` als Anlass.
+
+Die **Produktseite** (`web/index.html`) wird bewusst NICHT ausgeliefert. Sie
+ist ein 0.3-MB-Bauartefakt und gitignoriert — und sie zeigt die Prognose,
+waehrend die Bewertungsseite sie verbirgt. Beide auf derselben Site waeren
+eine Einladung zur Verankerung.
 
 **Vor 4 Uhr morgens** zaehlt die Bewertung noch zum Vorabend — wer um eins
 bewertet, meint den Sonnenuntergang von gestern.
