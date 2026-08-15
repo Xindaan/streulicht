@@ -348,6 +348,19 @@ def main():
 
     with open(a.konfig) as f:
         kfg = json.load(f)
+    # Das Alarm-Topic steht in konfig_geheim.json (gitignoriert), nicht in der
+    # versionierten Konfiguration: wer es hat, kann beliebige Pushs schicken.
+    # Das Bewertungs-Topic bleibt oeffentlich - es steht ohnehin im Klartext in
+    # der ausgelieferten Seite und laesst sich gar nicht verbergen.
+    gpfad = os.path.join(BASIS, "konfig_geheim.json")
+    geheim = {}
+    if os.path.exists(gpfad):
+        with open(gpfad) as f:
+            geheim = json.load(f)
+    for _o in kfg["orte"]:
+        _t = (geheim.get("ntfy_alarm") or {}).get(_o["name"])
+        if _t:
+            _o["ntfy_alarm"] = _t
     if fan_setzen(kfg):
         print("Sparfaecher aktiv: %d Azimute x %d Distanzen - s* ist damit "
               "NICHT mehr gueltig, Klimatologie neu rechnen!"

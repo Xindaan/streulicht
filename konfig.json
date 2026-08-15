@@ -1,5 +1,5 @@
 {
-  "_hinweis": "ntfy-Topics sind durch Namens-Obskuritaet geschuetzt, nicht durch Auth. Nicht oeffentlich posten.",
+  "_hinweis": "ntfy-Topics sind durch Namens-Obskuritaet geschuetzt, nicht durch Auth. Das ALARM-Topic steht deshalb in konfig_geheim.json (gitignoriert) - wer es hat, kann beliebige Pushs schicken. Das BEWERTUNGS-Topic bleibt hier: es steht ohnehin im Klartext in der ausgelieferten Bewertungsseite und laesst sich nicht verbergen.",
   "modell": "ecmwf_ifs025",
   "schwelle_score": 0.7065,
   "schwelle_wahrscheinlichkeit": 0.5,
@@ -16,7 +16,6 @@
       "breite": 52.52,
       "laenge": 13.405,
       "zeitzone": "Europe/Berlin",
-      "ntfy_alarm": "su-berlin-a7k2m9x4",
       "ntfy_bewertung": "su-bewertung-a7k2m9x4"
     }
   ],
