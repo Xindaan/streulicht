@@ -1,7 +1,7 @@
 # STATE
 
-Stand: 14.08.2026 abends (Aufloesungstest gegen ICON-D2 gerechnet,
-drei Fehler derselben Klasse behoben, einer davon im Betrieb)
+Stand: 15.08.2026 (Satellitenwahrheit gebaut - die Datenluecke ist zur
+Haelfte keine; Rueckkanal messbar gemacht; Fables Gutachten eingearbeitet)
 
 ## Ziel
 
@@ -119,24 +119,16 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
 
 ## Next actions
 
-Alle drei haengen an etwas, das ich nicht selbst entscheiden oder
-beschaffen kann.
-
-1. **T-0015 Seite ausliefern** — braucht ein Repo-Remote, das nur Du anlegen
-   kannst. Die Seite steht lokal, rendert korrekt (nachgesehen 14.08.) und
-   ist self-contained. Danach ist E3 zu.
-2. **T-0003 Archivierung** als Cron auf dem NAS — `ensemble-api` war am
-   14.08. nachmittags erschoepft. Vor dem Einrichten `--trocken` pruefen.
-3. **T-0019 MSG/MTG-Infrarot** — die letzte offene Antwort auf die
-   Datenluecke, nachdem Darstellung (Befund 25) und Aufloesung (Befund 29)
-   beide nichts getragen haben. Braucht vermutlich eine EUMETSAT-Anmeldung,
-   also Deine Entscheidung.
-
-**T-0006 ist erledigt (Befund 31):** s\* ist NICHT uebertragbar. Im
-ereignisreichen Sommerfenster rho = +0.504, nur 1 von 6 Spitzenabenden
-gemeinsam, und mit demselben s\* loest die 3-Schicht dreimal aus, die
-niveauaufgeloeste kein einziges Mal. Der Betrieb laeuft auf der richtigen
-Variante; ein Wechsel braeuchte eine eigene Klimatologie.
+1. **T-0027 Fensterterm gegen die Satellitenwahrheit.** Der neue Befund 34
+   dreht die Prioritaet: bei mindestens zwei der fuenf Problemabende hatte
+   das Modell die Wolke vollstaendig und der Score hat sie weggerechnet.
+   Offline, 0 EUR, keine Wartezeit. `python3 skripte/satellit.py`
+2. **T-0015 Seite ausliefern** — braucht ein Repo-Remote, das nur Andre
+   anlegen kann. Danach `seiten_basis` in konfig.json setzen, sonst kommt
+   die Bewertungsaufforderung ohne Link.
+3. **T-0003 Archivierung als Cron ab Tag 1.** Ohne dieses Archiv laesst sich
+   die Quantilbruecke (T-0020) nie messen, und die ist die zentrale
+   Unbekannte des Betriebs (Befund 33).
 
 ## Letzte Done
 

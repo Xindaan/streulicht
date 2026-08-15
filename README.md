@@ -64,13 +64,31 @@ zusammenfallen.
 # Alarmlauf, nach der Bereitstellung des 00z-Laufs
 30 7 * * *   cd /volume1/wetter && /usr/bin/python3 skripte/alarm.py >> daten/alarm.log 2>&1
 
+# Bewertungsaufforderung - STUENDLICH, das Skript prueft selbst das Fenster.
+# Eine feste Uhrzeit ginge nicht: der Sonnenuntergang wandert im Jahr um
+# mehr als vier Stunden. Idempotent, je Abend hoechstens eine Aufforderung.
+15 * * * *   cd /volume1/wetter && /usr/bin/python3 skripte/erinnerung.py >> daten/erinnerung.log 2>&1
+
 # Bewertungen einsammeln - ALLE DREI STUNDEN, nicht taeglich:
 # ntfy.sh haelt Nachrichten nur rund 12 h vor
 5 */3 * * *  cd /volume1/wetter && /usr/bin/python3 skripte/bewertungen_holen.py >> daten/bewertung.log 2>&1
 
-# Ensemble-Archivierung - das Archiv reicht nur 93 Tage zurueck und wandert
+# Ensemble-Archivierung - AB TAG 1 DES LIVEGANGS, nicht spaeter.
+# Das Archiv reicht nur 93 Tage zurueck und wandert; was heute nicht
+# weggeschrieben wird, ist in drei Monaten weg. Ohne dieses Archiv laesst
+# sich die Quantilbruecke (T-0020) nie messen - siehe unten.
 0 8 * * *    cd /volume1/wetter && /usr/bin/python3 skripte/archiviere.py >> daten/archiv.log 2>&1
 ```
+
+**Die Quantilbruecke ist die zentrale Unbekannte des Betriebs.**  s\* stammt
+aus einer Klimatologie auf IFS-**Analysen**; der Alarm rechnet auf
+ECMWF-**ENS-Membern**.  Der Sprung zwischen zwei Modellen ist gemessen
+genauso gross wie der zwischen zwei Score-Varianten (Befund 33: rho 0.483
+gegen 0.504, bei den Ausloesungen 8 gegen 2).  Ob dieselbe Schwelle dieselbe
+Rate ergibt, ist **nie gemessen worden** und vorab auch nicht messbar - es
+gibt kein Ensemble-Archiv.  Der Livegang ist die Messung: `archiviere.py` ab
+Tag 1, nach 6-8 Wochen s\* und p\* nachziehen.  Bis dahin gilt die Alarmrate
+als unbekannt, nicht als 18.5 pro Jahr.
 
 **Kontingent beachten.** Open-Meteo drosselt minuetlich (600), stuendlich
 (5000) und taeglich (10000). Die **historischen** Endpunkte (`archive-api`,
@@ -98,6 +116,29 @@ Bedeutungen, und nur eine ist terminal — im `reason`-Feld nachsehen:
 
 Wer alle drei gleich behandelt, bricht bei voller Quote ab: `icond2.py` kam
 so im ersten Lauf ueber 5 von 166 Abenden nicht hinaus.
+
+## Satellitenwahrheit (T-0019)
+
+Die MSG-Wolkenmaske beantwortet fuer jeden vergangenen Abend, ob die Wolke
+ueberhaupt da war - also ob ein Fehlschlag am MODELL lag oder am SCORE.
+Kosten 0 EUR: Meteosat-Daten ab einer Stunde Latenz sind gebuehrenfrei.
+
+Einrichtung, einmalig:
+
+1. Konto auf <https://user.eumetsat.int> (kostenlos).
+2. Consumer Key und Secret unter <https://api.eumetsat.int/api-key/>.
+3. `konfig_geheim.json` anlegen (ist gitignoriert):
+
+```json
+{"eumetsat": {"consumer_key": "...", "consumer_secret": "..."}}
+```
+
+`eumdac` wird **nicht** gebraucht - der Data Store ist gewoehnliches HTTP,
+und der GRIB2-Leser steht in `sonnen/grib2.py`.
+
+```bash
+python3 skripte/satellit.py 2025-09-15
+```
 
 ## Troubleshooting
 
@@ -128,6 +169,10 @@ deshalb aus **Terminal.app** starten.
 | `skripte/klimatologie.py` | Score ueber Jahre → Verteilung |
 | `skripte/auswertung.py` | Verteilung → s\*, Plot |
 | `skripte/abbruchtest.py` | Validierung gegen Fotoarchiv |
+| `skripte/erinnerung.py` | taegliche Bewertungsaufforderung (T-0021) |
+| `skripte/bewertungsseite.py` | erzeugt `web/bewerten-<ort>.html` je Ort |
+| `skripte/satellit.py` | MSG-Wolkenmaske als Beobachtungswahrheit |
+| `sonnen/grib2.py` | GRIB2-Leser fuer die Wolkenmaske, ohne Fremdbibliothek |
 
 Messwerte und Begruendungen: `docs/befunde-e1.md`. Jede Zahl dort ist mit
 ihrem Pruefbefehl belegt, auch die drei, bei denen die erste Annahme falsch war.
