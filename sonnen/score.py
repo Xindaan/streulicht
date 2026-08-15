@@ -123,12 +123,42 @@ def _schirmgewichte(hoehe_km):
     return {d: v / summe for d, v in g.items()}
 
 
-def score(hole):
+def weg_produkt(c_segmente):
+    """Der Betriebsterm: unabhaengiges Produkt ueber die Segmente."""
+    weg = 1.0
+    for c in c_segmente:
+        weg *= (1.0 - c) ** K_SEGMENT
+    return weg
+
+
+# Alternative Aggregationen des Beleuchtungswegs, fuer T-0029 (Umbau-Pruefung).
+# Alle nehmen die Liste der Segmentbedeckungen (Maximalueberlapp innerhalb
+# des Segments, azimutgewichtet) und geben den Wegfaktor 0..1 zurueck.
+# Der Betrieb rechnet "produkt"; die anderen sind Kandidaten, KEIN Ersatz.
+WEG_AGGREGATIONEN = {
+    "produkt": weg_produkt,
+    # Weichere Kopplung: Wurzel des Produkts (K = 0.5)
+    "wurzel": lambda cs: math.prod((1.0 - c) ** 0.5 for c in cs),
+    # Mittel statt Produkt: Licht durch ein gebrochenes Feld
+    "mittel": lambda cs: 1.0 - sum(cs) / len(cs) if cs else 1.0,
+    # Maximalueberlapp laengs des Weges - dieselbe Annahme wie in der Saeule
+    "max": lambda cs: 1.0 - max(cs) if cs else 1.0,
+}
+
+
+def score(hole, weg_agg=None, ohne_tangentensegment=False):
     """hole(d_km, az_versatz, schicht) -> Bedeckung 0..1  (oder None).
 
     Rueckgabe: (S, Detail-dict). Detail traegt die Terme fuer Diagnose und
     fuer den Vertikalschnitt in E3.
+
+    weg_agg: Funktion Liste der Segmentbedeckungen -> Wegfaktor.  None heisst
+    Betriebsterm (Produkt).  ohne_tangentensegment laesst die Stuetzstelle
+    jenseits der Tangente weg ("kuerzere Reichweite", T-0029) - im Betrieb
+    ist sie drin, siehe Kommentar unten.
     """
+    if weg_agg is None:
+        weg_agg = weg_produkt
     bestes, detail = 0.0, None
     for name, hoehe in SCHIRME:
         d_tan = tangentendistanz_km(hoehe)
@@ -185,14 +215,14 @@ def score(hole):
         # ohne diese Zeile endete die Abtastung bei 360 km.
         stuetzen = [d for d in DISTANZEN_KM if SICHT_KM <= d < d_tan]
         jenseits = [d for d in DISTANZEN_KM if d >= d_tan]
-        if jenseits:
+        if jenseits and not ohne_tangentensegment:
             stuetzen.append(jenseits[0])
         # weg startet bei 1.0 und bleibt dort, wenn kein Segment Daten hat.
         # Deshalb wird mitgezaehlt: moeglich = Segmente, die ueberhaupt einen
         # Wert tragen KOENNTEN, erfasst = Segmente, die einen bekamen.  Ein
         # Segment, das wegen der Selbstblockade-Regel uebersprungen wird, ist
         # KEIN fehlender Wert und zaehlt in keinem der beiden.
-        weg, segmente = 1.0, []
+        segmente, c_segmente = [], []
         weg_moeglich = weg_erfasst = 0
         for i in range(len(stuetzen) - 1):
             d_nah, d_fern = stuetzen[i], stuetzen[i + 1]
@@ -225,9 +255,11 @@ def score(hole):
             if zg == 0.0:
                 continue
             c_seg = zc / zg
-            weg *= (1.0 - c_seg) ** K_SEGMENT
+            c_segmente.append(c_seg)
             weg_erfasst += 1
             segmente.append((d_nah, d_fern, schichten, c_seg))
+        # weg ist 1.0, wenn kein Segment Daten hat (siehe Zaehlung oben).
+        weg = weg_agg(c_segmente)
 
         # Kein einziges auswertbares Segment, obwohl es welche gaebe: der
         # Beleuchtungsweg ist vollstaendig unbeobachtet.  weg waere dann 1.0,

@@ -1941,3 +1941,117 @@ Belegt: Feld 0 dekodiert zu 320 .. 15040 m, Median 4480 m; Berlin am
 03.05.2024 auf 6720 m.  Vor der Korrektur war das Feld Unsinn.
 
 Pruefbefehl: `python3 skripte/oberkante.py --nur-cache`
+
+## 37 T-0029: der Wegterm ist nicht der Toeter - keine Aggregation rettet die toten Fenster (15.08.2026)
+
+Nach Befund 35 (Wegwolken bestaetigt) und 36 (Schichtzuordnung richtig,
+Oberkante blind) blieb eine Erklaerung fuer die toten Albumabende: der Term
+selbst.  Das Produkt ueber vier bis sechs Wegsegmente rechnet ein
+gebrochenes Feld mit 66-91 % Bedeckung auf 0.001 herunter, waehrend in der
+Saeule Maximalueberlapp gilt.  Wenn der Term zu hart ist, muss eine weichere
+Aggregation die toten Abende retten - bei GLEICHER Alarmrate und ohne die
+Trennung Album/Referenz zu verlieren.
+
+**Aufbau.**  Der volle Score, beide Schirme, gleiche Felder und gleicher
+Sichtterm, fuer alle 4058 Abende der Klimatologie 2015-2026 in fuenf
+Fassungen des Wegterms (`sonnen/score.py`, `WEG_AGGREGATIONEN`):
+
+| Variante | Wegfaktor | Idee |
+|---|---|---|
+| produkt | Produkt (1 - c_i) | Betrieb, Referenz |
+| wurzel | Produkt (1 - c_i)^0.5 | weichere Kopplung, K = 0.5 |
+| mittel | 1 - Mittel(c_i) | Licht durch ein gebrochenes Feld |
+| max | 1 - max(c_i) | Maximalueberlapp wie in der Saeule |
+| kurz | Produkt ohne die Stuetzstelle jenseits der Tangente | kuerzere Reichweite, der bodennahe Abschnitt faellt weg |
+
+Jede Variante bekommt ihre EIGENE Schwelle (95. Perzentil ihrer eigenen
+Klimatologie, also dieselben 18 Alarme im Jahr).  Die Fassung `produkt`
+reproduziert die gespeicherte Klimatologie bitgenau (4058 von 4058,
+max |dS| = 0).  Beide Schirmzweige muessen mit, weil die gespeicherten
+Segmentwerte aus Befund 35 nur den GEWINNENDEN Zweig tragen - und der ist an
+drei der vier Toeter-Abende `mid` mit A = 0.02 bis 0.27.
+
+### 37.1 Ergebnis: nichts bewegt sich
+
+**Kein einziger der vier Toeter-Abende erreicht unter irgendeiner Variante
+die Alarmschwelle** - auch nicht unter `mittel`, der weichsten:
+
+| Abend | Zweig mit Schirm | A | B produkt | B mittel (weichste) | S mittel | Schwelle mittel |
+|---|---|---|---|---|---|---|
+| 2018-07-09 | high | 0.89 | 0.000 | 0.134 | 0.119 | 0.786 |
+| 2023-04-24 | (keiner) | 0.02 | 0.000 | 0.104 | 0.002 | 0.786 |
+| 2024-05-03 | high | 0.44 | 0.000 | 0.094 | 0.041 | 0.786 |
+| 2024-09-15 | mid | 0.87 | 0.032 | 0.425 | 0.368 | 0.786 |
+
+Der Grund steht in den Zweigen (`python3 skripte/wegterm.py --bericht`,
+letzte Tabelle): am 09.07.2018 und 03.05.2024 ist der Weg des Zweigs mit dem
+Schirm laut Modell auch im MITTEL zu 83 bzw. 64 % zu und hat ein Segment mit
+98 bzw. 90 % - da hilft keine Aggregation, das Modell sagt "zu", und der
+Satellit hat die Wolke in der Saeule bestaetigt (Befund 35).  Am 24.04.2023
+sieht das Modell gar keinen Schirm (A 0.02 / 0.01) - das ist die Klasse
+"Schirm fehlt im Modell" aus Befund 24.4, kein Fensterproblem.  Der 15.09.2024
+ist T-0018 (beleuchtete tiefe Decke): `kurz` und `mittel` heben B von 0.03 auf
+0.45, weil das Segment jenseits der Tangente (240-300 km, 93 %) wegfaellt oder
+untergeht - S = 0.39 bleibt trotzdem unter jeder Schwelle.
+
+**Trefferquote bei gleicher Alarmrate, Album n = 79 (Andres benotete Abende):**
+
+| Variante | 18/Jahr | 25/Jahr | 37/Jahr | gepaart gegen produkt bei 18/Jahr |
+|---|---|---|---|---|
+| produkt | 13 = 16 % [10..26] | 18 = 23 % | 26 = 33 % | - |
+| wurzel | 16 = 20 % [13..30] | 18 = 23 % | 25 = 32 % | +4 / -1 |
+| mittel | 13 = 16 % | 18 = 23 % | 26 = 33 % | +4 / -4 |
+| max | 15 = 19 % | 18 = 23 % | 28 = 35 % | +4 / -2 |
+| kurz | 14 = 18 % | 19 = 24 % | 24 = 30 % | +2 / -1 |
+
+Das beste Paar (`wurzel`, +4/-1) ist mit n = 5 diskordanten Abenden kein
+Signal (McNemar exakt p = 0.375), und bei 25 und 37 Alarmen ist es weg.  Die
+Anreicherung (mittlerer saisonaler Perzentilrang von S im Album) ist unter
+`produkt` am HOECHSTEN: 0.686 (z +5.71) gegen 0.678 / 0.657 / 0.678 / 0.681
+fuer wurzel / mittel / max / kurz.  Spearman S gegen Note innerhalb des
+Albums: +0.18 bis +0.22, ununterscheidbar.
+
+**Tote Fenster (B < 0.1), Album gegen Referenz:** produkt 3 gegen 14, wurzel
+2 gegen 10, mittel 1 gegen 5, max 3 gegen 9, kurz 3 gegen 11.  Das
+Verhaeltnis bleibt bei rund 3-5, aber die absolute Trennung schrumpft, je
+weicher der Term wird - die harten Nullen aus Befund 26 sind Signal, und
+Weichmachen nimmt davon.
+
+Die Rangfolge der Abende aendert sich dabei durchaus (Spearman gegen
+produkt: wurzel +0.985, kurz +0.987, max +0.971, mittel +0.908) - nur eben
+nicht dort, wo es zaehlt.
+
+### 37.2 Was das heisst
+
+**Der Wegterm ist als Erklaerung fuer die toten Albumabende gefallen.**
+Damit sind alle drei Lesarten aus Befund 35 durch: Wegdaten (35), Hoehe (36),
+Term (37).  Was von den vier Toeter-Abenden bleibt, ist heterogen und nicht
+mehr EIN Mechanismus:
+
+- 2023-04-24: kein Schirm im Modell.  Klasse "Modell sieht nichts", wie die
+  drei Datenfehler-Fuenfen in Befund 24.4.
+- 2024-09-15: T-0018, n = 1.
+- 2018-07-09 und 2024-05-03: Schirm da, Weg im Modell auch im Mittel zu
+  64-83 % dicht, Wolke in der Saeule vom Satelliten bestaetigt - und das
+  Licht kam trotzdem.  Was weder Modell noch Maske aufloesen: die
+  vertikale Struktur UNTER der Oberkante.  Ob die tiefe Decke, die das
+  Modell dort setzt, wirklich geschlossen war, sagt erst ein Produkt mit
+  Wolkentyp oder Unterkante (T-0030) - falls es eines gibt.
+
+Der Umbau des Wegterms entfaellt.  Der Hook `weg_agg` in `score()` bleibt
+mit Default `produkt` (bitgenau geprueft) und ist fuer eine spaetere
+Pruefung mit anderen Daten da; im Betrieb aendert sich nichts.
+
+Nebenbefund: in STATE.md stand "Faktor 49 an den Toeter-Segmenten" ohne
+Herleitung.  Gemessen ist das Verhaeltnis (1 - max) / Produkt am gewinnenden
+Zweig 10 / 291 / 107 / 1 fuer die vier Abende - die Ungleichbehandlung ist
+real und noch groesser, aendert aber am Ergebnis nichts, weil A dort klein
+ist oder auch das Maximum zu ist.
+
+Vorbehalt wie in Abschnitt 20-23: Album = draussen = eher klares Wetter.
+Eine Variante, die bewoelkte Wege oeffnet, kann im Album schlechter aussehen
+als sie ist.  Deshalb steht die Referenz mit auf dem Tisch - und dort
+verliert das Weichmachen ebenfalls, es gewinnt nirgends.
+
+Pruefbefehl: `python3 skripte/wegterm.py` (rechnet 4058 x 5 in rund 20 s und
+cacht nach `daten/wegterm_varianten.json`; `--bericht` nur auswerten).

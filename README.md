@@ -181,6 +181,16 @@ bestaetigte Wolke das Fenster geschlossen hat. Die Masken werden in
 python3 skripte/fensterterm.py --nur-cache
 ```
 
+`skripte/wegterm.py` (T-0029, Befund 37) rechnet den Score fuer alle Abende
+der Klimatologie mit fuenf Fassungen des Beleuchtungswegs (Produkt, Wurzel,
+Mittel, Maximum, ohne Tangentensegment) und misst je Fassung Trefferquote,
+Anreicherung und tote Fenster bei gleicher Alarmrate. Ergebnis: keine
+Fassung rettet die toten Albumabende, der Betrieb bleibt beim Produkt.
+
+```bash
+python3 skripte/wegterm.py
+```
+
 ## Troubleshooting
 
 **Kein Push angekommen.** Topic in der ntfy-App abonniert? `--trocken` zeigt,
@@ -214,6 +224,7 @@ deshalb aus **Terminal.app** starten.
 | `skripte/bewertungsseite.py` | erzeugt `web/bewerten-<ort>.html` je Ort |
 | `skripte/satellit.py` | MSG-Wolkenmaske als Beobachtungswahrheit |
 | `skripte/fensterterm.py` | Fensterterm gegen die Maske: Phantom oder bestaetigt (T-0027) |
+| `skripte/wegterm.py` | Wegterm anders aggregiert, fuenf Varianten gegen Album/Referenz (T-0029) |
 | `sonnen/grib2.py` | GRIB2-Leser fuer die Wolkenmaske, ohne Fremdbibliothek |
 
 Messwerte und Begruendungen: `docs/befunde-e1.md`. Jede Zahl dort ist mit

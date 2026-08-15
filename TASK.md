@@ -91,10 +91,14 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   der Livegang IST die Messung. `archiviere.py` ab Tag 1, nach 6-8 Wochen
   s\*/p\* nachziehen.
 - T-0021 **Bewertungsaufforderung an JEDEM Abend**, nicht nur bei Alarm.
+  **GEBAUT** (`skripte/erinnerung.py`, launchd-Agent), im Betrieb noch
+  nicht beobachtet — Nachtrag 15.08.2026 beim T-0029-Statuspass.
   Sonst entstehen nur Labels fuer Alarmabende - dieselbe Presence-only-Falle,
   die den ersten Abbruchtest unentscheidbar gemacht hat. Ohne Negative gibt
   es keine Trefferquote.
-- T-0022 **Prognosestand je Lauf vollstaendig festschreiben.** `alarm.py`
+- T-0022 **Prognosestand je Lauf vollstaendig festschreiben.** **GEBAUT**
+  (`alarm.py` haengt seit 15.08. den ganzen Stand an `verlauf`), im Betrieb
+  noch nicht beobachtet. Urspruenglicher Befund: `alarm.py`
   haengt nur `p` an `verlauf`; Median, A, sicht, weg werden ueberschrieben.
   Nach der Saison laesst sich sonst nicht rekonstruieren, was am Alarmtag
   vorhergesagt war.
@@ -123,12 +127,30 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   Modell die tiefe Decke darunter (47 von 48 Segmenten fragen `low` ab).
   Belegt hat der Lauf trotzdem, dass die Schichtzuordnung des Scores
   richtig ist, und zwei Fehler im eigenen GRIB2-Leser aufgedeckt.
+- T-0029 Wegterm anders aggregieren — **GERECHNET 15.08.2026, Antwort:
+  traegt nicht** (Befund 37, `skripte/wegterm.py`). Fuenf Fassungen des
+  Beleuchtungswegs (Produkt = Betrieb, Wurzel, Mittel, Maximum, ohne
+  Tangentensegment) ueber alle 4058 Abende, beide Schirmzweige, je Fassung
+  eigene Schwelle bei 18/Jahr. Kein Toeter-Abend erreicht unter irgendeiner
+  Fassung die Schwelle (bestes S 0.37 gegen 0.79); Trefferquote im Album
+  13-16 von 79, Unterschiede im Rauschen (bestes Paar +4/-1, p 0.375);
+  Anreicherung unter Produkt am hoechsten (z +5.71); tote Fenster
+  Album/Referenz 3/14 schrumpfen beim Weichmachen auf 1/5, das Verhaeltnis
+  bleibt. **Damit sind alle drei Erklaerungen aus Befund 35 durch** (Wegdaten
+  35, Hoehe 36, Term 37). Rest heterogen: 2023-04-24 kein Schirm im Modell,
+  2024-09-15 = T-0018, 2018-07-09 und 2024-05-03 Weg auch im Mittel zu
+  64-83 % dicht und satellitenbestaetigt. Hook `weg_agg` in `score()`
+  bleibt, Default bitgenau (4058/4058). Betrieb unveraendert.
 - T-0030 **Wolkentyp oder -unterkante als richtiges Instrument.** Was
   T-0028 gebraucht haette: ein Produkt, das low/mid/high trennt oder die
   Unterkante liefert. Kandidaten aus dem Data Store: `EO:EUM:DAT:0617`
   (Optimal Cloud Analysis, MSG, Klimadatensatz) und die MTG-Nachfolger
   `EO:EUM:DAT:0684` / `EO:EUM:DAT:0681`. Erst pruefen, ob eines davon eine
   Unterkante oder Schichtzuordnung fuehrt - sonst bleibt die Frage offen.
+  Nach T-0029 die letzte offene Spur fuer 2018-07-09 und 2024-05-03 (die
+  vertikale Struktur unter der Oberkante) — aber n = 2, und beide sind
+  satellitenbestaetigt dicht. Nur angehen, wenn das Produkt billig zu
+  pruefen ist; sonst zaehlt "nicht vorhersagbar mit diesem Ansatz".
 
 - T-0019 MSG/MTG-Infrarot als Beobachtungswahrheit — **GEBAUT 15.08.2026**
   (Befund 34). Zugang, GRIB2-Leser und Faecherabtastung stehen;

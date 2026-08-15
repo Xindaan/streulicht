@@ -2,8 +2,9 @@
 
 Stand: 15.08.2026 abends. **Der Betrieb laeuft.** Repo oeffentlich, Pages
 liefert die Bewertungsseite, ntfy eingerichtet, vier launchd-Agenten geladen.
-Fachlich: Anwesenheit der Wegwolken (35) und ihre Hoehe (36) sind beide
-geprueft und erklaeren die toten Fenster nicht - uebrig bleibt der Term.
+Fachlich: Anwesenheit der Wegwolken (35), ihre Hoehe (36) und der Term
+selbst (37) sind alle drei geprueft und erklaeren die toten Fenster nicht.
+Der Score bleibt, wie er ist.
 
 ## Ziel
 
@@ -132,6 +133,14 @@ Decke darunter blockiert.
 
 **Damit ist der Term die einzige verbliebene Erklaerung (T-0029).**
 
+**Nachtrag 15.08. spaet (Befund 37): auch der Term ist durch.**  Fuenf
+Aggregationen des Wegs ueber alle 4058 Abende, beide Schirmzweige, gleiche
+Alarmrate: kein Toeter-Abend erreicht eine Schwelle, Trefferquote im
+Rauschen, Anreicherung unter dem Produkt am hoechsten.  An zwei der vier
+Abende ist der Weg im Modell auch im Mittel zu 64-83 % dicht und vom
+Satelliten bestaetigt; einer hat keinen Schirm im Modell; einer ist T-0018.
+Kein Umbau.  `python3 skripte/wegterm.py`.
+
 Entscheidung 14.08.: kein kommerzielles Kontingent, es dauert eben laenger.
 Ebenfalls gestrichen: die Sichtbarkeitszeile im Alarm - Andre geht zur Not
 vor die Tuer und braucht nur zu wissen, ob es gut wird.
@@ -145,13 +154,15 @@ fehlt, ist Zeit: der Livegang IST die Messung (Quantilbruecke T-0020).
 1. **Beobachten, nicht bauen.** Nach ein paar Tagen `daten/*.log` ansehen:
    feuert die Erinnerung im Fenster, kommen Bewertungen an, laeuft die
    Archivierung? Erst danach lohnt der naechste Umbau.
-2. **T-0029 Wegterm anders aggregieren** — die einzige verbliebene Erklaerung
-   fuer die toten Fenster, nachdem Anwesenheit (Befund 35) und Hoehe
-   (Befund 36) beide nichts hergaben. Die Ungleichbehandlung steht schon im
-   Code: Maximalueberlapp in der Saeule, unabhaengiges Produkt auf dem Weg,
-   Faktor 49 an den Toeter-Segmenten. Offline, 0 EUR.
-3. **T-0030 Wolkentyp/-unterkante** — nur falls T-0029 nicht traegt. Erst
-   pruefen, ob es das Produkt ueberhaupt gibt.
+2. **T-0030 Wolkentyp/-unterkante** — die letzte offene Spur fuer
+   2018-07-09 und 2024-05-03, nachdem T-0029 nicht traegt (Befund 37).
+   n = 2, beide satellitenbestaetigt dicht: nur angehen, wenn das Produkt
+   billig zu pruefen ist. Erst nachsehen, ob es Unterkante oder
+   Schichtzuordnung ueberhaupt fuehrt.
+3. **Nach der Beobachtungsphase**: T-0023 (Bewertungsverlust ausschliessen,
+   localStorage + Nachsenden) — T-0021 und T-0022 sind im Code schon drin
+   (`erinnerung.py`, `alarm.py` verlauf), im Betrieb aber noch nicht
+   beobachtet.
 
 ## Letzte Done
 
@@ -167,3 +178,7 @@ fehlt, ist Zeit: der Livegang IST die Messung (Quantilbruecke T-0020).
   statt Balken, telefonfester Vertikalschnitt, alle Kontraste ueber AA.
 - T-0027 Fensterterm gegen die Satellitenwahrheit: 158 Masken, kein Phantom
   im Album, Modellsaeule gegen Maske r bis +0.84 auf dem Weg (Befund 35).
+- T-0028 Wolkenoberkante: falsches Instrument, Strahl bei 0-1.5 km, CTH
+  sieht nur die oberste Wolke (Befund 36).
+- T-0029 Wegterm anders aggregiert: fuenf Fassungen, 4058 Abende, kein
+  Toeter-Abend gerettet, Betrieb bleibt beim Produkt (Befund 37).
