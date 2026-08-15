@@ -69,42 +69,41 @@ Betrieb laeuft deshalb auf `sonnen/score.py`, nicht auf der niveauaufgeloesten
 Wechsel steht aus, bis die Ablation (T-0006) zeigt, dass die Rangfolgen
 zusammenfallen.
 
-## Betrieb: wo laeuft der Cron?
+## Betrieb: launchd, nicht cron
 
-Die Cron-Zeilen unten stehen auf `/volume1/wetter`, also einem Synology-NAS.
-**Das ist eine geerbte Annahme aus der ersten Fassung dieser Datei, keine
-gepruefte Tatsache.**  Was der Betrieb wirklich braucht:
+**Auf macOS ist cron die falsche Wahl, und der Grund ist nicht Geschmack.**
+Diese Maschine steht auf `sleep 10` — sie schlaeft nach zehn Minuten ein.
+Cron feuert im Schlaf nicht und holt einen verpassten Lauf auch nicht nach;
+`launchd` mit `StartCalendarInterval` startet ihn beim Aufwachen nach. Genau
+das braucht ein Alarm, dessen Fenster einmal am Tag offen steht.
 
-- eine Maschine, die abends laeuft (die Bewertungsaufforderung kommt zur
-  Sonnenuntergangszeit) und morgens (der Alarmlauf braucht den 00z-Lauf),
-- Python 3 mit Standardbibliothek,
-- Netz.
+Vier Agenten in `~/Library/LaunchAgents/`, alle mit
+`WorkingDirectory` und absolutem Interpreterpfad (launchd hat kein PATH):
 
-Ein Mac tut es, solange er an ist; verpasste Laeufe holt nichts nach.  Ein
-NAS oder ein Kleinrechner ist der robustere Ort, aber keine Voraussetzung.
-Pfade unten entsprechend anpassen.
+| Label | Skript | Wann |
+|---|---|---|
+| `de.greatbelow.streulicht.alarm` | `alarm.py` | 07:30 |
+| `de.greatbelow.streulicht.erinnerung` | `erinnerung.py` | stuendlich zur 15. Minute |
+| `de.greatbelow.streulicht.bewertung` | `bewertungen_holen.py` | alle 3 h zur 5. Minute |
+| `de.greatbelow.streulicht.archiv` | `archiviere.py` | 08:00 |
 
-## Cron
-
-```cron
-# Alarmlauf, nach der Bereitstellung des 00z-Laufs
-30 7 * * *   cd /volume1/streulicht && /usr/bin/python3 skripte/alarm.py >> daten/alarm.log 2>&1
-
-# Bewertungsaufforderung - STUENDLICH, das Skript prueft selbst das Fenster.
-# Eine feste Uhrzeit ginge nicht: der Sonnenuntergang wandert im Jahr um
-# mehr als vier Stunden. Idempotent, je Abend hoechstens eine Aufforderung.
-15 * * * *   cd /volume1/streulicht && /usr/bin/python3 skripte/erinnerung.py >> daten/erinnerung.log 2>&1
-
-# Bewertungen einsammeln - ALLE DREI STUNDEN, nicht taeglich:
-# ntfy.sh haelt Nachrichten nur rund 12 h vor
-5 */3 * * *  cd /volume1/streulicht && /usr/bin/python3 skripte/bewertungen_holen.py >> daten/bewertung.log 2>&1
-
-# Ensemble-Archivierung - AB TAG 1 DES LIVEGANGS, nicht spaeter.
-# Das Archiv reicht nur 93 Tage zurueck und wandert; was heute nicht
-# weggeschrieben wird, ist in drei Monaten weg. Ohne dieses Archiv laesst
-# sich die Quantilbruecke (T-0020) nie messen - siehe unten.
-0 8 * * *    cd /volume1/streulicht && /usr/bin/python3 skripte/archiviere.py >> daten/archiv.log 2>&1
+```bash
+launchctl bootstrap gui/$UID ~/Library/LaunchAgents/de.greatbelow.streulicht.alarm.plist
 ```
+
+```bash
+launchctl kickstart -k gui/$UID/de.greatbelow.streulicht.erinnerung
+```
+
+Der zweite Befehl stoesst einen Agenten sofort an — der Funktionstest, ohne
+auf die naechste Kalenderzeit zu warten. Logs liegen unter `daten/*.log`.
+
+**Warum die Erinnerung stuendlich laeuft und nicht zur Sonnenuntergangszeit:**
+die wandert im Jahr um mehr als vier Stunden. Das Skript prueft selbst, ob
+sie gerade im Fenster liegt, und ist je Abend idempotent.
+
+Auf einem NAS oder Linux-Rechner tut es stattdessen ein gewoehnlicher Cron;
+die Zeiten sind dieselben.
 
 **Die Quantilbruecke ist die zentrale Unbekannte des Betriebs.**  s\* stammt
 aus einer Klimatologie auf IFS-**Analysen**; der Alarm rechnet auf

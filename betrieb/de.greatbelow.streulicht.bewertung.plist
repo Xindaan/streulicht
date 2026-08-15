@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+ "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>de.greatbelow.streulicht.bewertung</string>
+  <key>ProgramArguments</key>
+  <array><string>/usr/local/bin/python3</string><string>/Users/Andre/src/wetter/skripte/bewertungen_holen.py</string></array>
+  <key>WorkingDirectory</key><string>/Users/Andre/src/wetter</string>
+  <key>StandardOutPath</key><string>/Users/Andre/src/wetter/daten/bewertung.log</string>
+  <key>StandardErrorPath</key><string>/Users/Andre/src/wetter/daten/bewertung.log</string>
+  <key>StartCalendarInterval</key><array><dict><key>Hour</key><integer>2</integer><key>Minute</key><integer>5</integer></dict>
+<dict><key>Hour</key><integer>5</integer><key>Minute</key><integer>5</integer></dict>
+<dict><key>Hour</key><integer>8</integer><key>Minute</key><integer>5</integer></dict>
+<dict><key>Hour</key><integer>11</integer><key>Minute</key><integer>5</integer></dict>
+<dict><key>Hour</key><integer>14</integer><key>Minute</key><integer>5</integer></dict>
+<dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>5</integer></dict>
+<dict><key>Hour</key><integer>20</integer><key>Minute</key><integer>5</integer></dict>
+<dict><key>Hour</key><integer>23</integer><key>Minute</key><integer>5</integer></dict></array>
+</dict></plist>
