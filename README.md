@@ -10,7 +10,7 @@ ein paar Skripte, eine JSON-Datei.
 ## Quickstart
 
 ```bash
-git clone <repo> && cd wetter
+git clone https://github.com/Xindaan/wetter.git && cd wetter
 python3 skripte/alarm.py --trocken          # rechnen, nichts senden
 python3 skripte/alarm.py                    # rechnen und pushen
 ```
@@ -24,8 +24,9 @@ und Auswertung — der Alarmlauf selbst kommt mit der Standardbibliothek aus.
 aus `konfig.json` abonnieren. Der Push kommt, sobald ein Abend im Vorlauf die
 Schwelle reisst — hoechstens einmal je Abend.
 
-**Bewerten.** `web/bewerten-<ort>.html` auf dem Telefon oeffnen (per GitHub
-Pages ausgeliefert). Fuenf Knoepfe, sonst nichts. Die Seite zeigt bewusst
+**Bewerten.** `web/bewerten-<ort>.html` auf dem Telefon oeffnen.
+**Noch nicht ausgeliefert** - das Repo ist privat, und GitHub Pages gibt es im
+kostenlosen Tarif nur aus oeffentlichen Repos (T-0015). Fuenf Knoepfe, sonst nichts. Die Seite zeigt bewusst
 **keine** Prognose: wer vorher die Vorhersage sieht, bewertet die Vorhersage
 statt den Himmel. Erst bewerten, dann nachsehen.
 
@@ -58,7 +59,22 @@ Betrieb laeuft deshalb auf `sonnen/score.py`, nicht auf der niveauaufgeloesten
 Wechsel steht aus, bis die Ablation (T-0006) zeigt, dass die Rangfolgen
 zusammenfallen.
 
-## Cron auf dem NAS
+## Betrieb: wo laeuft der Cron?
+
+Die Cron-Zeilen unten stehen auf `/volume1/wetter`, also einem Synology-NAS.
+**Das ist eine geerbte Annahme aus der ersten Fassung dieser Datei, keine
+gepruefte Tatsache.**  Was der Betrieb wirklich braucht:
+
+- eine Maschine, die abends laeuft (die Bewertungsaufforderung kommt zur
+  Sonnenuntergangszeit) und morgens (der Alarmlauf braucht den 00z-Lauf),
+- Python 3 mit Standardbibliothek,
+- Netz.
+
+Ein Mac tut es, solange er an ist; verpasste Laeufe holt nichts nach.  Ein
+NAS oder ein Kleinrechner ist der robustere Ort, aber keine Voraussetzung.
+Pfade unten entsprechend anpassen.
+
+## Cron
 
 ```cron
 # Alarmlauf, nach der Bereitstellung des 00z-Laufs

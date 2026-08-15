@@ -62,9 +62,19 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
 ## Backlog
 
 - T-0009 Eigene Bewertungsseite und ntfy-Rueckkanal (E2)
-- T-0015 Produktseite auf GitHub Pages ausliefern. Die Seite steht lokal
-  (`web/index.html`, self-contained, 0,3 MB); es fehlt das Repo-Remote und
-  der Pages-Zweig. Erst danach ist E3 wirklich zu.
+- T-0015 Seiten ausliefern. **Remote steht seit 15.08.2026:**
+  `github.com/Xindaan/wetter`, **privat**. Damit ist Pages blockiert - im
+  kostenlosen Tarif gibt es Pages nur aus OEFFENTLICHEN Repos, privat
+  braeuchte GitHub Pro. Zielkonflikt mit der 0-EUR-Regel, Entscheidung
+  offen. Drei Wege:
+  (a) Repo oeffentlich machen - kostenlos, aber beide ntfy-Topics stehen in
+      der Historie und muessen vorher rotiert werden (neue Topics in der App
+      abonnieren);
+  (b) zweites, winziges oeffentliches Repo nur mit `web/` - kostenlos, kein
+      Code und keine Befunde oeffentlich, dafuer zwei Repos zu pflegen;
+  (c) GitHub Pro - kostet Geld, loest alles, faellt unter die 0-EUR-Regel.
+  Ohne Auslieferung bleibt `seiten_basis` leer und die Bewertungs-
+  aufforderung kommt ohne Link.
 - T-0016 Horizontsilhouette aus DEM als zweites Bild neben dem Schnitt.
   Bewusst zurueckgestellt (T-0010, Entscheidung d): Schnitt und Silhouette
   beantworten verschiedene Fragen — der Schnitt zeigt WARUM (das Licht muss
