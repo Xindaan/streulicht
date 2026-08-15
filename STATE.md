@@ -1,8 +1,9 @@
 # STATE
 
-Stand: 15.08.2026 (Fensterterm gegen die Satellitenwahrheit: die Wegwolken
-waren da, kein Phantom im Album - Befund 35; davor Satellitenwahrheit gebaut,
-Rueckkanal messbar gemacht, Fables Gutachten eingearbeitet)
+Stand: 15.08.2026 abends. **Der Betrieb laeuft.** Repo oeffentlich, Pages
+liefert die Bewertungsseite, ntfy eingerichtet, vier launchd-Agenten geladen.
+Fachlich: Anwesenheit der Wegwolken (35) und ihre Hoehe (36) sind beide
+geprueft und erklaeren die toten Fenster nicht - uebrig bleibt der Term.
 
 ## Ziel
 
@@ -94,10 +95,15 @@ der Fusstext lag bei 2,28:1 Kontrast (AA verlangt 4,5), die Beschriftung im
 Vertikalschnitt bei 3,5-4,3 px auf dem Telefon, und der Balken war ein
 Fuellstand von null, obwohl kein Abend je unter das 59. Perzentil faellt.
 
-**Offen bleibt T-0015: die Seiten sind nirgends ausgeliefert.** Das Repo
-liegt seit 15.08.2026 oeffentlich auf `github.com/Xindaan/streulicht`, damit
-ist Pages moeglich; der Pages-Zweig fehlt noch, danach `seiten_basis` setzen.
-Erst dann ist E3 zu.
+**T-0015 erledigt 15.08.2026.** Repo oeffentlich auf
+`github.com/Xindaan/streulicht`, Pages ab `main` aus der Wurzel (GitHub
+erlaubt nur `/` oder `/docs`, nicht `/web`). Die Bewertungsseite liegt unter
+<https://xindaan.github.io/streulicht/web/bewerten-berlin.html>, `seiten_basis`
+ist gesetzt, der Live-Abruf wurde gegen die lokale Datei verglichen: identisch.
+
+Die **Produktseite** bleibt bewusst draussen - Bauartefakt (0.3 MB,
+gitignoriert) und Verankerungsrisiko: sie zeigt die Prognose, die die
+Bewertungsseite verbirgt.
 
 ## Naechster Lauf, wenn Kontingent zurueck ist
 
@@ -116,11 +122,15 @@ Beobachtung statt Modell (T-0019, MSG/MTG-Infrarot).**  Feineres Gitter,
 erweiterter Faecher und Folgestunde bleiben moeglich, aber ohne Befund,
 der sie priorisiert.
 
-**Nachtrag 15.08. (Befund 35):** Auch die Wegdaten sind durch.  Die
+**Nachtrag 15.08. (Befunde 35 und 36):** Auch die Wegdaten sind durch.  Die
 Wolkenmaske bestaetigt an allen vier toten Abenden die Wolke auf dem
-Lichtweg, im ganzen Album gibt es kein Phantom.  Was bleibt, ist der Term
-selbst oder die Hoehenzuordnung des Modells - trennbar erst mit
-Wolkenoberkantentemperatur (T-0028).
+Lichtweg, im ganzen Album gibt es kein Phantom.  Die Wolkenoberkante sollte
+danach die Hoehe klaeren und erwies sich als falsches Instrument: der Strahl
+laeuft dort bei 0.00-1.54 km, also liegt fast jede Oberkante darueber, und
+CTH sieht ohnehin nur die oberste Wolke - waehrend laut Modell die tiefe
+Decke darunter blockiert.
+
+**Damit ist der Term die einzige verbliebene Erklaerung (T-0029).**
 
 Entscheidung 14.08.: kein kommerzielles Kontingent, es dauert eben laenger.
 Ebenfalls gestrichen: die Sichtbarkeitszeile im Alarm - Andre geht zur Not
