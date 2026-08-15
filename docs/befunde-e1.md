@@ -1486,9 +1486,14 @@ durchweg hoeher (Median 0.0090 gegen 0.0000, p90 um die Haelfte).  Ein
 Perzentilschwellwert aus der einen Verteilung bedeutet in der anderen etwas
 anderes.  **Bei einem Wechsel muss s\* neu hergeleitet werden.**
 
-Praktisch ist gerade nichts kaputt: `alarm.py` rechnet auf `sonnen/score.py`,
-also derselben Variante, aus der s\* stammt.  Die Warnung in der README war
-richtig.
+Praktisch schien nichts kaputt: `alarm.py` rechnet auf `sonnen/score.py`,
+also derselben Variante, aus der s\* stammt.
+
+**Diese Beruhigung ist am 15.08. gefallen (Befund 33).**  Die Variante stimmt,
+das MODELL nicht: s\* kommt aus einer Klimatologie auf IFS-Analysen, der Alarm
+rechnet auf ENS-Membern.  Derselbe Vergleich zeigt den Modellsprung genauso
+gross wie den Variantensprung (rho 0.483 gegen 0.504) und bei den
+Ausloesungen groesser (8 gegen 2 statt 2 gegen 0).
 
 **Das Loch im Test, und es ist gross.**  In diesen 42 Herbstabenden erreicht
 **kein einziger** Abend s\* = 0.7065 - die Maxima liegen bei 0.39 und 0.46.
@@ -1624,3 +1629,35 @@ falsch berichtet.
 **Merksatz:** eine Zwischenzahl aus einem laufenden Abruf ist ein Messwert
 ueber einen Teilcache, kein Ergebnis.  Wer sie nicht am Ende wiederholt,
 berichtet den Zustand einer Baustelle.
+
+## 33 T-0025: der Modellsprung ist so gross wie der Variantensprung - und laeuft schon
+
+Befund 31 endete mit "praktisch ist gerade nichts kaputt: `alarm.py` rechnet
+auf `sonnen/score.py`, also derselben Variante, aus der s\* stammt."  **Das
+beruhigt zu Unrecht.**  Aus denselben Ablationsdaten, Sommerfenster,
+42 gemeinsame Abende, s\* = 0.7065:
+
+| Sprung | rho | Top-6 gemeinsam | Ausloesungen |
+|---|---|---|---|
+| **Variante** GFS 3-Schicht vs GFS niveauaufgeloest | +0.504 | 1 von 6 | 2 gegen 0 |
+| **Modell** IFS 3-Schicht vs GFS 3-Schicht | **+0.483** | **1 von 6** | **8 gegen 2** |
+
+Gleiche Score-Variante, gleiche Faechergeometrie, gleicher Schwellwert -
+nur ein anderes Modell, und die Rangfolge faellt genauso weit auseinander wie
+beim Variantenwechsel, vor dem T-0006 gewarnt hat.  Bei den Ausloesungen ist
+der Modellsprung sogar groesser: Faktor 4 statt Faktor 2.
+
+**Und genau diesen Sprung macht der Betrieb.**  s\* kommt aus einer
+Klimatologie auf **IFS-Analysen** (Befund 32.1), der Alarm rechnet auf
+**ECMWF-ENS-Membern** - anderes Gitter, anderer Lauftyp, andere
+Bedeckungsstatistik.  Ob dieselbe Schwelle dort dieselbe Rate ergibt, ist nie
+gemessen worden.
+
+Damit ist die **Quantilbruecke (T-0020) kein Nice-to-have, sondern die
+zentrale offene Unbekannte des Livegangs.**  Sie ist vorab nicht messbar: es
+gibt kein Ensemble-Archiv (T-0003 nie gestartet, und das Archiv reicht nur
+93 Tage zurueck und wandert).  Der Livegang IST die Messung - deshalb
+`archiviere.py` ab Tag 1, und nach 6-8 Wochen s\*/p\* nachziehen.
+
+Bis dahin gilt: **die Alarmrate des Betriebs ist unbekannt, nicht 18.5/Jahr.**
+Die 18.5 sind die Rate der Klimatologie auf ihrem eigenen Modell.
