@@ -56,6 +56,11 @@ function umgebung({speicherGeht = true, fetchOk = true} = {}) {
     Promise: Promise,
     String: String,
     setTimeout: setTimeout,
+    // Die Seite bricht die Uebertragung nach 12 s ab (kein Timeout waere
+    // ein Haenger ohne Ende). Ohne AbortSignal im Kontext wirft uebertrage
+    // sofort, und alle Sendepruefungen schlagen fehl - ein Loch im
+    // PRUEFSTAND, das wie ein Codefehler aussieht.
+    AbortSignal: AbortSignal,
     getComputedStyle: (n) => ({display: n.style.display || "none"}),
     localStorage: speicherGeht ? {
       getItem: (k) => (k in speicher ? speicher[k] : null),
@@ -68,7 +73,13 @@ function umgebung({speicherGeht = true, fetchOk = true} = {}) {
     _gesendet: [],
     fetch: async function (url, opt) {
       if (!fetchOk) throw new Error("simulierter Netzausfall");
-      ctx._gesendet.push(JSON.parse(opt.body));
+      // ntfy-JSON-Publizieren: der Rumpf traegt topic/title/tags und das
+      // eigentliche Datum als JSON-ZEICHENKETTE in `message`. Der Test
+      // packt es aus, damit die Pruefungen die Note direkt sehen.
+      const aussen = JSON.parse(opt.body);
+      const innen = JSON.parse(aussen.message);
+      ctx._gesendet.push(Object.assign({_topic: aussen.topic,
+                                        _titel: aussen.title}, innen));
       return {ok: true, status: 200};
     }
   };
@@ -115,7 +126,7 @@ async function lauf(opt) {
          "als unbestaetigt markiert");
   pruefe(getComputedStyleDisplay(u) !== "none",
          "Nachsende-Knopf sichtbar");
-  pruefe(u.el.status.textContent.indexOf("noch nicht angekommen") >= 0,
+  pruefe(u.el.status.textContent.toLowerCase().indexOf("noch nicht angekommen") >= 0,
          "Status sagt die Wahrheit: \"" + u.el.status.textContent + "\"");
 
   console.log("\n=== 3. Neustart nach Netzausfall: wird nachgesendet");

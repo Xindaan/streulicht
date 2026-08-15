@@ -144,12 +144,31 @@ function zeigeOffen() {
     : n + " Bewertungen noch nicht angekommen — nachsenden";
 }
 
+// Zwei Fehler, die am 15.08. eine Bewertung 21,7 s brauchen liessen:
+//
+// (a) Die erste Fassung setzte die Kopfzeilen "Title" und "Tags". Das sind
+//     keine EINFACHEN Kopfzeilen, also schickt der Browser erst einen
+//     CORS-Vorabflug (OPTIONS) und danach den POST - zwei Umlaeufe statt
+//     einem, auf dem Telefon im Mobilnetz spuerbar. ntfy nimmt dieselben
+//     Angaben im JSON-Rumpf entgegen; damit ist es eine einfache Anfrage
+//     und der Vorabflug entfaellt.
+// (b) Es gab KEINEN Timeout. `fetch` hat von sich aus keinen, und ohne
+//     einen haengt eine haengende Anfrage fuer immer - "sende ..." waere
+//     bis zum Schliessen der Seite stehengeblieben. Ausgerechnet in dem
+//     Code, der gegen stillen Verlust gebaut wurde.
+const SENDE_TIMEOUT_MS = 12000;
+
 async function uebertrage(eintrag) {
-  const r = await fetch("https://ntfy.sh/" + TOPIC, {
+  const r = await fetch("https://ntfy.sh/", {
     method: "POST",
-    body: JSON.stringify({ort: ORT, tag: eintrag.tag, note: eintrag.note,
-                          anlass: eintrag.anlass, erfasst: eintrag.erfasst}),
-    headers: {"Title": "Bewertung " + eintrag.tag, "Tags": "star"}
+    body: JSON.stringify({
+      topic: TOPIC,
+      title: "Bewertung " + eintrag.tag,
+      tags: ["star"],
+      message: JSON.stringify({ort: ORT, tag: eintrag.tag, note: eintrag.note,
+                               anlass: eintrag.anlass, erfasst: eintrag.erfasst})
+    }),
+    signal: AbortSignal.timeout(SENDE_TIMEOUT_MS)
   });
   if (!r.ok) throw new Error("HTTP " + r.status);
 }
@@ -174,16 +193,20 @@ async function sendeOffene(still) {
 }
 
 async function senden(note, knopf) {
-  status.textContent = "sende …";
   const aktuell = warteschlange().filter(x => x.tag !== tag);
   aktuell.push({tag: tag, note: note, anlass: ANLASS,
               erfasst: new Date().toISOString(), gesendet: false});
   schreibe(aktuell);                     // ERST lokal, dann senden.
+  // Der Status sagt jetzt die Wahrheit statt "sende ...": ab hier kann
+  // nichts mehr verlorengehen, egal wie lange die Uebertragung dauert.
+  // Die erste Fassung liess den Nutzer 22 s im Ungewissen, obwohl die
+  // Bewertung zu dem Zeitpunkt schon sicher war.
+  status.textContent = "Gespeichert. Wird gesendet …";
   knoepfe.querySelectorAll("button").forEach(x => x.disabled = true);
   knopf.classList.add("gewaehlt");
   const fehler = await sendeOffene(true);
   status.textContent = fehler
-    ? "Gespeichert, aber noch nicht angekommen — der Knopf unten sendet nach."
+    ? "Gespeichert. Noch nicht angekommen — geht beim nächsten Öffnen raus."
     : (note === 0 ? "Notiert: nicht gesehen."
                   : "Danke — " + note + " für den " + tag + ".");
 }
