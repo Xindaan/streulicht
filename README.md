@@ -1,8 +1,13 @@
-# Sonnenuntergang
+# Streulicht
 
 Meldet zwei bis zehn Tage im Voraus eine Wahrscheinlichkeit dafuer, dass in
 Berlin ein aussergewoehnlicher Sonnenuntergang stattfindet — und schickt einen
 Push aufs Telefon, wenn sie hoch genug ist.
+
+**Zum Namen.** In der Optik ist Streulicht der Parasit: das, was man aus einem
+Instrument herauskonstruiert. Hier ist es das Produkt. Der Score integriert
+eine Henyey-Greenstein-Phasenfunktion ueber den Vorwaertspeak — es geht
+ausschliesslich um Licht, das gestreut wird, statt geradeaus zu laufen.
 
 Kein Produkt: keine Nutzerverwaltung, keine Datenbank, kein Docker. Ein Cron,
 ein paar Skripte, eine JSON-Datei.
@@ -10,7 +15,7 @@ ein paar Skripte, eine JSON-Datei.
 ## Quickstart
 
 ```bash
-git clone https://github.com/Xindaan/wetter.git && cd wetter
+git clone https://github.com/Xindaan/streulicht.git && cd streulicht
 python3 skripte/alarm.py --trocken          # rechnen, nichts senden
 python3 skripte/alarm.py                    # rechnen und pushen
 ```
@@ -20,8 +25,9 @@ und Auswertung — der Alarmlauf selbst kommt mit der Standardbibliothek aus.
 
 ## Nutzung
 
-**Alarm empfangen.** ntfy-App installieren (iOS/Android, kostenlos), das Topic
-aus `konfig.json` abonnieren. Der Push kommt, sobald ein Abend im Vorlauf die
+**Alarm empfangen.** ntfy-App installieren (iOS/Android, kostenlos), das
+Alarm-Topic aus `konfig_geheim.json` abonnieren — es steht bewusst NICHT in
+der versionierten Konfiguration, weil wer es hat beliebige Pushs senden kann. Der Push kommt, sobald ein Abend im Vorlauf die
 Schwelle reisst — hoechstens einmal je Abend.
 
 **Bewerten.** `web/bewerten-<ort>.html` auf dem Telefon oeffnen. Fuenf
@@ -46,7 +52,7 @@ bewertet, meint den Sonnenuntergang von gestern.
 | `schwelle_wahrscheinlichkeit` | p\* — ab diesem Memberanteil wird gepusht |
 | `vorlauf_tage` | wie weit voraus gerechnet wird |
 | `advektion` | semi-Lagrangesche Zeitinterpolation an/aus |
-| `orte[]` | Name, Koordinaten, Zeitzone, ntfy-Topics |
+| `orte[]` | Name, Koordinaten, Zeitzone, Bewertungs-Topic |
 | `faecher` | optional: reduzierte Abfragegeometrie |
 
 **Zwei Fallen in dieser Datei.**
@@ -81,22 +87,22 @@ Pfade unten entsprechend anpassen.
 
 ```cron
 # Alarmlauf, nach der Bereitstellung des 00z-Laufs
-30 7 * * *   cd /volume1/wetter && /usr/bin/python3 skripte/alarm.py >> daten/alarm.log 2>&1
+30 7 * * *   cd /volume1/streulicht && /usr/bin/python3 skripte/alarm.py >> daten/alarm.log 2>&1
 
 # Bewertungsaufforderung - STUENDLICH, das Skript prueft selbst das Fenster.
 # Eine feste Uhrzeit ginge nicht: der Sonnenuntergang wandert im Jahr um
 # mehr als vier Stunden. Idempotent, je Abend hoechstens eine Aufforderung.
-15 * * * *   cd /volume1/wetter && /usr/bin/python3 skripte/erinnerung.py >> daten/erinnerung.log 2>&1
+15 * * * *   cd /volume1/streulicht && /usr/bin/python3 skripte/erinnerung.py >> daten/erinnerung.log 2>&1
 
 # Bewertungen einsammeln - ALLE DREI STUNDEN, nicht taeglich:
 # ntfy.sh haelt Nachrichten nur rund 12 h vor
-5 */3 * * *  cd /volume1/wetter && /usr/bin/python3 skripte/bewertungen_holen.py >> daten/bewertung.log 2>&1
+5 */3 * * *  cd /volume1/streulicht && /usr/bin/python3 skripte/bewertungen_holen.py >> daten/bewertung.log 2>&1
 
 # Ensemble-Archivierung - AB TAG 1 DES LIVEGANGS, nicht spaeter.
 # Das Archiv reicht nur 93 Tage zurueck und wandert; was heute nicht
 # weggeschrieben wird, ist in drei Monaten weg. Ohne dieses Archiv laesst
 # sich die Quantilbruecke (T-0020) nie messen - siehe unten.
-0 8 * * *    cd /volume1/wetter && /usr/bin/python3 skripte/archiviere.py >> daten/archiv.log 2>&1
+0 8 * * *    cd /volume1/streulicht && /usr/bin/python3 skripte/archiviere.py >> daten/archiv.log 2>&1
 ```
 
 **Die Quantilbruecke ist die zentrale Unbekannte des Betriebs.**  s\* stammt
