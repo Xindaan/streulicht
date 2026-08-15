@@ -2042,11 +2042,24 @@ Der Umbau des Wegterms entfaellt.  Der Hook `weg_agg` in `score()` bleibt
 mit Default `produkt` (bitgenau geprueft) und ist fuer eine spaetere
 Pruefung mit anderen Daten da; im Betrieb aendert sich nichts.
 
-Nebenbefund: in STATE.md stand "Faktor 49 an den Toeter-Segmenten" ohne
-Herleitung.  Gemessen ist das Verhaeltnis (1 - max) / Produkt am gewinnenden
-Zweig 10 / 291 / 107 / 1 fuer die vier Abende - die Ungleichbehandlung ist
-real und noch groesser, aendert aber am Ergebnis nichts, weil A dort klein
-ist oder auch das Maximum zu ist.
+Nebenbefund, und er ist schaerfer als "ohne Herleitung": in STATE.md und
+TASK.md stand "Faktor 49 an den Toeter-Segmenten".  Diese Zahl war **nicht
+gemessen, sondern konstruiert**.  Sie entstand aus vier Segmentwerten
+[0.66, 0.70, 0.80, 0.91] - und davon stammen nur 0.66 und 0.91 aus den Daten,
+naemlich als Endpunkte der Formulierung "vier Segmente mit 66-91 %" in
+Befund 35.  Die beiden mittleren Werte sind **erfunden**, um die Spanne zu
+fuellen.  Der Satz behauptete danach "fuer dieselben vier Segmente" und
+klang damit nach einem realen Abend.
+
+Gemessen ist das Verhaeltnis (1 - max) / Produkt am gewinnenden Zweig
+**10 / 291 / 107 / 1** fuer die vier Abende.  Die Ungleichbehandlung ist real
+und an drei Abenden groesser als behauptet, aendert am Ergebnis aber nichts:
+dort ist entweder A klein oder auch das Maximum zu.
+
+**Fehlerklasse:** eine Spanne aus einem Bericht in Einzelwerte zurueckrechnen
+und das Ergebnis als Messung ausgeben.  Dieselbe Form wie die Zwischenzahl
+aus dem laufenden Abruf (32.4) - plausibel aussehende Zahlen ohne Herkunft.
+Der Unterschied zu dort: hier waren zwei der vier Eingaben frei gewaehlt.
 
 Vorbehalt wie in Abschnitt 20-23: Album = draussen = eher klares Wetter.
 Eine Variante, die bewoelkte Wege oeffnet, kann im Album schlechter aussehen
