@@ -130,7 +130,8 @@ def maske(produkt):
     with open(p, "rb") as f:
         z = zipfile.ZipFile(io.BytesIO(f.read()))
     name = [n for n in z.namelist() if n.endswith(".grb")][0]
-    return werte(z.read(name))
+    feld, gp, _ = werte(z.read(name))
+    return feld, gp
 
 
 def faecher_anteil(feld, gp, tag, breite, laenge, nur_nahbereich=None):

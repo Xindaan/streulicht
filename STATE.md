@@ -128,16 +128,20 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
 
 ## Next actions
 
-1. **T-0015 Pages einschalten** — Remote steht und ist oeffentlich, ntfy ist
-   eingerichtet. Es fehlt der Pages-Zweig, danach `seiten_basis` in
-   konfig.json, sonst kommt die Bewertungsaufforderung ohne Link.
-2. **T-0003 Archivierung als Cron ab Tag 1.** Ohne dieses Archiv laesst sich
-   die Quantilbruecke (T-0020) nie messen, und die ist die zentrale
-   Unbekannte des Betriebs (Befund 33).
-3. **T-0028 Wolkenoberkantentemperatur** mit der konkreten Frage aus
-   Befund 35: sitzt die bestaetigte Wolke an den Toeter-Segmenten unter oder
-   ueber dem Strahl?  Entscheidet zwischen Termumbau (T-0029) und
-   Schichtfehler des Modells. Offline, 0 EUR.
+**Der Betrieb steht.** Repo oeffentlich, Pages liefert die Bewertungsseite
+aus, ntfy eingerichtet, vier launchd-Agenten geladen und getestet. Was jetzt
+fehlt, ist Zeit: der Livegang IST die Messung (Quantilbruecke T-0020).
+
+1. **Beobachten, nicht bauen.** Nach ein paar Tagen `daten/*.log` ansehen:
+   feuert die Erinnerung im Fenster, kommen Bewertungen an, laeuft die
+   Archivierung? Erst danach lohnt der naechste Umbau.
+2. **T-0029 Wegterm anders aggregieren** — die einzige verbliebene Erklaerung
+   fuer die toten Fenster, nachdem Anwesenheit (Befund 35) und Hoehe
+   (Befund 36) beide nichts hergaben. Die Ungleichbehandlung steht schon im
+   Code: Maximalueberlapp in der Saeule, unabhaengiges Produkt auf dem Weg,
+   Faktor 49 an den Toeter-Segmenten. Offline, 0 EUR.
+3. **T-0030 Wolkentyp/-unterkante** — nur falls T-0029 nicht traegt. Erst
+   pruefen, ob es das Produkt ueberhaupt gibt.
 
 ## Letzte Done
 

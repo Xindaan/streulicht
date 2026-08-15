@@ -115,39 +115,21 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
 - T-0026 **`member_liste()` liefert 50 statt 51.** Der Kontrolllauf hat keinen
   `_memberNN`-Suffix und faellt still heraus. Kein Fehler im Ergebnis, aber
   eine stille Abweichung zwischen erwarteter und tatsaechlicher Memberzahl.
-- T-0028 **Wolkenoberkantentemperatur als zweites Satellitenprodukt.** Die
-  Maske kennt nur Wolke ja/nein. Ob eine 100-%-Maske ein Cirrus-Schirm oder
-  eine tiefe Decke ist, entscheidet erst die Hoehe - und erst damit ist
-  2023-04-24 (100 % Maske, 1 % mid+high im Modell) aufloesbar.
-  **Geschaerft durch T-0027 (Befund 35):** die Wegwolken der vier toten
-  Abende sind in der Saeule bestaetigt; offen ist nur noch, ob sie am Strahl
-  sassen. Konkrete Frage: liegt die Oberkante an den Toeter-Segmenten
-  (2018-07-09: 180-300 km; 2023-04-24: 180-240; 2024-05-03: 60-120 und
-  240-300; 2024-09-15: 240-300) unter oder ueber der Strahlhoehe? Unter =
-  Term zu hart (T-0029), ueber = Schichtverteilung des Modells falsch.
-- T-0029 **Wegterm anders aggregieren.** Vier Segmente mit 66-91 %
-  Bedeckung ergeben als Produkt 0.001 - "ein Strahl, der jede Luecke treffen
-  muss" ist fuer parallel einfallendes Licht durch ein gebrochenes Feld
-  moeglicherweise zu hart, und nahe der Tangente laeuft der Strahl in
-  Bodennaehe. Varianten (Mittel statt Produkt, kuerzere Reichweite, weichere
-  Kopplung, Toeter-Segment nur bei > 95 %) gegen Album/Referenz pruefen; die
-  Segmentwerte je Abend liegen in `daten/fensterterm_satellit.json`.
-  Vorbehalt: dieselbe Konfundierung wie Befund 20-23 (Album = draussen =
-  klares Wetter) - jede Variante, die den Weg lockert, gewinnt dort auch
-  ohne Physik. Deshalb erst nach T-0028 oder mit einem Kriterium, das nicht
-  nur "mehr Fenster" belohnt. Aus Befund 35.
+- T-0028 Wolkenoberkante — **GERECHNET 15.08.2026, Antwort: falsches
+  Instrument** (Befund 36). 48 Toeter-Segmente, 0 mit Oberkante unter dem
+  Strahl. Das entlastet den Term aber NICHT: der Strahl laeuft dort bei
+  0.00-1.54 km, also liegt fast jede Oberkante darueber - der Test kann
+  kaum ablehnen. Und CTH sieht nur die OBERSTE Wolke; blockiert wird laut
+  Modell die tiefe Decke darunter (47 von 48 Segmenten fragen `low` ab).
+  Belegt hat der Lauf trotzdem, dass die Schichtzuordnung des Scores
+  richtig ist, und zwei Fehler im eigenen GRIB2-Leser aufgedeckt.
+- T-0030 **Wolkentyp oder -unterkante als richtiges Instrument.** Was
+  T-0028 gebraucht haette: ein Produkt, das low/mid/high trennt oder die
+  Unterkante liefert. Kandidaten aus dem Data Store: `EO:EUM:DAT:0617`
+  (Optimal Cloud Analysis, MSG, Klimadatensatz) und die MTG-Nachfolger
+  `EO:EUM:DAT:0684` / `EO:EUM:DAT:0681`. Erst pruefen, ob eines davon eine
+  Unterkante oder Schichtzuordnung fuehrt - sonst bleibt die Frage offen.
 
-  **Nachtrag 15.08.: die Inkonsistenz ist schon im Code sichtbar, ohne neue
-  Daten.** Der Score behandelt Bewoelkung ZWEIMAL, mit zwei verschiedenen
-  Annahmen: innerhalb einer Saeule mit Maximalueberlapp (`ueberlappung()`
-  in feuchte.py, kalibriert auf w = 0.75), entlang des Wegs dagegen als
-  unabhaengiges Produkt. Fuer dieselben vier Segmente sind das 0.0018 gegen
-  0.0900 - **Faktor 49**. Wolken auf 400 km Weg gehoeren zu derselben
-  Luftmasse und sind hoch korreliert; unabhaengig zu multiplizieren ist
-  dort schwerer begruendbar als vertikal. Eine Variante mit demselben
-  Ueberlappungsansatz wie in der Saeule ist damit keine Lockerung "um zu
-  gewinnen", sondern die Beseitigung einer Ungleichbehandlung - und genau
-  deshalb die erste, die zu pruefen ist.
 - T-0019 MSG/MTG-Infrarot als Beobachtungswahrheit — **GEBAUT 15.08.2026**
   (Befund 34). Zugang, GRIB2-Leser und Faecherabtastung stehen;
   `python3 skripte/satellit.py`. Die Anwendung auf alle Albumabende ist mit

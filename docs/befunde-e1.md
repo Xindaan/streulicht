@@ -1875,3 +1875,69 @@ Pruefbefehl: `python3 skripte/fensterterm.py --nur-cache` (Masken liegen in
 `daten/satellit/`, 158 Produkte; ohne `--nur-cache` laedt es Fehlendes nach).
 Rohwerte je Faecherpunkt (Maske und drei Modellschichten) stehen in
 `daten/fensterterm_satellit.json`.
+
+## 36 T-0028: die Wolkenoberkante ist das falsche Instrument (15.08.2026)
+
+Befund 35 liess zwei Erklaerungen fuer die toten Fenster offen: der Term ist
+zu hart (T-0029) oder die Hoehenzuordnung stimmt nicht.  Die
+Wolkenoberkantenhoehe (`EO:EUM:DAT:MSG:CTH`, 0 EUR) sollte das zweite
+einseitig entscheiden - liegt die Oberkante UNTER dem Strahl, kann die Wolke
+nicht blockieren.
+
+**Gemessen ueber 48 Toeter-Segmente: 0 darunter, 47 darueber, 1 ohne Wolke.**
+
+Das sieht nach Entlastung aus und ist keine.  Zwei Gruende, beide geometrisch:
+
+**1. Der Strahl ist zu tief, als dass der Test greifen koennte.**  An den
+Toeter-Segmenten liegt er bei **0.00 bis 1.54 km** - nahe dem Tangentenpunkt
+laeuft er per Konstruktion in der Grenzschicht.  Damit ist praktisch jede
+Wolkenoberkante ueber ihm.  Ein Test, der fast nie ablehnen kann, ist kein
+Test; 0 von 48 ist Blindheit, kein Ergebnis.
+
+**2. CTH sieht nur die OBERSTE Wolke.**  An den Toeter-Segmenten sind das
+3-11 km, also mittlere und hohe Schichten.  Blockiert wird laut Modell die
+TIEFE Decke darunter: **47 der 48 Segmente fragen die Schicht `low` ab**, und
+das ist bei Strahlhoehe 0-1.5 km korrekt.  Ob unter dem hohen Deckel noch
+eine tiefe Decke sitzt, kann CTH prinzipiell nicht sagen - "nur hohe Wolke"
+und "hohe ueber tiefer" liefern dasselbe Pixel.
+
+### 36.1 Was der Lauf trotzdem belegt
+
+Zwei Dinge, die vorher nur behauptet waren, stehen jetzt gemessen da:
+
+- **Die Schichtzuordnung des Scores ist richtig.**  Der Strahl laeuft im
+  Toeter-Bereich bodennah, und der Score fragt dort `low` ab.  Die Vermutung
+  aus Befund 35, das Modell koenne die Wolke in die falsche Schicht stecken,
+  betrifft also nicht die Zuordnung im SCORE - hoechstens die im Modell.
+- **Der GRIB2-Leser trug zwei Fehler**, die die Wolkenmaske nie gezeigt hat
+  (siehe 36.2).
+
+**Damit bleibt T-0029 als einzige offene Erklaerung** - und die ist ohne neue
+Daten pruefbar.
+
+### 36.2 Zwei Fehler im eigenen GRIB2-Leser, von einer Konstante versteckt
+
+`sonnen/grib2.py` funktionierte an der Wolkenmaske und war trotzdem an zwei
+Stellen falsch.  Beide fielen erst am Oberkantenprodukt auf:
+
+**Vorzeichen-Betrag statt Zweierkomplement.**  GRIB2 kodiert vorzeichen-
+behaftete Skalierungsfaktoren als Vorzeichen-Betrag: das hoechste Bit ist das
+Vorzeichen.  `0x8001` ist **-1**, nicht -32767.  Der Leser nahm
+`int.from_bytes(..., signed=True)` und haette 10**32767 gerechnet.
+Warum es nie auffiel: die Wolkenmaske hat E = D = 0, und bei null sind beide
+Lesarten identisch.  **Eine Konstante, die den Fehler versteckt.**
+
+**Wiederholte Sektionen.**  Eine GRIB2-Nachricht darf die Sektionen 4-7
+mehrfach enthalten und Gitter plus Bitmap teilen - genau so liefert MSG die
+Oberkante (Feld 1 Hoehe, Feld 2 Status).  Der Leser schrieb die Sektionen in
+ein Dict und ueberschrieb damit Feld 1 mit Feld 2.  Kein Fehler, keine
+Warnung, beide Felder wohlgeformt.
+
+Dazu neu: Bitmaps (Indikator 0 und 254), fehlende Punkte als NaN statt 0 -
+eine Null waere hier "Oberkante auf Meereshoehe" und damit eine Aussage, die
+die Daten nicht machen.
+
+Belegt: Feld 0 dekodiert zu 320 .. 15040 m, Median 4480 m; Berlin am
+03.05.2024 auf 6720 m.  Vor der Korrektur war das Feld Unsinn.
+
+Pruefbefehl: `python3 skripte/oberkante.py --nur-cache`
