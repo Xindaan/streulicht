@@ -5,8 +5,8 @@
   "schwelle_wahrscheinlichkeit": 0.5,
   "vorlauf_tage": 10,
   "advektion": true,
-  "seiten_basis": "https://xindaan.github.io/streulicht/web",
-  "_hinweis_seiten_basis": "Basis-URL der ausgelieferten Seiten. GitHub Pages erlaubt als Quelle nur / oder /docs - deshalb Wurzel, und die Seiten liegen unter /web/. Wird von erinnerung.py fuer den Klicklink verwendet.",
+  "seiten_basis": "https://xindaan.github.io/streulicht",
+  "_hinweis_seiten_basis": "Basis-URL der ausgelieferten Seiten. Sie liegen in der WURZEL des gh-pages-Zweigs (siehe skripte/ausliefern.py), nicht unter /web/.",
   "bewertung_tage_pro_woche": 7,
   "_hinweis_bewertung": "7 = jeden Abend fragen. Weniger ergibt eine deterministische Wochenstichprobe (gleiche Woche -> gleiche Tage). Unter 7 sinkt die Zahl auswertbarer Abende proportional.",
   "orte": [

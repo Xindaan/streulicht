@@ -275,6 +275,32 @@ def lauf_ort(ort, kfg, zustand, trocken):
             s, det = score(hole)
             werte.append((s, det))
 
+        # Wolkenfeld fuer den Vertikalschnitt der Produktseite mitschreiben.
+        # Ohne das kann die Seite die Prognose zwar als Zahl zeigen, aber
+        # nicht als Bild - und das Bild ist der Punkt: es zeigt, WARUM.
+        # Gespeichert wird der MemberMEDIAN je Faecherpunkt und Schicht,
+        # umgeschluesselt auf das 0.5-Grad-Gitter, das schnitt.py erwartet.
+        # Rund 120 Zahlen je Abend.
+        feld_seite = {}
+        for (d_, dv_), (la_, lo_) in info["punkte"].items():
+            schluessel = "%d/%d" % (round(la_ / 0.5), round(lo_ / 0.5))
+            eintrag = feld_seite.setdefault(schluessel, {})
+            for schicht in SCHICHTEN:
+                vals = []
+                for m in mem:
+                    z_ = (karte.get((t, schicht, (d_, dv_)))
+                          if kfg.get("advektion", True) else zelle(la_, lo_))
+                    e_ = feld.get(z_)
+                    if e_ is None:
+                        continue
+                    r_ = e_.get(feldname("cloud_cover_%s" % schicht, m))
+                    if r_ is None or i >= len(r_) or r_[i] is None:
+                        continue
+                    vals.append(r_[i])
+                if vals:
+                    vals.sort()
+                    eintrag[schicht] = vals[len(vals) // 2]
+
         v = verdichte(werte, kfg["schwelle_score"])
         if v is None:
             print("   %s: KEIN Member mit Daten - Abend uebersprungen" % t,
@@ -293,7 +319,8 @@ def lauf_ort(ort, kfg, zustand, trocken):
             "A": besterdet["A"] if besterdet else None,
             "sicht": besterdet["sicht"] if besterdet else None,
             "weg": besterdet["weg"] if besterdet else None,
-            "n_member": v["n_member"], "n_member_gesamt": v["n_member_gesamt"]}
+            "n_member": v["n_member"], "n_member_gesamt": v["n_member_gesamt"],
+            "feld": feld_seite}
     return ergebnisse
 
 
@@ -389,7 +416,10 @@ def main():
             # das ist die Frage, fuer die der Livegang ueberhaupt stattfindet.
             e["verlauf"] = (alt.get("verlauf") or []) + [
                 dict({k: v for k, v in e.items()
-                      if k not in ("verlauf", "bewertung")},
+                      # `feld` bleibt draussen: 120 Zahlen je Lauf und Abend
+                      # blaehen die Zustandsdatei, und fuer die Rueckschau
+                      # zaehlen die Terme, nicht das Rohfeld.
+                      if k not in ("verlauf", "bewertung", "feld")},
                      lauf=str(date.today()))]
             eintrag["abende"][tag] = e
             lz = lokalzeit(tag, e["stunde_utc"], ort.get("zeitzone", "UTC"))

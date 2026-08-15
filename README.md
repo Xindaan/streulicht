@@ -36,14 +36,40 @@ Knoepfe, sonst nichts. Die Seite zeigt bewusst **keine** Prognose: wer vorher
 die Vorhersage sieht, bewertet die Vorhersage statt den Himmel. Erst bewerten,
 dann nachsehen.
 
-**Ausgeliefert seit 15.08.2026** ueber GitHub Pages:
-<https://xindaan.github.io/streulicht/web/bewerten-berlin.html>
-Die abendliche Aufforderung verlinkt genau dorthin, mit `?a=1` als Anlass.
+## Die Seiten
 
-Die **Produktseite** (`web/index.html`) wird bewusst NICHT ausgeliefert. Sie
-ist ein 0.3-MB-Bauartefakt und gitignoriert — und sie zeigt die Prognose,
-waehrend die Bewertungsseite sie verbirgt. Beide auf derselben Site waeren
-eine Einladung zur Verankerung.
+| Was | URL |
+|---|---|
+| **Prognose** | <https://xindaan.github.io/streulicht/> |
+| **Bewerten** | <https://xindaan.github.io/streulicht/bewerten-berlin.html> |
+
+Die Prognoseseite zeigt je Abend **zwei Zahlen, die nicht dasselbe sind**:
+
+- **Wahrscheinlichkeit** — Anteil der Ensemble-Member ueber s\*. "Wie sicher?"
+- **Perzentil** — klimatologischer Rang des Member-MEDIANS. "Wie selten?"
+
+Die Achse traegt das Perzentil (Schwellen bei 80. und 95.), weil sie danach
+gebaut ist; die Wahrscheinlichkeit steht als Text daneben. Der Vertikalschnitt
+wird aus dem gespeicherten Medianfeld gezeichnet - fuer das BILD richtig, fuer
+die ZAHL nicht: S ist ein Produkt nichtlinearer Terme, der Score des
+Medianfelds ist nicht der Median der Scores (Jensen). Deshalb kommt jede Zahl
+aus dem Zustand, nur das Bild aus dem Feld.
+
+`python3 skripte/seite.py --rueckschau` baut stattdessen das Entwurfsmuster
+aus historischen Abenden - das, was die Seite vor dem 15.08. immer zeigte.
+
+**Ausgeliefert wird ueber einen Wegwerfzweig.** `skripte/ausliefern.py` baut
+beide Seiten und schreibt sie als EINZELNEN Commit nach `gh-pages`, mit
+`--force`. Grund: die Prognoseseite ist 220 kB und wird taeglich neu erzeugt -
+taeglich nach `main` waeren das ueber 100 MB im Jahr fuer Staende, die
+niemanden interessieren. Auf dem Wegwerfzweig gibt es keine Historie, die
+wachsen koennte.
+
+Was veroeffentlicht wird, steht dort als **ausdrueckliche Liste**. Der erste
+Anlauf nahm "jede .html ausser der Vorlage" und haette `diagnose.html`
+(Albumabende neben Bewertungen) und `rueckschau.html` (9.5 MB) mit ins Netz
+gestellt. Dass beide gitignoriert sind, hat NICHT geschuetzt - kopiert wird
+aus dem Arbeitsverzeichnis, nicht aus dem Repo.
 
 **Vor 4 Uhr morgens** zaehlt die Bewertung noch zum Vorabend — wer um eins
 bewertet, meint den Sonnenuntergang von gestern.
@@ -91,6 +117,7 @@ Vier Agenten in `~/Library/LaunchAgents/`, alle mit
 | `de.greatbelow.streulicht.erinnerung` | `erinnerung.py` | stuendlich zur 15. Minute |
 | `de.greatbelow.streulicht.bewertung` | `bewertungen_holen.py` | alle 3 h zur 5. Minute |
 | `de.greatbelow.streulicht.archiv` | `archiviere.py` | 08:00 |
+| `de.greatbelow.streulicht.seite` | `ausliefern.py` | 08:10 (nach dem Alarm) |
 
 ```bash
 launchctl bootstrap gui/$UID ~/Library/LaunchAgents/de.greatbelow.streulicht.alarm.plist
@@ -223,6 +250,7 @@ deshalb aus **Terminal.app** starten.
 | `skripte/erinnerung.py` | taegliche Bewertungsaufforderung (T-0021) |
 | `skripte/bewertungsseite.py` | erzeugt `web/bewerten-<ort>.html` je Ort |
 | `skripte/satellit.py` | MSG-Wolkenmaske als Beobachtungswahrheit |
+| `skripte/ausliefern.py` | baut die Seiten und pusht nach `gh-pages` |
 | `skripte/fensterterm.py` | Fensterterm gegen die Maske: Phantom oder bestaetigt (T-0027) |
 | `skripte/wegterm.py` | Wegterm anders aggregiert, fuenf Varianten gegen Album/Referenz (T-0029) |
 | `sonnen/grib2.py` | GRIB2-Leser fuer die Wolkenmaske, ohne Fremdbibliothek |

@@ -133,10 +133,61 @@ def kurzmarke(d, erster):
     return "%d." % d.day
 
 
+def prognose_eintraege(ort_name, perzentil):
+    """Die kommenden Abende aus daten/zustand.json - was der Alarm gerechnet hat.
+
+    WARUM ZWEI ZAHLEN JE ABEND, und warum sie nicht dasselbe sind:
+
+      Wahrscheinlichkeit  Anteil der Ensemble-Member ueber s*.  "Wie sicher?"
+      Perzentil           Klimatologischer Rang des Member-MEDIANS.  "Wie selten?"
+
+    Die Achse der Seite ist auf den Perzentilrang gebaut (Schwellen bei 80.
+    und 95.), also steht der Punkt dort.  Die Wahrscheinlichkeit ist die
+    Zahl, nach der Andre gefragt hat, und steht als Text daneben.
+
+    Das SVG rechnet aus dem gespeicherten MEDIANFELD einen eigenen Score.
+    Der ist fuer das BILD richtig und fuer die ZAHL falsch: S ist ein Produkt
+    nichtlinearer Terme, der Score des Medianfelds ist nicht der Median der
+    Scores (Jensen).  Deshalb kommt das Bild aus dem Feld und jede Zahl aus
+    dem Zustand.
+    """
+    zp = os.path.join(BASIS, "daten", "zustand.json")
+    if not os.path.exists(zp):
+        return []
+    with open(zp) as f:
+        zustand = json.load(f)
+    abende = (zustand.get(ort_name) or {}).get("abende", {})
+    aus = []
+    for t in sorted(abende):
+        e = abende[t]
+        if e.get("p") is None or e.get("median") is None:
+            continue                       # bewertet, aber nie prognostiziert
+        bild = ""
+        if e.get("feld"):
+            try:
+                bild = svg(t, e["feld"], kompakt=True)[0]
+            except Exception:                                    # noqa: BLE001
+                bild = ""
+        rang = perzentil(e["median"])
+        name, klasse = stufe(rang)
+        d = date.fromisoformat(t)
+        aus.append({"tag": t, "wt": WOCHENTAG[d.weekday()],
+                    "kurz": kurzmarke(d, not aus),
+                    "lang": "%s, %d. %s" % (WOCHENTAG_LANG[d.weekday()],
+                                            d.day, MONAT[d.month - 1]),
+                    "p": rang, "stufe": name, "klasse": klasse,
+                    "zeit": lokalzeit(t), "svg": bild,
+                    "wahrsch": e["p"], "vorlauf_h": e.get("dt_h")})
+    return aus
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--von", default="2025-08-25")
     ap.add_argument("--tage", type=int, default=10)
+    ap.add_argument("--rueckschau", action="store_true",
+                    help="historische Abende statt der Prognose (Entwurfsmuster)")
+    ap.add_argument("--ort", default="berlin")
     a = ap.parse_args()
     with open(os.path.join(BASIS, "daten",
                            "score_berlin_g0.5_2022_2025.json")) as f:
@@ -146,27 +197,37 @@ def main():
     def perzentil(s):
         return sum(1 for x in alle if x < s) / len(alle)
 
-    tage = [(date.fromisoformat(a.von) + timedelta(days=k)).isoformat()
-            for k in range(a.tage)]
-    tage = [t for t in tage if t in klima]
     eintraege = []
-    for t in tage:
-        feld = lade_feld(t)
-        if not feld:
-            continue
-        try:
-            bild, s, det = svg(t, feld, kompakt=True)
-        except Exception:                                        # noqa: BLE001
-            continue
-        p = perzentil(s)
-        name, klasse = stufe(p)
-        d = date.fromisoformat(t)
-        eintraege.append({"tag": t, "wt": WOCHENTAG[d.weekday()],
-                          "kurz": kurzmarke(d, not eintraege),
-                          "lang": "%s, %d. %s" % (WOCHENTAG_LANG[d.weekday()],
-                                                  d.day, MONAT[d.month - 1]),
-                          "p": p, "stufe": name, "klasse": klasse,
-                          "zeit": lokalzeit(t), "svg": bild})
+    if not a.rueckschau:
+        eintraege = prognose_eintraege(a.ort, perzentil)
+        if not eintraege:
+            print("Keine Prognose in daten/zustand.json - der Alarmlauf war "
+                  "noch nicht erfolgreich.\nEntwurfsmuster mit historischen "
+                  "Abenden: --rueckschau", file=sys.stderr)
+            raise SystemExit(2)
+
+    if a.rueckschau:
+        tage = [(date.fromisoformat(a.von) + timedelta(days=k)).isoformat()
+                for k in range(a.tage)]
+        tage = [t for t in tage if t in klima]
+        for t in tage:
+            feld = lade_feld(t)
+            if not feld:
+                continue
+            try:
+                bild, s, det = svg(t, feld, kompakt=True)
+            except Exception:                                    # noqa: BLE001
+                continue
+            p = perzentil(s)
+            name, klasse = stufe(p)
+            d = date.fromisoformat(t)
+            eintraege.append({"tag": t, "wt": WOCHENTAG[d.weekday()],
+                              "kurz": kurzmarke(d, not eintraege),
+                              "lang": "%s, %d. %s" % (WOCHENTAG_LANG[d.weekday()],
+                                                      d.day, MONAT[d.month - 1]),
+                              "p": p, "stufe": name, "klasse": klasse,
+                              "zeit": lokalzeit(t), "svg": bild,
+                              "wahrsch": None, "vorlauf_h": None})
     if not eintraege:
         raise SystemExit("keine Abende")
 
@@ -196,7 +257,8 @@ def main():
         for i, e in enumerate(eintraege))
     svgs = json.dumps({str(i): e["svg"] for i, e in enumerate(eintraege)})
     meta = json.dumps([{k: e[k] for k in ("tag", "lang", "p", "stufe",
-                                          "klasse", "zeit")}
+                                          "klasse", "zeit", "wahrsch",
+                                          "vorlauf_h")}
                        for e in eintraege])
 
     html = """<!doctype html><html lang="de"><head><meta charset="utf-8">
@@ -345,9 +407,17 @@ function waehle(i,rollen){
   document.getElementById("etikett").textContent=m.lang;
   const st=document.getElementById("stufe");
   st.textContent=m.stufe; st.className="stufe "+m.klasse;
-  document.getElementById("unter").textContent=
-    "Sonnenuntergang "+m.zeit+" Uhr \\u00b7 "+Math.round(m.p*100)+
-    ". Perzentil des Jahres";
+  // Zwei verschiedene Zahlen, und sie duerfen nicht verwechselt werden:
+  // die Wahrscheinlichkeit ist der Anteil der Ensemble-Member ueber der
+  // Schwelle ("wie sicher"), das Perzentil der klimatologische Rang des
+  // Member-Medians ("wie selten"). In der Rueckschau gibt es nur das
+  // Perzentil - dort war nichts vorherzusagen.
+  const teile=[];
+  if(m.wahrsch!==null&&m.wahrsch!==undefined)
+    teile.push(Math.round(m.wahrsch*100)+" % Wahrscheinlichkeit");
+  teile.push("Sonnenuntergang "+m.zeit+" Uhr");
+  teile.push(Math.round(m.p*100)+". Perzentil des Jahres");
+  document.getElementById("unter").textContent=teile.join(" \\u00b7 ");
   document.getElementById("bild").innerHTML=SVG[i];
   if(rollen)heranrollen(b);
 }
