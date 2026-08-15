@@ -114,7 +114,20 @@ def hole_jahr(zellen, jahr, gesucht, block=60):
                                                   len(liste)), flush=True)
             continue
         mitten = [zellmitte(z) for z in teil]
+        # MODELL EXPLIZIT, seit 15.08.2026.  Vorher stand hier kein `models=`,
+        # und das ganze Projekt nannte das Ergebnis "ERA5".  Es ist keins:
+        # `archive-api` liefert ohne `models=` byte-identisch `ecmwf_ifs`
+        # (live geprueft ueber vier Junimonate 2019/21/22/23, jeweils
+        # abweichend von `models=era5`).  Das sind IFS-ANALYSEN auf rund 9 km,
+        # nicht ERA5 auf 25 km - eine Verwechslung, die vier Wochen lang jede
+        # Aussage ueber Gitterweiten verfaelscht hat.
+        #
+        # Der Wert wird festgeschrieben, NICHT geaendert: `ecmwf_ifs` ist
+        # genau das, was der Cache schon enthaelt.  Ein Wechsel auf `era5`
+        # waere ein anderes Datenprodukt und wuerde die Klimatologie und damit
+        # s* ungueltig machen.
         u = ("https://archive-api.open-meteo.com/v1/archive?latitude=%s&longitude=%s"
+             "&models=ecmwf_ifs"
              "&hourly=%s&start_date=%d-01-01&end_date=%d-12-31"
              % (",".join("%.4f" % m[0] for m in mitten),
                 ",".join("%.4f" % m[1] for m in mitten), VARIABLEN, jahr, jahr))

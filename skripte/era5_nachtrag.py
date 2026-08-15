@@ -1,4 +1,10 @@
-"""Traegt einzelne Abende in die ERA5-Klimatologie nach.
+"""Traegt einzelne Abende in die Klimatologie nach.
+
+ACHTUNG ZUM DATEINAMEN: der sagt "era5" und ist falsch.  Die
+Klimatologie steht auf ECMWF-IFS-Analysen (rund 9 km), nicht auf
+ERA5 (25 km) - `archive-api` liefert ohne `models=` `ecmwf_ifs`.
+Der Name bleibt vorerst, weil er in Befunden und Commits steht;
+das Modell ist jetzt explizit gesetzt.  Siehe Befund 32.1.
 
 WARUM.  Die Klimatologie endet am 31.12.2025, der Aufloesungstest (icond2.py)
 zieht seine Kontrollabende aber bis August 2026.  Von 35 gepaarten Bloecken
@@ -89,7 +95,7 @@ def hole_tag(tag, breite, laenge, block=40):
         teil = zellen[i:i + block]
         mitten = [zellmitte(z) for z in teil]
         u = ("https://archive-api.open-meteo.com/v1/archive?latitude=%s&longitude=%s"
-             "&hourly=%s&start_date=%s&end_date=%s"
+             "&models=ecmwf_ifs&hourly=%s&start_date=%s&end_date=%s"
              % (",".join("%.4f" % m[0] for m in mitten),
                 ",".join("%.4f" % m[1] for m in mitten), VARIABLEN, tag, tag))
         e = _hole(u)

@@ -11,7 +11,7 @@ Ablauf je Ort:
 ENTSCHEIDUNGEN, bewusst getroffen:
 
 * Betriebsscore ist die 3-SCHICHT-Variante, nicht die niveauaufgeloeste.
-  Grund: s* = 0.6325 ist auf der 3-Schicht-Klimatologie kalibriert.  Ein
+  Grund: s* = 0.7065 ist auf der 3-Schicht-Klimatologie kalibriert.  Ein
   Betrieb auf der anderen Variante haette einen Schwellwert, der nicht zu
   ihm gehoert.  Wechsel erst, wenn die Ablation (T-0006) zeigt, dass die
   Rangfolgen zusammenfallen.
@@ -56,7 +56,7 @@ WOCHENTAG = ("Mo", "Di", "Mi", "Do", "Fr", "Sa", "So")
 def fan_setzen(kfg):
     """Optionaler Sparfaecher aus der Konfiguration.
 
-    ACHTUNG: s* = 0.6325 gilt fuer den Faecher der Klimatologie (5 Azimute,
+    ACHTUNG: s* = 0.7065 gilt fuer den Faecher der Klimatologie (5 Azimute,
     8 Distanzen).  Ein anderer Faecher liefert eine andere Score-Verteilung
     und damit einen anderen Schwellwert - wer hier reduziert, MUSS die
     Klimatologie mit demselben Faecher neu rechnen.  Deshalb steht der

@@ -194,6 +194,7 @@ ausgewertet zur naechstliegenden vollen Stunde am Sonnenuntergang.
 ### 6.1 Die Zahl
 
     s* = 0.6325   (95. Perzentil)   ->   18.5 Ausloesungen/Jahr
+    (UEBERHOLT: gilt nur fuer GEWICHTUNG="punkt", siehe 10.3 -> 0.7065)
 
 74 Ereignisse in 4 Jahren; Poisson-Standardfehler sqrt(74)/74 = 12 %, also
 18.5 +/- 2.2 pro Jahr.  Zielband des Auftrags war 10-25 - das haelt auch am
@@ -1372,9 +1373,17 @@ Sonnenstand und Tageslaenge konstant.  35 Bloecke, 166 Abende, 5976 Abfragen.
 Beide Verfahren rechnen **denselben Score auf derselben Faechergeometrie** -
 es unterscheidet sich nur die Gitterweite der Quelle.
 
-**Gueltigkeitspruefung vorweg:** ERA5 und ICON-D2 stimmen ueber 77
-gemeinsame Abende mit rho = +0.746 ueberein, bei praktisch gleichem Mittel
-(0.230 gegen 0.221).  Die Kette misst Meteorologie, kein Artefakt.
+**Gueltigkeitspruefung vorweg** (korrigiert 15.08., siehe 32.4 - die erste
+Fassung stand auf einem Teilcache mitten im Abruf): ueber alle **166** Abende
+Spearman **+0.698**, Pearson +0.554.  Die Mittel sind NICHT praktisch gleich
+(0.222 gegen 0.186, ICON liegt 16 % niedriger).  Bei rho 0.70 misst die Kette
+Meteorologie und kein Artefakt; die zuerst berichteten Zahlen waren falsch.
+
+**Und die Ueberschrift dieses Abschnitts traegt nicht.**  "ERA5 25 km" ist
+falsch: die Klimatologie steht auf `ecmwf_ifs`, also IFS-ANALYSEN auf rund
+9 km (Befund 32.1).  Der Test vergleicht Faktor 4, nicht Faktor 11.  Richtig
+formuliert lautet das Ergebnis: **bei Faktor 4 in der Gitterweite ist kein
+Effekt nachweisbar** - nicht "Aufloesung ist als Erklaerung gefallen".
 
 | Verfahren | Mittelrang | 95 %-KI | z |
 |---|---|---|---|
@@ -1451,7 +1460,7 @@ Gefunden wurde er nicht beim Bau der Produktseite, sondern beim
 
 ## 31 T-0006 Ablation: s* ist NICHT uebertragbar - und der Test hat ein Loch
 
-Load-bearing, weil s* = 0.6325 aus der **3-Schicht**-Klimatologie stammt.
+Load-bearing, weil s* = 0.7065 aus der **3-Schicht**-Klimatologie stammt.
 Falls der Betrieb je auf die niveauaufgeloeste Variante wechselt, muss die
 Rangfolge dieselbe sein - sonst bedeutet der Schwellwert dort etwas anderes.
 
@@ -1482,7 +1491,7 @@ also derselben Variante, aus der s\* stammt.  Die Warnung in der README war
 richtig.
 
 **Das Loch im Test, und es ist gross.**  In diesen 42 Herbstabenden erreicht
-**kein einziger** Abend s\* = 0.6325 - die Maxima liegen bei 0.39 und 0.46.
+**kein einziger** Abend s\* = 0.7065 - die Maxima liegen bei 0.39 und 0.46.
 Das Fenster enthaelt also null Ereignisse.  Gemessen wurde damit die
 Uebereinstimmung im **Mittelfeld**, waehrend der Alarm ausschliesslich im
 **Schwanz** lebt.  Ueber die Rangfolge dort sagt rho = 0.697 nichts.
@@ -1504,16 +1513,25 @@ Alarm lebt, sind sich die beiden Varianten praktisch uneinig darueber, welche
 Abende die besten sind.
 
 **Und die Zahl, die es endgueltig entscheidet.**  Im selben Sommerfenster,
-mit demselben s\* = 0.6325:
+mit demselben s\* = 0.7065:
 
-    3-Schicht          3 Ausloesungen   (Maximum 0.757)
+    3-Schicht          2 Ausloesungen   (Maximum 0.757)
     niveauaufgeloest   0 Ausloesungen   (Maximum 0.488)
 
 Das Maximum der niveauaufgeloesten Variante liegt **unter der Schwelle**.
 Derselbe Schwellwert erzeugt auf der einen Variante Alarme und auf der
 anderen keinen einzigen - das ist kein Randfall, das sind zwei Massstaebe.
-Fuer dieselbe Ausloeserate muesste s\* dort bei rund **0.4224** liegen, also
-33 % niedriger.
+Fuer dieselbe Ausloeserate muesste s\* dort deutlich niedriger liegen.
+
+**KORREKTUR 15.08.2026 (Fable-Gutachten).**  Dieser Abschnitt rechnete
+zunaechst mit s\* = 0.6325 und meldete 3 statt 2 Ausloesungen.  0.6325 gilt
+nur fuer GEWICHTUNG="punkt" und ist seit der Umstellung auf
+Raumwinkelgewichtung durch 0.7065 ersetzt - **im selben Dokument, Abschnitt
+10.3**.  Ich habe den ueberholten Wert aus dem Gedaechtnis wiedereingefuehrt,
+statt in konfig.json nachzusehen.  Die Folgerung aendert sich nicht (die
+niveauaufgeloeste Variante loest in beiden Faellen nie aus), die Zahl schon.
+Derselbe Wert steckte fest verdrahtet in `termanalyse.py` und `rueckschau.py`
+und ist dort jetzt durch einen Lesezugriff auf konfig.json ersetzt.
 
 **T-0006 ist damit klar beantwortet: nicht uebertragbar, und zwar am
 staerksten genau dort, wo es zaehlt.**  Ein Wechsel auf die
@@ -1530,3 +1548,79 @@ Der Dateiname traegt jetzt das Fenster.
 Pruefbefehl: `python3 skripte/ablation.py --von 2023-06-01 --bis 2023-07-12`
 
 Pruefbefehl: `python3 skripte/ablation.py`
+
+## 32 Vier Korrekturen aus dem Fable-Gutachten (15.08.2026)
+
+Ein externes Gate mit vollem Repo-Zugriff hat vier Dinge gefunden, die ich
+selbst nicht gefunden hatte.  Alle vier sind hier nachgerechnet und bestaetigt.
+
+### 32.1 Die Klimatologie ist NICHT ERA5
+
+`klimatologie.py` ruft `archive-api` **ohne `models=`** auf.  Der Default ist
+nicht ERA5.  Live geprueft, vier Junimonate, byte-identisch verglichen:
+
+| Jahr | ohne `models=` gegen `models=era5` | gegen `models=ecmwf_ifs` |
+|---|---|---|
+| 2019 | abweichend | **gleich** |
+| 2021 | abweichend | **gleich** |
+| 2022 | abweichend | **gleich** |
+| 2023 | abweichend | **gleich** |
+
+Die gesamte Klimatologie (11 Jahre, 4058 Abende) steht auf **ECMWF-IFS-
+Analysen**.  Jede Stelle im Projekt, die "ERA5" sagte, war falsch.
+
+**Folge fuer Befund 29, die ich selbst ziehen muss:** dort steht "ERA5 25 km
+gegen ICON-D2 2.2 km".  IFS-Analysen laufen auf rund **9 km**.  Der
+Aufloesungstest verglich also Faktor 4, nicht Faktor 11 - was erklaert, warum
+der Effekt klein ausfiel, und die Ueberschrift "Gitterweite ist als Erklaerung
+gefallen" nicht traegt.  Richtig ist: **bei Faktor 4 nicht nachweisbar.**
+
+### 32.2 Regimebruch 2022 im selben Datenprodukt
+
+Anteil exakt 100 % Bedeckung im Rohcache der Klimatologie:
+
+| Jahr | low | mid | high |
+|---|---|---|---|
+| 2015-2021 | 9-16 % | 4-10 % | **7-12 %** |
+| 2022-2025 | 15-19 % | 11-17 % | **19-27 %** |
+
+Der `high`-Anteil verdoppelt sich.  Das ist kein Wetter.  Das Album liegt
+schief dazu: 27 Abende vor 2022, 49 danach.
+
+Aera-gepaart nachgerechnet (Rang nur gegen Abende derselben Aera):
+
+    gepoolt        Mittelrang 0.671
+    aera-gepaart   Mittelrang 0.657
+
+**Die Anreicherung haelt.**  Sie ist kein Artefakt des Regimewechsels.
+
+### 32.3 Mein z war mit der falschen Streuung gerechnet
+
+Ich habe die **Stichproben**-SD in den Nenner gesetzt (0.2545).  Unter H0
+sind die Raenge gleichverteilt, ihre SD ist **0.2887**.  Wer die kleinere
+beobachtete Streuung nimmt, testet gegen etwas, das H0 nicht behauptet.
+
+    z mit Stichproben-SD   +5.86   (berichtet, zu gross)
+    z mit Null-SD          +5.16   (richtig)
+
+Alle frueher berichteten z-Werte dieser Bauart sind entsprechend zu gross.
+Keine Schlussfolgerung kippt dadurch, aber die Zahlen sind zu korrigieren.
+
+### 32.4 Meine Gueltigkeitspruefung in Befund 29 stand auf einem Teilcache
+
+Dort steht "ERA5 und ICON-D2 stimmen ueber **77** gemeinsame Abende mit
+rho = +0.746 ueberein, bei praktisch gleichem Mittel (0.230 gegen 0.221)".
+
+Diese Zahl entstand **mitten im Abruf**, als erst 77 von 166 Abenden im Cache
+lagen.  Ich habe sie nach Abschluss nie neu gerechnet.  Endstand:
+
+    n = 166   Spearman +0.698   Pearson +0.554
+    Mittel: Klimatologie 0.222   ICON 0.186
+
+Die Mittel sind **nicht** praktisch gleich - ICON liegt 16 % niedriger.  Die
+Folgerung (die Kette misst Meteorologie) haelt bei rho 0.70, die Zahlen sind
+falsch berichtet.
+
+**Merksatz:** eine Zwischenzahl aus einem laufenden Abruf ist ein Messwert
+ueber einen Teilcache, kein Ergebnis.  Wer sie nicht am Ende wiederholt,
+berichtet den Zustand einer Baustelle.

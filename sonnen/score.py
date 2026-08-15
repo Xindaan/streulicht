@@ -168,7 +168,14 @@ def score(hole):
                     rest *= (1.0 - c)
                 sicht_c += 1.0 - rest
                 sicht_n += 1
-        sicht = 1.0 - (sicht_c / sicht_n if sicht_n else 0.0)
+        # sicht_n == 0 heisst: KEINE Sichtzelle hatte Daten.  Frueher stand
+        # hier ein "if sicht_n else 0.0", was sicht auf 1.0 setzte - fehlende
+        # Daten wirkten also als freie Sicht.  Spiegelbild des Memberfehlers
+        # (Befund 27a): dort stimmte fehlende Information gegen den Abend,
+        # hier stimmt sie dafuer.
+        if sicht_n == 0:
+            continue
+        sicht = 1.0 - sicht_c / sicht_n
 
         # --- Term B (b): Beleuchtungsweg, Produkt ueber Segmente
         # Die erste Stuetzstelle JENSEITS der Tangente kommt mit dazu, sonst
@@ -180,7 +187,13 @@ def score(hole):
         jenseits = [d for d in DISTANZEN_KM if d >= d_tan]
         if jenseits:
             stuetzen.append(jenseits[0])
+        # weg startet bei 1.0 und bleibt dort, wenn kein Segment Daten hat.
+        # Deshalb wird mitgezaehlt: moeglich = Segmente, die ueberhaupt einen
+        # Wert tragen KOENNTEN, erfasst = Segmente, die einen bekamen.  Ein
+        # Segment, das wegen der Selbstblockade-Regel uebersprungen wird, ist
+        # KEIN fehlender Wert und zaehlt in keinem der beiden.
         weg, segmente = 1.0, []
+        weg_moeglich = weg_erfasst = 0
         for i in range(len(stuetzen) - 1):
             d_nah, d_fern = stuetzen[i], stuetzen[i + 1]
             schichten = _schichten_im_segment(
@@ -199,6 +212,7 @@ def score(hole):
             schichten = [s for s in schichten if s != name] or None
             if schichten is None:
                 continue
+            weg_moeglich += 1
             zc, zg = 0.0, 0.0
             for dv in FAECHER_AZIMUTE:
                 cs = [hole(d_fern, dv, s) for s in schichten]
@@ -212,7 +226,18 @@ def score(hole):
                 continue
             c_seg = zc / zg
             weg *= (1.0 - c_seg) ** K_SEGMENT
+            weg_erfasst += 1
             segmente.append((d_nah, d_fern, schichten, c_seg))
+
+        # Kein einziges auswertbares Segment, obwohl es welche gaebe: der
+        # Beleuchtungsweg ist vollstaendig unbeobachtet.  weg waere dann 1.0,
+        # also "freies Fenster" - und fehlende Daten schlagen bekannte Wolke.
+        # Belegt: bei ueberall 90 % Bewoelkung gibt der volle Faecher S = 0.000,
+        # ein Faecher mit nur der Standortzelle S = 0.090.
+        # weg_moeglich == 0 ist etwas anderes und legitim: dann gibt es
+        # konstruktionsbedingt nichts zu blockieren (Selbstblockade-Regel).
+        if weg_moeglich > 0 and weg_erfasst == 0:
+            continue
 
         b = sicht * weg
         s = a * b
@@ -220,7 +245,13 @@ def score(hole):
             bestes = s
             detail = {"schirm": name, "hoehe_km": hoehe, "d_tangente": d_tan,
                       "A": a, "B": b, "sicht": sicht, "weg": weg,
-                      "segmente": segmente}
+                      "segmente": segmente,
+                      # Teildeckung bleibt erlaubt, aber sichtbar: nicht
+                      # abgetastete Abschnitte gelten als frei und beguenstigen
+                      # den Score.  Wer die Zahl ignoriert, misst ein Artefakt.
+                      "weg_deckung": (weg_erfasst / weg_moeglich
+                                      if weg_moeglich else 1.0),
+                      "sicht_zellen": sicht_n}
     return bestes, detail
 
 

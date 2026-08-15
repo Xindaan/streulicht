@@ -12,7 +12,22 @@ import statistics
 import sys
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SCHWELLE = 0.6325
+
+
+def _schwelle():
+    """s* aus konfig.json, nicht fest verdrahtet.
+
+    Hier stand 0.6325. Dieser Wert gilt nur fuer GEWICHTUNG="punkt" und ist
+    seit der Umstellung auf Raumwinkelgewichtung durch 0.7065 ersetzt
+    (Befund 10.3). Die feste Zahl hat den Wechsel nicht mitbekommen und
+    still zu viele Abende als Ereignis gezaehlt - gefunden am 15.08.2026.
+    Einzige Quelle ist ab jetzt konfig.json, dieselbe wie im Betrieb.
+    """
+    with open(os.path.join(BASIS, "konfig.json")) as f:
+        return json.load(f)["schwelle_score"]
+
+
+SCHWELLE = _schwelle()
 
 
 def raenge(v):

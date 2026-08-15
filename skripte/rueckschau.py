@@ -109,7 +109,7 @@ const liste=document.getElementById("liste"), bild=document.getElementById("bild
 let filter="alle";
 function zeichne(){
   liste.innerHTML="";
-  DATEN.filter(d=>filter==="alle"||(filter==="foto"&&d.f)||(filter==="top"&&d.s>=0.6325))
+  DATEN.filter(d=>filter==="alle"||(filter==="foto"&&d.f)||(filter==="top"&&d.s>=__SCHWELLE__))
    .forEach(d=>{
     const e=document.createElement("div");
     e.className="z";
@@ -122,7 +122,7 @@ function zeichne(){
     liste.appendChild(e);
   });
   const sichtbar=DATEN.filter(d=>filter==="alle"||(filter==="foto"&&d.f)||
-    (filter==="top"&&d.s>=0.6325));
+    (filter==="top"&&d.s>=__SCHWELLE__));
   if(sichtbar.length){
     const best=sichtbar.reduce((a,b)=>b.s>a.s?b:a);
     const i=sichtbar.indexOf(best);
@@ -139,9 +139,17 @@ zeichne();
 
     ziel = os.path.join(BASIS, "web", "rueckschau.html")
     os.makedirs(os.path.dirname(ziel), exist_ok=True)
+    # s* aus konfig.json einsetzen, nicht in die Seite einbrennen.  Hier stand
+    # zweimal die feste 0.6325 - ein Wert, der nur fuer GEWICHTUNG="punkt"
+    # gilt und seit der Umstellung auf Raumwinkelgewichtung durch 0.7065
+    # ersetzt ist (Befund 10.3).  Die Rueckschau markierte damit still zu
+    # viele Abende als Ereignis.  Gefunden am 15.08.2026.
+    with open(os.path.join(BASIS, "konfig.json")) as f:
+        schwelle = json.load(f)["schwelle_score"]
     with open(ziel, "w") as f:
-        f.write(kopf + ",\n".join(zeilen)
-                + fuss.replace("__SVG_DATEN__", json.dumps(bilder)))
+        f.write((kopf + ",\n".join(zeilen)
+                 + fuss.replace("__SVG_DATEN__", json.dumps(bilder)))
+                .replace("__SCHWELLE__", repr(schwelle)))
     print("geschrieben: %s (%.1f MB)" % (ziel, os.path.getsize(ziel) / 1e6))
 
 

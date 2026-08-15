@@ -28,7 +28,7 @@ fuer die Terminal-App in den Systemeinstellungen.
 [0.499, 0.826], Top-15-%-Ueberlappung 4 von 6, Verteilungen verschoben.
 s\* muss bei einem Wechsel neu hergeleitet werden. **Sommerfenster am selben
 Abend nachgeholt** (01.06.-12.07.2023, 8 Ereignisse): dort rho = +0.504 und
-nur 1 von 6 Spitzenabenden gemeinsam. Mit s\* = 0.6325 loest die 3-Schicht
+nur 1 von 6 Spitzenabenden gemeinsam. Mit s\* = 0.7065 loest die 3-Schicht
 dreimal aus, die niveauaufgeloeste kein einziges Mal - ihr Maximum (0.488)
 liegt unter der Schwelle. Fuer gleiche Rate braeuchte es dort s\* ~ 0.4224.
 Historisch: `historical-forecast-api` war frei.
@@ -130,8 +130,8 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   entfernungsabhaengige Niveauzuordnung, semi-Lagrangesche Interpolation,
   Validierungsplan. Korrekturen: Juni-Sonnenuntergang 19:33 statt 17:30 UTC;
   Fensterband 200-400 km statt 100-200 km.
-- **T-0002 Klimatologie und Schwellwert** (14.08.2026) — ERA5 2022-2025,
-  1461 Abende, 3-Schicht auf 0.5-Grad-Gitter. **s\* = 0.6325 → 18.5
+- **T-0002 Klimatologie und Schwellwert** (14.08.2026) — dem Archiv (ecmwf_ifs) 2022-2025,
+  1461 Abende, 3-Schicht auf 0.5-Grad-Gitter. **s\* = 0.7065 → 18.5
   Ausloesungen/Jahr.** Januar null von 124. r(A,B) = -0.259. Offen bleibt die
   Quantilbruecke auf ECMWF (haengt an T-0006).
 - **T-0004 Score implementiert** (14.08.2026) — 3-Schicht (`sonnen/score.py`)

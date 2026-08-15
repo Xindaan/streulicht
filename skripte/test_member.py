@@ -80,9 +80,18 @@ pruefe(det is None and s == 0.0,
 s, det = score(feld(alle))
 pruefe(det is not None, "voller Faecher -> Detail vorhanden")
 
+# DIESER FALL STAND HIER UMGEKEHRT UND WAR FALSCH (gefunden 15.08.2026 im
+# Fable-Gutachten).  Der Test forderte "Detail vorhanden" und zementierte
+# damit ein Loch: bei belegtem Standort, aber leerem Beleuchtungsweg blieb
+# weg auf seinem Startwert 1.0 und sicht fiel auf 1.0 - fehlende Fensterdaten
+# wirkten als FREIES Fenster.  Gemessen: bei ueberall 90 % Bewoelkung gibt der
+# volle Faecher S = 0.0000, ein Faecher mit nur der Standortzelle S = 0.0900.
+# Fehlende Daten schlugen also bekannte Wolke.  Exaktes Spiegelbild des
+# Memberfehlers, den dieselbe Datei prueft - und mein eigener Test hat es
+# als "ok" abgehakt.
 s, det = score(feld({(0.0, 0.0)}))
-pruefe(det is not None,
-       "nur der Standort belegt -> Detail vorhanden (kein Fehlalarm auf None)")
+pruefe(det is None,
+       "nur der Standort belegt -> None (Beleuchtungsweg unbeobachtet)")
 
 # Dieser Fall lief beim ersten Lauf auf FEHL, und die Erwartung war falsch,
 # nicht der Code: Term A ist nur im Nahbereich (d <= 120 km) definiert.  Ist
@@ -105,6 +114,45 @@ def nullfeld(d, dv, schicht):
 s, det = score(nullfeld)
 pruefe(det is not None and s == 0.0,
        "ueberall exakt 0 %% Bewoelkung -> S = 0, aber Detail VORHANDEN")
+
+print()
+print("=== 3. Fehlende Fensterdaten duerfen NIE guenstiger sein als Wolke")
+# Die Zahl, die den Fehler sichtbar gemacht hat: identische Bewoelkung,
+# einmal voll abgetastet, einmal nur am Standort.  Frueher 0.0000 gegen
+# 0.0900 - zugunsten des unbeobachteten Falls.
+alle_zellen = {(d, dv) for d in DISTANZEN_KM for dv in FAECHER_AZIMUTE}
+s_voll, d_voll = score(feld(alle_zellen))
+s_duenn, d_duenn = score(feld({(0.0, 0.0)}))
+pruefe(d_voll is not None,
+       "voller Faecher, ueberall belegt -> bewertbar, S = %.4f" % s_voll)
+pruefe(d_duenn is None,
+       "nur Standort -> nicht bewertbar (frueher S = 0.0900 bei 90 %%)")
+
+# Der eigentliche Beleg, mit derselben Bewoelkung in beiden Faellen:
+# frueher schlug der unbeobachtete Faecher den vollstaendigen.
+def dicht(d, dv, schicht):
+    return 0.9
+
+
+s_dicht, d_dicht = score(dicht)
+# NICHT auf == 0.0 pruefen: die Anzeige mit %.4f zeigte 0.0000, der Wert ist
+# 9e-06.  Eine gerundete Ausgabe ist nicht der Wert - derselbe Fehler wie bei
+# einem Kontrastverhaeltnis ohne seine Bezugsflaeche (Befund 30).
+pruefe(d_dicht is not None and s_dicht < 1e-4,
+       "90 %% ueberall, voll abgetastet -> S = %.3g, praktisch zu" % s_dicht)
+pruefe(s_dicht < 0.09,
+       "und das schlaegt die alte Luecke: dieselbe Wolke gab dort S = 0.0900")
+
+teil = {(0.0, 0.0)} | {(d, dv) for d in (60.0, 120.0)
+                       for dv in FAECHER_AZIMUTE}
+s_teil, d_teil = score(feld(teil))
+pruefe(d_teil is not None and "weg_deckung" in d_teil,
+       "Teildeckung bleibt bewertbar und meldet weg_deckung")
+pruefe(d_teil is not None and d_teil["weg_deckung"] < 1.0,
+       "und die Deckung ist ehrlich unter 1.0 (%.2f)"
+       % (d_teil["weg_deckung"] if d_teil else -1))
+pruefe(d_voll is not None and d_voll["weg_deckung"] == 1.0,
+       "voller Faecher meldet Deckung 1.00")
 
 print()
 if fehler:

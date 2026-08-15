@@ -22,9 +22,14 @@ zeigen.
   (RH ueber Eis mit Schwelle bei Saettigung) war falsch und ist widerlegt;
   gewaehlt ist eine nukleationsfoermige Schwelle. Gegen ERA5 erreicht sie
   r 0,768 — mehr als GFS' eigenes Wolkenschema (0,730).
-- **ERA5 auf Open-Meteo hat keine Druckflaechen.** Klimatologie laeuft
-  deshalb als 3-Schicht-Variante auf ERA5. Ensemble-Archiv nur 93 Tage tief.
-- **s\* = 0.6325 → 18.5 Ausloesungen/Jahr** (4 Jahre, 74 Ereignisse, +/-12 %).
+- **Das Archiv auf Open-Meteo hat keine Druckflaechen.** Klimatologie
+  laeuft deshalb als 3-Schicht-Variante. **Die Quelle ist NICHT ERA5,
+  sondern `ecmwf_ifs` (IFS-Analysen, rund 9 km)** - `archive-api` liefert
+  ohne `models=` dieses Produkt. Vier Wochen lang falsch benannt, siehe
+  Befund 32.1. Ausserdem: Regimebruch 2022, der 100-%-Anteil bei `high`
+  verdoppelt sich. Die Anreicherung haelt aera-gepaart (0.671 -> 0.657). Ensemble-Archiv nur 93 Tage tief.
+- **s\* = 0.7065 → 18.5 Ausloesungen/Jahr** (4 Jahre, 74 Ereignisse, +/-12 %).
+  (0.6325 galt nur fuer GEWICHTUNG="punkt", siehe Befund 10.3.)
   Januar: null Ausloesungen in 124 Abenden (P = 0.002, kein Rauschen).
   r(A,B) = -0.259 — der Fensterterm traegt eigene Information.
 
@@ -139,7 +144,7 @@ Variante; ein Wechsel braeuchte eine eigene Klimatologie.
 - Sonnenuntergangszeiten gegen Open-Meteo unabhaengig bestaetigt (19:33 UTC
   im Juni — die E0-Korrektur haelt).
 - Kalibrierung Eiszweig: Training 2023-24, Test 2025 ausgehalten.
-- Klimatologie gerechnet, s* = 0.6325 (18.5 Ausloesungen/Jahr).
+- Klimatologie gerechnet, s* = 0.7065 (18.5 Ausloesungen/Jahr).
 - Interpolation gemessen: Semi-Lagrange 42 % besser auf 300 hPa.
 - Beide Score-Varianten implementiert und an Grenzfaellen geprueft.
 - `docs/befunde-e1.md` mit allen Messungen und Pruefbefehlen.
