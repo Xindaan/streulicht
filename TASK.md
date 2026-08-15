@@ -81,6 +81,38 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
 - T-0018 Beleuchtete tiefe Decke als Ereignis statt als Hindernis. Genau ein
   Albumabend hat guten Schirm bei totem Fenster (2024-09-15, A 0.87,
   B 0.032). n = 1 — erst angehen, wenn ein zweiter Fall auftaucht.
+- T-0020 **Quantilbruecke messen.** s\* = 0.7065 ist das 95. Perzentil der
+  Klimatologie (IFS-Analysen, 0.5-Grad-Gitter). Der Betrieb rechnet auf
+  ENS-Membern mit anderer Gitterweite und bildet p = Anteil ueber s\*.
+  Ob dieselbe Schwelle dort dieselbe Rate ergibt, ist NIE gemessen worden -
+  es gibt kein Ensemble-Archiv (T-0003 nie gestartet). Vorab nicht messbar:
+  der Livegang IST die Messung. `archiviere.py` ab Tag 1, nach 6-8 Wochen
+  s\*/p\* nachziehen.
+- T-0021 **Bewertungsaufforderung an JEDEM Abend**, nicht nur bei Alarm.
+  Sonst entstehen nur Labels fuer Alarmabende - dieselbe Presence-only-Falle,
+  die den ersten Abbruchtest unentscheidbar gemacht hat. Ohne Negative gibt
+  es keine Trefferquote.
+- T-0022 **Prognosestand je Lauf vollstaendig festschreiben.** `alarm.py`
+  haengt nur `p` an `verlauf`; Median, A, sicht, weg werden ueberschrieben.
+  Nach der Saison laesst sich sonst nicht rekonstruieren, was am Alarmtag
+  vorhergesagt war.
+- T-0023 **Bewertungsverlust ausschliessen.** ntfy haelt rund 12 h vor, der
+  Einsammel-Cron laeuft alle 3 h - steht das NAS still, fehlen Zeilen ohne
+  Meldung. `localStorage` plus Nachsende-Knopf auf der Bewertungsseite.
+- T-0024 **Aufloesungstest neu aufsetzen, wenn er wiederholt wird.** Zwei
+  Gruende: die Baseline war 9 km, nicht 25 (Befund 32.1), und die 27 %
+  Foto-Kontrollen sind ergebnisentscheidend - ohne sie +0.154
+  [+0.028, +0.279], also Kriterium erfuellt. Post hoc, reicht aber, um
+  "Aufloesung ist als Erklaerung gefallen" NICHT zu behaupten.
+- T-0025 **Modellsprung gegen Variantensprung.** Aus denselben Ablationsdaten:
+  Klimatologie-3-Schicht gegen GFS-3-Schicht (gleiche Score-Variante, anderes
+  Modell) ergibt rho 0.483 - mindestens so gross wie der Variantensprung, den
+  T-0006 gemessen hat. Der Betrieb macht genau diesen Modellsprung
+  (Klimatologie auf IFS-Analysen, Alarm auf ENS). "Laeuft auf der richtigen
+  Variante" beruhigt also zu Unrecht.
+- T-0026 **`member_liste()` liefert 50 statt 51.** Der Kontrolllauf hat keinen
+  `_memberNN`-Suffix und faellt still heraus. Kein Fehler im Ergebnis, aber
+  eine stille Abweichung zwischen erwarteter und tatsaechlicher Memberzahl.
 - T-0019 MSG/MTG-Infrarot als Beobachtungswahrheit (3 km, 15 min, kostenlos).
   Beantwortet fuer jeden Albumabend, ob die Wolke ueberhaupt da war — die
   Frage, die am 14.08. fuenfmal von Hand am Foto beantwortet wurde.
