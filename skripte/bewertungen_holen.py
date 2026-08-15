@@ -68,11 +68,23 @@ def main():
                 continue
             abend = eintrag["abende"].setdefault(tag, {})
             # Spaetere Bewertung desselben Abends ueberschreibt - eine
-            # Korrektur ist gewollt, ein Duplikat schadet nicht.
+            # Korrektur ist gewollt, ein Duplikat schadet nicht.  Genau
+            # deshalb darf die Seite beliebig oft nachsenden (T-0023).
             if abend.get("bewertung") != note:
                 neu += 1
             abend["bewertung"] = note
             abend["bewertung_zeit"] = zeit
+            # T-0021: kam die Note auf Aufforderung, nach einem Alarm, oder
+            # spontan?  Ohne diese Unterscheidung ist die Stichprobe nicht
+            # auswertbar - wer nur nach Alarmen bewertet, liefert keine
+            # Basisrate, sondern dieselbe Presence-only-Falle wie das Album.
+            if m.get("anlass"):
+                abend["bewertung_anlass"] = m["anlass"]
+            if m.get("erfasst"):
+                # Zeitpunkt am GERAET, nicht der Empfang bei ntfy.  Bei einer
+                # nachgesendeten Bewertung liegen die beiden Tage auseinander,
+                # und nur der erste sagt, wann tatsaechlich bewertet wurde.
+                abend["bewertung_erfasst"] = m["erfasst"]
     with open(zpfad, "w") as f:
         json.dump(zustand, f, indent=1)
 

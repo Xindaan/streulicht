@@ -5,6 +5,10 @@
   "schwelle_wahrscheinlichkeit": 0.5,
   "vorlauf_tage": 10,
   "advektion": true,
+  "seiten_basis": "",
+  "_hinweis_seiten_basis": "Basis-URL der ausgelieferten Seiten, z.B. https://<nutzer>.github.io/wetter. Leer = die Erinnerung kommt ohne Link. Wird mit T-0015 (GitHub Pages) gefuellt.",
+  "bewertung_tage_pro_woche": 7,
+  "_hinweis_bewertung": "7 = jeden Abend fragen. Weniger ergibt eine deterministische Wochenstichprobe (gleiche Woche -> gleiche Tage). Unter 7 sinkt die Zahl auswertbarer Abende proportional.",
   "orte": [
     {
       "name": "berlin",

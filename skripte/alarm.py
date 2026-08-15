@@ -114,15 +114,35 @@ def abfrage(zellen, variablen, modell, tage, block=25):
     return aus
 
 
-def member_liste(h):
-    """Memberkennungen aus den Schluesselnamen.
+KONTROLLLAUF = ""      # der unstoerte Lauf: Schluessel OHNE _memberNN-Suffix
 
-    ACHTUNG: das zaehlt Schluessel, nicht Daten.  Ein Member, dessen Reihen
-    durchgehend None sind, steht hier trotzdem drin.  Wer das Ergebnis als
-    "so viele Member haben Werte" liest, unterschaetzt jede daraus gebildete
-    Wahrscheinlichkeit - siehe verdichte().
+
+def feldname(basis, m):
+    """Variablenname je Member.  Der Kontrolllauf hat kein Suffix."""
+    return basis if m == KONTROLLLAUF else "%s_member%s" % (basis, m)
+
+
+def member_liste(h):
+    """Memberkennungen aus den Schluesselnamen, KONTROLLLAUF eingeschlossen.
+
+    T-0026, gemessen 15.08.2026: ECMWF ENS liefert ueber Open-Meteo 51
+    Reihen je Variable - 50 mit `_memberNN` und **eine ohne Suffix**.  Die
+    ohne ist der Kontrolllauf, also der unstoerte und damit einzeln beste
+    Lauf.  Die fruehere Fassung filterte auf `"_member" in k` und warf ihn
+    weg: p wurde ueber 50 statt 51 Member gebildet, und ausgerechnet der
+    informativste fehlte.  Kein Fehler, keine Warnung - nur ein Nenner, der
+    nicht zur Modellbeschreibung passt.
+
+    ACHTUNG, unveraendert gueltig: das zaehlt Schluessel, nicht Daten.  Ein
+    Member mit durchgehend None steht hier trotzdem drin; erst verdichte()
+    nimmt ihn aus Zaehler und Nenner.
     """
-    return sorted({k.split("_member")[1] for k in h if "_member" in k})
+    mem = {k.split("_member")[1] for k in h if "_member" in k}
+    # Gibt es eine suffixlose Reihe derselben Variable, ist das der Kontrolllauf.
+    basen = {k.split("_member")[0] for k in h if "_member" in k}
+    if basen & set(h):
+        mem.add(KONTROLLLAUF)
+    return sorted(mem)
 
 
 def verdichte(werte, schwelle):
@@ -206,10 +226,10 @@ def lauf_ort(ort, kfg, zustand, trocken):
         vz = ziel_dt - datetime.fromisoformat(zeiten[i]).replace(tzinfo=timezone.utc)
         stunden = vz.total_seconds() / 3600.0
         for s in SCHICHTEN:
-            sp = [zentrum.get("wind_speed_%dhPa_member%s" % (WINDNIVEAU[s], m), [None])[i]
-                  for m in mem]
-            ri = [zentrum.get("wind_direction_%dhPa_member%s" % (WINDNIVEAU[s], m), [None])[i]
-                  for m in mem]
+            sp = [zentrum.get(feldname("wind_speed_%dhPa" % WINDNIVEAU[s], m),
+                              [None])[i] for m in mem]
+            ri = [zentrum.get(feldname("wind_direction_%dhPa" % WINDNIVEAU[s], m),
+                              [None])[i] for m in mem]
             sp = [x for x in sp if x is not None]
             ri = [x for x in ri if x is not None]
             if not sp:
@@ -248,7 +268,7 @@ def lauf_ort(ort, kfg, zustand, trocken):
                 e = feld.get(z)
                 if e is None:
                     return None
-                r = e.get("cloud_cover_%s_member%s" % (schicht, _m))
+                r = e.get(feldname("cloud_cover_%s" % schicht, _m))
                 if r is None or _i >= len(r) or r[_i] is None:
                     return None
                 return r[_i] / 100.0
@@ -348,8 +368,16 @@ def main():
             e = erg[tag]
             alt = eintrag["abende"].get(tag, {})
             e["bewertung"] = alt.get("bewertung")
+            # T-0022: den GANZEN Prognosestand je Lauf festhalten, nicht nur p.
+            # Vorher stand hier {"lauf", "p"}; Median, Schirm, A, sicht, weg und
+            # die Memberzahl wurden beim naechsten Lauf ueberschrieben.  Nach
+            # einer Saison waere damit nur die Trefferquote je Vorlauf
+            # auswertbar gewesen, nicht WARUM ein Alarm danebenlag - und genau
+            # das ist die Frage, fuer die der Livegang ueberhaupt stattfindet.
             e["verlauf"] = (alt.get("verlauf") or []) + [
-                {"lauf": str(date.today()), "p": e["p"]}]
+                dict({k: v for k, v in e.items()
+                      if k not in ("verlauf", "bewertung")},
+                     lauf=str(date.today()))]
             eintrag["abende"][tag] = e
             lz = lokalzeit(tag, e["stunde_utc"], ort.get("zeitzone", "UTC"))
             marke = "*" if e["p"] >= kfg["schwelle_wahrscheinlichkeit"] else " "
