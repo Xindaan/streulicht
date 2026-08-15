@@ -165,6 +165,17 @@ und der GRIB2-Leser steht in `sonnen/grib2.py`.
 python3 skripte/satellit.py 2025-09-15
 ```
 
+Darauf setzt `skripte/fensterterm.py` auf (T-0027, Befund 35): es rechnet
+den Fensterterm fuer alle Albumabende plus saisongleiche Referenzabende
+dreimal — mit dem Modell, mit der Maske als Deckel je Faecherzelle (Hybrid)
+und mit der Maske allein — und sagt je Abend, ob eine Phantomwolke oder eine
+bestaetigte Wolke das Fenster geschlossen hat. Die Masken werden in
+`daten/satellit/` gecacht; mit `--nur-cache` laeuft es ohne Netz.
+
+```bash
+python3 skripte/fensterterm.py --nur-cache
+```
+
 ## Troubleshooting
 
 **Kein Push angekommen.** Topic in der ntfy-App abonniert? `--trocken` zeigt,
@@ -197,6 +208,7 @@ deshalb aus **Terminal.app** starten.
 | `skripte/erinnerung.py` | taegliche Bewertungsaufforderung (T-0021) |
 | `skripte/bewertungsseite.py` | erzeugt `web/bewerten-<ort>.html` je Ort |
 | `skripte/satellit.py` | MSG-Wolkenmaske als Beobachtungswahrheit |
+| `skripte/fensterterm.py` | Fensterterm gegen die Maske: Phantom oder bestaetigt (T-0027) |
 | `sonnen/grib2.py` | GRIB2-Leser fuer die Wolkenmaske, ohne Fremdbibliothek |
 
 Messwerte und Begruendungen: `docs/befunde-e1.md`. Jede Zahl dort ist mit

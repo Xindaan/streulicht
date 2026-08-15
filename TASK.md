@@ -123,23 +123,48 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
 - T-0026 **`member_liste()` liefert 50 statt 51.** Der Kontrolllauf hat keinen
   `_memberNN`-Suffix und faellt still heraus. Kein Fehler im Ergebnis, aber
   eine stille Abweichung zwischen erwarteter und tatsaechlicher Memberzahl.
-- T-0027 **Fensterterm gegen die Satellitenwahrheit.** Aus T-0019: bei
-  mindestens zwei der fuenf Problemabende hatte das Modell die Wolke
-  vollstaendig (2024-05-03: 90 % mid+high; 2024-09-15: 99 %) und der Score
-  hat sie weggerechnet. Dort ist der Fehler im Fensterterm, nicht in den
-  Daten. Offline pruefbar, 0 EUR - der naechste lohnende Schritt.
 - T-0028 **Wolkenoberkantentemperatur als zweites Satellitenprodukt.** Die
   Maske kennt nur Wolke ja/nein. Ob eine 100-%-Maske ein Cirrus-Schirm oder
   eine tiefe Decke ist, entscheidet erst die Hoehe - und erst damit ist
   2023-04-24 (100 % Maske, 1 % mid+high im Modell) aufloesbar.
+  **Geschaerft durch T-0027 (Befund 35):** die Wegwolken der vier toten
+  Abende sind in der Saeule bestaetigt; offen ist nur noch, ob sie am Strahl
+  sassen. Konkrete Frage: liegt die Oberkante an den Toeter-Segmenten
+  (2018-07-09: 180-300 km; 2023-04-24: 180-240; 2024-05-03: 60-120 und
+  240-300; 2024-09-15: 240-300) unter oder ueber der Strahlhoehe? Unter =
+  Term zu hart (T-0029), ueber = Schichtverteilung des Modells falsch.
+- T-0029 **Wegterm anders aggregieren.** Vier Segmente mit 66-91 %
+  Bedeckung ergeben als Produkt 0.001 - "ein Strahl, der jede Luecke treffen
+  muss" ist fuer parallel einfallendes Licht durch ein gebrochenes Feld
+  moeglicherweise zu hart, und nahe der Tangente laeuft der Strahl in
+  Bodennaehe. Varianten (Mittel statt Produkt, kuerzere Reichweite, weichere
+  Kopplung, Toeter-Segment nur bei > 95 %) gegen Album/Referenz pruefen; die
+  Segmentwerte je Abend liegen in `daten/fensterterm_satellit.json`.
+  Vorbehalt: dieselbe Konfundierung wie Befund 20-23 (Album = draussen =
+  klares Wetter) - jede Variante, die den Weg lockert, gewinnt dort auch
+  ohne Physik. Deshalb erst nach T-0028 oder mit einem Kriterium, das nicht
+  nur "mehr Fenster" belohnt. Aus Befund 35.
 - T-0019 MSG/MTG-Infrarot als Beobachtungswahrheit — **GEBAUT 15.08.2026**
   (Befund 34). Zugang, GRIB2-Leser und Faecherabtastung stehen;
-  `python3 skripte/satellit.py`. Offen ist nur noch die Anwendung auf alle
-  Albumabende statt auf die fuenf Problemfaelle. (3 km, 15 min, kostenlos).
+  `python3 skripte/satellit.py`. Die Anwendung auf alle Albumabende ist mit
+  T-0027 erledigt (158 Masken in `daten/satellit/`). (3 km, 15 min, kostenlos).
   Beantwortet fuer jeden Albumabend, ob die Wolke ueberhaupt da war — die
   Frage, die am 14.08. fuenfmal von Hand am Foto beantwortet wurde.
 
 ## Done
+
+- **T-0027 Fensterterm gegen die Satellitenwahrheit** (15.08.2026, Befund 35)
+  — `skripte/fensterterm.py`: der Fensterterm dreimal mit derselben Formel
+  (Nachbildung bitgenau gegen `score.py` geprueft): Modell, Hybrid (Hoehen
+  vom Modell, Anwesenheit je Faecherzelle vom Satelliten gedeckelt), reine
+  Maske. 79 Albumabende plus 79 saisongleiche Referenzabende, 158 MSG-Masken.
+  **Ergebnis:** kein Albumabend, den eine Phantomwolke auf dem Weg gekillt
+  haette (0 von 3 toten Fenstern, 1 von 14 bei lockerer Schwelle); die vier
+  Toeter-Abende aus Befund 34 sind saeulenbestaetigt (88-100 %). Modellsaeule
+  gegen Maske je Ring r = +0.61 (Berlin) bis +0.84 (420 km), kein Bias.
+  Deckelhebung im Album nicht groesser als in der Referenz. **Verworfen: die
+  Wegdaten als Erklaerung. Offen: Term oder Hoehenzuordnung** - trennt erst
+  T-0028; Termumbau als T-0029 notiert.
 
 - **T-0010 Produktseite auf den Hausstandard** (14.08.2026) — Portierung
   von Andres Designsprache aus `poisson-dor` und `rezept-grid`, Werte und
