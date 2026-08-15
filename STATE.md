@@ -94,8 +94,10 @@ der Fusstext lag bei 2,28:1 Kontrast (AA verlangt 4,5), die Beschriftung im
 Vertikalschnitt bei 3,5-4,3 px auf dem Telefon, und der Balken war ein
 Fuellstand von null, obwohl kein Abend je unter das 59. Perzentil faellt.
 
-**Offen bleibt T-0015: die Seite ist nirgends ausgeliefert.** Das Repo hat
-kein Remote, also auch keinen Pages-Zweig. Erst danach ist E3 zu.
+**Offen bleibt T-0015: die Seiten sind nirgends ausgeliefert.** Das Repo
+liegt seit 15.08.2026 oeffentlich auf `github.com/Xindaan/streulicht`, damit
+ist Pages moeglich; der Pages-Zweig fehlt noch, danach `seiten_basis` setzen.
+Erst dann ist E3 zu.
 
 ## Naechster Lauf, wenn Kontingent zurueck ist
 
@@ -126,9 +128,9 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
 
 ## Next actions
 
-1. **T-0015 Seite ausliefern** — braucht ein Repo-Remote, das nur Andre
-   anlegen kann. Danach `seiten_basis` in konfig.json setzen, sonst kommt
-   die Bewertungsaufforderung ohne Link.
+1. **T-0015 Pages einschalten** — Remote steht und ist oeffentlich, ntfy ist
+   eingerichtet. Es fehlt der Pages-Zweig, danach `seiten_basis` in
+   konfig.json, sonst kommt die Bewertungsaufforderung ohne Link.
 2. **T-0003 Archivierung als Cron ab Tag 1.** Ohne dieses Archiv laesst sich
    die Quantilbruecke (T-0020) nie messen, und die ist die zentrale
    Unbekannte des Betriebs (Befund 33).

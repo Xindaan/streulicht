@@ -25,19 +25,20 @@ und Auswertung — der Alarmlauf selbst kommt mit der Standardbibliothek aus.
 
 ## Nutzung
 
-**Alarm empfangen.** ntfy-App installieren (iOS/Android, kostenlos), das
-Alarm-Topic aus `konfig_geheim.json` abonnieren — es steht bewusst NICHT in
-der versionierten Konfiguration, weil wer es hat beliebige Pushs senden kann. Der Push kommt, sobald ein Abend im Vorlauf die
-Schwelle reisst — hoechstens einmal je Abend.
+**Alarm empfangen.** ntfy-App installieren (iOS/Android, kostenlos), dann das
+Alarm-Topic aus `konfig_geheim.json` abonnieren. Es steht bewusst NICHT in der
+versionierten Konfiguration: ohne Anmeldung ist der Topicname bei ntfy das
+Passwort, und wer ihn hat, kann beliebige Pushs schicken. Der Push kommt,
+sobald ein Abend im Vorlauf die Schwelle reisst — hoechstens einmal je Abend.
 
 **Bewerten.** `web/bewerten-<ort>.html` auf dem Telefon oeffnen. Fuenf
 Knoepfe, sonst nichts. Die Seite zeigt bewusst **keine** Prognose: wer vorher
 die Vorhersage sieht, bewertet die Vorhersage statt den Himmel. Erst bewerten,
 dann nachsehen.
 
-**Noch nicht ausgeliefert.** Das Repo ist privat, und GitHub Pages gibt es im
-kostenlosen Tarif nur aus oeffentlichen Repos — siehe T-0015. Bis dahin bleibt
-`seiten_basis` leer und die Bewertungsaufforderung kommt ohne Link.
+**Noch nicht ausgeliefert.** Das Repo ist seit 15.08.2026 oeffentlich, damit
+ist Pages moeglich — eingeschaltet ist es noch nicht (T-0015). Bis dahin
+bleibt `seiten_basis` leer und die Bewertungsaufforderung kommt ohne Link.
 
 **Vor 4 Uhr morgens** zaehlt die Bewertung noch zum Vorabend — wer um eins
 bewertet, meint den Sonnenuntergang von gestern.

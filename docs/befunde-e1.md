@@ -1844,15 +1844,32 @@ den Toeter-Abenden zu hart.
 der Hoehenfrage an den vier Toeter-Segmenten, oder der Termumbau gegen
 Album/Referenz.  Beides offline, 0 EUR.**
 
-Nebenbefund zur Sorgfalt: die beiden Modellspalten der Tabelle in Befund 34
-("Modell gesamt" / "davon mid+high": 17/5, 40/1, 78/90, 100/99, 3/3) lassen
-sich aus dem IFS-Rohcache NICHT reproduzieren - weder als Faechermittel
-(25/15, 84/63, 91/82, 71/36, 32/29) noch als Berliner Punkt (7/0, 4/0,
-45/41, 100/92, 1/1) noch als A.  Woher sie kamen, ist nicht mehr
-rekonstruierbar.  Die qualitative Aussage haelt trotzdem: 2024-05-03 und
-2024-09-15 hat das Modell reichlich Wolke im Faecher, 2023-04-24 ueber
-Berlin keine in mid/high (A = 0.02).  Wer die Zahlen zitiert, nimmt die aus
-dieser Zeile.
+Nebenbefund zur Sorgfalt, in zwei Schritten:
+
+Die erste Fassung dieses Absatzes schrieb, die Modellspalten der Tabelle in
+Befund 34 (17/5, 40/1, 78/90, 100/99, 3/3) liessen sich aus dem IFS-Rohcache
+nicht reproduzieren und ihre Herkunft sei "nicht mehr rekonstruierbar".
+
+**Beides ist falsch, nachgeprueft am 15.08.**  Alle fuenf Paare reproduzieren
+BITGENAU.  Die Herkunft steht im Sessionprotokoll: eine Live-Abfrage gegen
+`archive-api` am **exakten Punkt 52.52 / 13.405** zur Sonnenuntergangsstunde -
+nicht aus dem Rohcache.  Der Cache rastert auf 0.5 Grad und haelt die Zelle
+52.5 / 13.5; das ist ein anderer Gitterpunkt, und die API interpoliert
+ausserdem auf den angefragten Ort statt den Zellmittelpunkt zu liefern.
+Fables Faechermittel (25/15, 84/63, ...) und Cache-Punkt (7/0, 4/0, ...) sind
+deshalb **andere Messungen, keine gescheiterten Reproduktionen**.
+
+Der methodische Kern des Einwands bleibt aber richtig und war in Befund 34
+schon als Vorbehalt danebengeschrieben: dort steht eine faechergemittelte
+Satellitenzahl neben einem Modellwert an EINEM Punkt.  Das ist Apfel gegen
+Birne.  Wer die Modellseite faechergemittelt braucht, nimmt Fables Zahlen;
+wer den Punkt ueber Berlin meint, die aus Befund 34.  Zusammen in einer
+Zeile gehoeren sie nicht.
+
+**Merksatz:** "nicht reproduzierbar" und "mit einer anderen Methode gemessen"
+sehen im Ergebnis gleich aus und sind es nicht.  Bevor man Herkunft fuer
+verloren erklaert, lohnt der Blick, ob die Zahl vielleicht nur woanders
+herkam als vermutet.
 
 Pruefbefehl: `python3 skripte/fensterterm.py --nur-cache` (Masken liegen in
 `daten/satellit/`, 158 Produkte; ohne `--nur-cache` laedt es Fehlendes nach).
