@@ -402,7 +402,7 @@ def main():
                 continue
             if tag in eintrag["alarme"]:
                 continue          # Idempotenz: je Abend hoechstens ein Alarm
-            titel = "Sonnenuntergang %s" % ort["anzeige"]
+            titel = "Streulicht %s" % ort["anzeige"]
             text = "%s %s, %s Uhr - %.0f %%. %s" % (
                 WOCHENTAG[lz.weekday()], lz.strftime("%d.%m."),
                 lz.strftime("%H:%M"), 100 * e["p"], begruendung(e))

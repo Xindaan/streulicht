@@ -202,7 +202,7 @@ def main():
     html = """<!doctype html><html lang="de"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>Sonnenuntergang Berlin</title><style>
+<title>Streulicht</title><style>
 __TOKENS__
 *{box-sizing:border-box}
 html{color-scheme:dark}
@@ -298,7 +298,7 @@ h1 span{color:var(--gedaempft);font-weight:400}
  *{transition:none!important;animation:none!important}}
 </style></head><body>
 <div class="rahmen">
-<header><h1>Sonnenuntergang <span>Berlin</span></h1>
+<header><h1>Streulicht <span>Berlin</span></h1>
 <p class="spanne">__SPANNE__<span class="pille">R&uuml;ckschau</span></p></header>
 
 <div class="achse-karte"><div class="achse-rollen">
