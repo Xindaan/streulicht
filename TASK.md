@@ -144,6 +144,18 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   klares Wetter) - jede Variante, die den Weg lockert, gewinnt dort auch
   ohne Physik. Deshalb erst nach T-0028 oder mit einem Kriterium, das nicht
   nur "mehr Fenster" belohnt. Aus Befund 35.
+
+  **Nachtrag 15.08.: die Inkonsistenz ist schon im Code sichtbar, ohne neue
+  Daten.** Der Score behandelt Bewoelkung ZWEIMAL, mit zwei verschiedenen
+  Annahmen: innerhalb einer Saeule mit Maximalueberlapp (`ueberlappung()`
+  in feuchte.py, kalibriert auf w = 0.75), entlang des Wegs dagegen als
+  unabhaengiges Produkt. Fuer dieselben vier Segmente sind das 0.0018 gegen
+  0.0900 - **Faktor 49**. Wolken auf 400 km Weg gehoeren zu derselben
+  Luftmasse und sind hoch korreliert; unabhaengig zu multiplizieren ist
+  dort schwerer begruendbar als vertikal. Eine Variante mit demselben
+  Ueberlappungsansatz wie in der Saeule ist damit keine Lockerung "um zu
+  gewinnen", sondern die Beseitigung einer Ungleichbehandlung - und genau
+  deshalb die erste, die zu pruefen ist.
 - T-0019 MSG/MTG-Infrarot als Beobachtungswahrheit — **GEBAUT 15.08.2026**
   (Befund 34). Zugang, GRIB2-Leser und Faecherabtastung stehen;
   `python3 skripte/satellit.py`. Die Anwendung auf alle Albumabende ist mit
