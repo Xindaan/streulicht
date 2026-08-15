@@ -113,7 +113,19 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
 - T-0026 **`member_liste()` liefert 50 statt 51.** Der Kontrolllauf hat keinen
   `_memberNN`-Suffix und faellt still heraus. Kein Fehler im Ergebnis, aber
   eine stille Abweichung zwischen erwarteter und tatsaechlicher Memberzahl.
-- T-0019 MSG/MTG-Infrarot als Beobachtungswahrheit (3 km, 15 min, kostenlos).
+- T-0027 **Fensterterm gegen die Satellitenwahrheit.** Aus T-0019: bei
+  mindestens zwei der fuenf Problemabende hatte das Modell die Wolke
+  vollstaendig (2024-05-03: 90 % mid+high; 2024-09-15: 99 %) und der Score
+  hat sie weggerechnet. Dort ist der Fehler im Fensterterm, nicht in den
+  Daten. Offline pruefbar, 0 EUR - der naechste lohnende Schritt.
+- T-0028 **Wolkenoberkantentemperatur als zweites Satellitenprodukt.** Die
+  Maske kennt nur Wolke ja/nein. Ob eine 100-%-Maske ein Cirrus-Schirm oder
+  eine tiefe Decke ist, entscheidet erst die Hoehe - und erst damit ist
+  2023-04-24 (100 % Maske, 1 % mid+high im Modell) aufloesbar.
+- T-0019 MSG/MTG-Infrarot als Beobachtungswahrheit — **GEBAUT 15.08.2026**
+  (Befund 34). Zugang, GRIB2-Leser und Faecherabtastung stehen;
+  `python3 skripte/satellit.py`. Offen ist nur noch die Anwendung auf alle
+  Albumabende statt auf die fuenf Problemfaelle. (3 km, 15 min, kostenlos).
   Beantwortet fuer jeden Albumabend, ob die Wolke ueberhaupt da war — die
   Frage, die am 14.08. fuenfmal von Hand am Foto beantwortet wurde.
 

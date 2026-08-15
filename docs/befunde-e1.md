@@ -1661,3 +1661,57 @@ gibt kein Ensemble-Archiv (T-0003 nie gestartet, und das Archiv reicht nur
 
 Bis dahin gilt: **die Alarmrate des Betriebs ist unbekannt, nicht 18.5/Jahr.**
 Die 18.5 sind die Rate der Klimatologie auf ihrem eigenen Modell.
+
+## 34 T-0019 gebaut - und die Datenluecke ist zur Haelfte keine (15.08.2026)
+
+Die Satellitenwolkenmaske laeuft.  Zugang ueber die EUMETSAT-Data-Store-API
+mit Consumer Key und Secret aus `konfig_geheim.json`; **kein `eumdac` noetig**,
+die API ist gewoehnliches HTTP.  Der GRIB2-Leser steht in `sonnen/grib2.py`
+und kommt ohne Fremdbibliothek aus: die Maske benutzt Packvorlage 5.0
+(2 Bit je Punkt) und Gittervorlage 3.90 (geostationaer), beides in der
+WMO-Spezifikation vollstaendig beschrieben.  Kosten 0 EUR - Meteosat-Daten ab
+einer Stunde Latenz sind gebuehrenfrei fuer jede Nutzung.
+
+**Zwei unabhaengige Belege, dass der Dekoder stimmt:**
+- Der Subsatellitenpunkt (0 N, 0 E) faellt exakt auf Pixel (1856, 1856), also
+  die Bildmitte von 3712 x 3712.  Sydney liegt korrekt hinter dem Erdrand.
+- Ueber 90 europaeische Gitterpunkte korreliert die Maske mit der
+  Modellbewoelkung zu **r = +0.670**.  Bei falscher Orientierung waere das 0.
+
+### 34.1 Der Befund, der zwei Tage Arbeitsannahme umkehrt
+
+Fuer die fuenf Problemabende, Produkt jeweils 5-7 min vom Sonnenuntergang,
+Faecherdeckung durchgehend 100 %:
+
+| Abend | Note | Satellit | Modell gesamt | davon mid+high | Diagnose |
+|---|---|---|---|---|---|
+| 2022-09-20 | 5 | 33 % | 17 % | 5 % | beide sehen wenig |
+| 2023-04-24 | 4 | **100 %** | 40 % | **1 %** | Wolke da, falsches Niveau |
+| 2024-05-03 | 3 | 97 % | 78 % | **90 %** | **Modell sieht sie** |
+| 2024-09-15 | - | 69 % | 100 % | **99 %** | **Modell sieht sie** |
+| 2025-09-15 | 5 | 64 % | **3 %** | 3 % | echte Datenluecke |
+
+**Nur einer von fuenf ist eine Datenluecke.**  Bei zweien hatte das Modell die
+Wolke vollstaendig und der Score hat sie weggerechnet - dort liegt der Fehler
+im Fensterterm, nicht in der Vorhersage.
+
+Das widerspricht der Linie, unter der seit dem 14.08. gearbeitet wurde
+("rund 12.5 % der Abende hat das Modell den Himmel nicht").  Diese Quote
+stammte aus dem Vergleich Foto gegen Modell und konnte Modellfehler nicht von
+Scorefehlern trennen.  Genau das war der Grund, T-0019 zu bauen.
+
+**Folge fuer die Richtung.**  Die drei gefallenen Erklaerungen (Darstellung,
+Niveauaufloesung, Gitterweite) suchten alle am Modell.  Bei mindestens zwei
+von fuenf Faellen ist dort nichts zu holen, weil das Modell die Wolke hatte.
+Der naechste lohnende Schritt ist damit **nicht** eine bessere Datenquelle,
+sondern der Fensterterm gegen die Satellitenwahrheit - und der ist umsonst
+und offline pruefbar.
+
+**Einschraenkung, die bestehen bleibt.**  Die Maske kennt nur "Wolke ja/nein",
+keine Hoehe.  Ob eine 100-%-Maske ein Cirrus-Schirm oder eine tiefe Decke ist,
+sagt sie nicht.  Fuer die Trennung braeuchte es Wolkenoberkantentemperatur
+(eigenes Produkt) - und erst damit waere 2023-04-24 entscheidbar.
+Unbestimmte Pixel (Klasse 3, rund 30 % der Scheibe) zaehlen als FEHLEND, nicht
+als wolkenfrei; die gemeldete Deckung sagt, wie viel entschieden werden konnte.
+
+Pruefbefehl: `python3 skripte/satellit.py`

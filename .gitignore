@@ -7,3 +7,12 @@ Album/
 web/rueckschau.html
 web/diagnose.html
 web/index.html
+
+# Zugangsdaten. NIE committen.
+# Am 15.08.2026 hatte ich behauptet, dieser Eintrag stehe hier - er stand
+# nicht. Die Datei lag ungeschuetzt im Baum, bis es auffiel. Deshalb hier
+# breiter als noetig: jede Datei, die "geheim" oder "secret" im Namen traegt.
+konfig_geheim.json
+*geheim*
+*secret*
+.env
