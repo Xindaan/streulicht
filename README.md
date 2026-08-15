@@ -24,11 +24,14 @@ und Auswertung — der Alarmlauf selbst kommt mit der Standardbibliothek aus.
 aus `konfig.json` abonnieren. Der Push kommt, sobald ein Abend im Vorlauf die
 Schwelle reisst — hoechstens einmal je Abend.
 
-**Bewerten.** `web/bewerten-<ort>.html` auf dem Telefon oeffnen.
-**Noch nicht ausgeliefert** - das Repo ist privat, und GitHub Pages gibt es im
-kostenlosen Tarif nur aus oeffentlichen Repos (T-0015). Fuenf Knoepfe, sonst nichts. Die Seite zeigt bewusst
-**keine** Prognose: wer vorher die Vorhersage sieht, bewertet die Vorhersage
-statt den Himmel. Erst bewerten, dann nachsehen.
+**Bewerten.** `web/bewerten-<ort>.html` auf dem Telefon oeffnen. Fuenf
+Knoepfe, sonst nichts. Die Seite zeigt bewusst **keine** Prognose: wer vorher
+die Vorhersage sieht, bewertet die Vorhersage statt den Himmel. Erst bewerten,
+dann nachsehen.
+
+**Noch nicht ausgeliefert.** Das Repo ist privat, und GitHub Pages gibt es im
+kostenlosen Tarif nur aus oeffentlichen Repos — siehe T-0015. Bis dahin bleibt
+`seiten_basis` leer und die Bewertungsaufforderung kommt ohne Link.
 
 **Vor 4 Uhr morgens** zaehlt die Bewertung noch zum Vorabend — wer um eins
 bewertet, meint den Sonnenuntergang von gestern.
