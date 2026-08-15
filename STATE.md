@@ -1,7 +1,8 @@
 # STATE
 
-Stand: 15.08.2026 (Satellitenwahrheit gebaut - die Datenluecke ist zur
-Haelfte keine; Rueckkanal messbar gemacht; Fables Gutachten eingearbeitet)
+Stand: 15.08.2026 (Fensterterm gegen die Satellitenwahrheit: die Wegwolken
+waren da, kein Phantom im Album - Befund 35; davor Satellitenwahrheit gebaut,
+Rueckkanal messbar gemacht, Fables Gutachten eingearbeitet)
 
 ## Ziel
 
@@ -113,22 +114,28 @@ Beobachtung statt Modell (T-0019, MSG/MTG-Infrarot).**  Feineres Gitter,
 erweiterter Faecher und Folgestunde bleiben moeglich, aber ohne Befund,
 der sie priorisiert.
 
+**Nachtrag 15.08. (Befund 35):** Auch die Wegdaten sind durch.  Die
+Wolkenmaske bestaetigt an allen vier toten Abenden die Wolke auf dem
+Lichtweg, im ganzen Album gibt es kein Phantom.  Was bleibt, ist der Term
+selbst oder die Hoehenzuordnung des Modells - trennbar erst mit
+Wolkenoberkantentemperatur (T-0028).
+
 Entscheidung 14.08.: kein kommerzielles Kontingent, es dauert eben laenger.
 Ebenfalls gestrichen: die Sichtbarkeitszeile im Alarm - Andre geht zur Not
 vor die Tuer und braucht nur zu wissen, ob es gut wird.
 
 ## Next actions
 
-1. **T-0027 Fensterterm gegen die Satellitenwahrheit.** Der neue Befund 34
-   dreht die Prioritaet: bei mindestens zwei der fuenf Problemabende hatte
-   das Modell die Wolke vollstaendig und der Score hat sie weggerechnet.
-   Offline, 0 EUR, keine Wartezeit. `python3 skripte/satellit.py`
-2. **T-0015 Seite ausliefern** — braucht ein Repo-Remote, das nur Andre
+1. **T-0015 Seite ausliefern** — braucht ein Repo-Remote, das nur Andre
    anlegen kann. Danach `seiten_basis` in konfig.json setzen, sonst kommt
    die Bewertungsaufforderung ohne Link.
-3. **T-0003 Archivierung als Cron ab Tag 1.** Ohne dieses Archiv laesst sich
+2. **T-0003 Archivierung als Cron ab Tag 1.** Ohne dieses Archiv laesst sich
    die Quantilbruecke (T-0020) nie messen, und die ist die zentrale
    Unbekannte des Betriebs (Befund 33).
+3. **T-0028 Wolkenoberkantentemperatur** mit der konkreten Frage aus
+   Befund 35: sitzt die bestaetigte Wolke an den Toeter-Segmenten unter oder
+   ueber dem Strahl?  Entscheidet zwischen Termumbau (T-0029) und
+   Schichtfehler des Modells. Offline, 0 EUR.
 
 ## Letzte Done
 
@@ -142,3 +149,5 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
 - `docs/befunde-e1.md` mit allen Messungen und Pruefbefehlen.
 - T-0010 Produktseite auf den Hausstandard portiert: Token-Datei, Zeitachse
   statt Balken, telefonfester Vertikalschnitt, alle Kontraste ueber AA.
+- T-0027 Fensterterm gegen die Satellitenwahrheit: 158 Masken, kein Phantom
+  im Album, Modellsaeule gegen Maske r bis +0.84 auf dem Weg (Befund 35).

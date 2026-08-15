@@ -1715,3 +1715,146 @@ Unbestimmte Pixel (Klasse 3, rund 30 % der Scheibe) zaehlen als FEHLEND, nicht
 als wolkenfrei; die gemeldete Deckung sagt, wie viel entschieden werden konnte.
 
 Pruefbefehl: `python3 skripte/satellit.py`
+
+## 35 T-0027: der Fensterterm gegen die Satellitenwahrheit - die Wegwolken waren da (15.08.2026)
+
+Befund 34 hat die Frage gestellt: wenn das Modell den Schirm hatte und der
+Score den Abend trotzdem auf null gerechnet hat, liegt der Fehler dann in den
+DATEN auf dem Lichtweg (Modell setzt Wolken nach Westen, die nicht da waren)
+oder im TERM (die Wolken waren da, das Licht kam trotzdem durch)?  Die
+Wolkenmaske sieht den ganzen Faecher bis 420 km und entscheidet das je Abend.
+
+**Aufbau.**  Alle 79 Albumabende mit Andres Note (2018-2026) plus je ein
+Referenzabend - gleicher Kalendertag, anderes Jahr, nicht im Album, damit die
+Daemmerung und damit die Entscheidbarkeit der Maske gleich verteilt ist.  Der
+Fensterterm wird dreimal mit derselben Formel gerechnet (Nachbildung von
+`score.py`, gegen den Produktions-Score bitgenau geprueft, `pruefe_replik`):
+
+| | Hoehen | Anwesenheit | Bedeutung |
+|---|---|---|---|
+| B_mod | Modell | Modell | das B der Klimatologie |
+| **B_hyb** | Modell | **Satellit** (Deckel je Faecherzelle) | was der Term rechnet, wenn nur blockieren darf, was der Satellit sieht |
+| B_sat | keine | Satellit | jede Wolke blockiert - Untergrenze |
+
+Der Deckel: die Maske wird ueber genau die 0.5-Grad-Modellzelle gemittelt
+(7 x 7 Proben, unbestimmte Pixel raus, unter 50 % entschieden gilt die Zelle
+als unbeobachtet), und die Blockade eines Punktes darf nicht groesser sein
+als diese Saeulenbedeckung.  B_hyb >= B_mod immer.  Ein totes Modellfenster
+(B_mod < 0.1), das unter dem Deckel aufgeht (B_hyb >= 0.5), ist PHANTOM -
+Modellwolke ohne Satellitenwolke.  Bleibt es zu, ist es BESTAETIGT.
+
+Warum nicht einfach B_sat: die Maske kennt keine Hoehe.  Der Schirm ueber
+Berlin ist fuer sie dieselbe Wolke wie eine tiefe Decke, und ein Cirrus in
+100 km Entfernung liegt UEBER dem Strahl, blockiert also nicht - fuer die
+Maske ist es Wolke.  Deshalb ist B_sat fast immer null, sobald ueberhaupt
+ein Schirm da ist, und taugt nur als Untergrenze.  Der Hybrid umgeht das,
+indem er die Hoehenzuordnung beim Modell laesst und nur die Anwesenheit
+korrigiert.
+
+### 35.1 Ergebnis: kein einziges Phantom im Album
+
+| Diagnose (B_mod < 0.1 = tot, >= 0.5 = offen) | Album (n = 79) | Referenz (n = 79) |
+|---|---|---|
+| offen | 49 | 41 |
+| halb | 27 | 24 |
+| tot, **BESTAETIGT** (B_hyb < 0.1) | **3** | 11 |
+| tot, teils Phantom | 0 | 2 |
+| tot, **PHANTOM** (B_hyb >= 0.5) | **0** | 1 |
+
+Die drei toten Albumabende - 2018-07-09 (Note 5), 2023-04-24 (4),
+2024-05-03 (3) - und der fuenfte Problemabend 2024-09-15 (kein Album, Foto
+"Himmel brennt tiefrot") sind alle bestaetigt: an den Segmenten, an denen das
+Modell blockiert, sieht die Maske 88-100 % Saeulenbedeckung.  Der Deckel
+aendert an ihnen praktisch nichts (B_hyb 0.015 / 0.000 / 0.001 / 0.042).
+
+| Abend | Note | Schirm | A | sicht | weg | B_mod | B_hyb | Maske je Ring 0..420 km |
+|---|---|---|---|---|---|---|---|---|
+| 2018-07-09 | 5 | mid | 0.06 | 0.83 | 0.018 | 0.015 | 0.015 | 100 100 100 100 99 99 90 88 |
+| 2023-04-24 | 4 | high | 0.02 | 0.33 | 0.000 | 0.000 | 0.000 | 96 88 100 98 99 98 100 100 |
+| 2024-05-03 | 3 | mid | 0.27 | 0.60 | 0.001 | 0.001 | 0.001 | 100 97 100 100 100 100 74 94 |
+| 2024-09-15 | - | mid | 0.87 | 0.61 | 0.053 | 0.032 | 0.042 | 100 96 29 18 40 93 91 98 |
+
+Robust gegen die Schwelle: nimmt man "tot" bis B_mod < 0.25, kommen elf
+Albumabende hinzu, und genau EINER davon geht unter dem Deckel auf
+(2023-06-19, Note 3, B 0.23 -> 0.67; das Modell hatte 59 % Bedeckung im
+Segment 360-420 km, die Maske 22 %).  Also 1 von 14 statt 0 von 3.
+
+### 35.2 Das Modell kennt die Wolken auf dem Weg
+
+Ueber alle 158 Abende, Modellsaeule (Zufallsueberlapp der drei Schichten)
+gegen Maske, je Entfernungsring azimutgewichtet:
+
+| Ring km | 0 | 60 | 120 | 180 | 240 | 300 | 360 | 420 |
+|---|---|---|---|---|---|---|---|---|
+| r | +0.61 | +0.73 | +0.71 | +0.77 | +0.80 | +0.82 | +0.83 | +0.84 |
+| Modell-Mittel | 0.61 | 0.61 | 0.57 | 0.55 | 0.53 | 0.51 | 0.49 | 0.50 |
+| Masken-Mittel | 0.67 | 0.62 | 0.61 | 0.55 | 0.52 | 0.49 | 0.48 | 0.53 |
+
+Kein Bias, und die Uebereinstimmung ist auf dem Lichtweg (240-420 km) am
+BESTEN - dort, wo der Term entscheidet.  Was der Deckel insgesamt hebt, ist
+klein und im Album nicht groesser als in der Referenz: B_hyb - B_mod im Median
++0.009 (Album) gegen +0.001 (Referenz), Anteil ueber 0.1: 14 % gegen 19 %.
+Phantomwolken auf dem Weg gibt es, aber sie sind ein leichter allgemeiner
+Hang des Modells und **keine Eigenart der guten Abende**.
+
+Innerhalb des Albums korreliert das Fenster nicht mit der Note, egal woher
+es kommt: Spearman gegen Andres Note B_mod -0.01, B_hyb -0.01, B_sat -0.20
+(n = 79).  Das ist kein neuer Befund (Abschnitt 20-23), aber jetzt auch fuer
+das satellitenkorrigierte Fenster gemessen.
+
+### 35.3 Was das heisst - und was es nicht heisst
+
+**Widerlegt ist die Datenluecke auf dem Lichtweg.**  Die "mindestens zwei von
+fuenf" aus Befund 34 sind jetzt vier von vier bestaetigt, und im ganzen Album
+gibt es keinen Abend, den eine erfundene Wegwolke gekillt haette.  Ein
+besseres Modell fuer den Weg (feineres Gitter, andere Analysen) wuerde diese
+Abende nicht retten.
+
+**Nicht entschieden ist, ob der Term oder die Hoehenzuordnung falsch ist.**
+Bestaetigt ist die Wolke in der SAEULE.  Ob sie dort sass, wo der Strahl
+laeuft (bei 240 km fuer einen mid-Schirm in rund 0.05 km, fuer high in
+1.5 km), sagt die Maske nicht.  Zwei Lesarten bleiben, und sie fuehren zu
+verschiedenen Umbauten:
+
+- **Hoehenzuordnung.**  Das Modell setzt die bestaetigte Wolke in die
+  blockierende Schicht, sie war aber hoeher (Schirm) oder tiefer (unter dem
+  Strahl).  Beispiel 2024-05-03: das Modell hat bei 120-300 km low 66-100 %
+  UND high 91-100 % (bei 240 km 9 %), mid nur 17-60 %; der Makrelenhimmel (Altocumulus, mid)
+  ist genau die Schicht, die es kaum sieht.  Dann ist der Term richtig und
+  die Schichtverteilung des Modells falsch.  Dafuer braucht es
+  Wolkenoberkantentemperatur (T-0028) - jetzt mit einer klaren Frage: liegt
+  die Oberkante an den Toeter-Segmenten unter oder ueber dem Strahl?
+- **Termkonstruktion.**  Vier Segmente mit 66-91 % Bedeckung ergeben als
+  Produkt 0.001; das Bild "ein Strahl, der jede Luecke treffen muss" ist zu
+  hart fuer parallel einfallendes Licht durch ein gebrochenes Feld, und nahe
+  der Tangente laeuft der Strahl in Bodennaehe, wo jede Nebelbank zaehlt.
+  Dann muss der Wegterm anders aggregieren (Mittel statt Produkt, kuerzere
+  Reichweite, weichere Kopplung) - pruefbar gegen Album/Referenz mit den jetzt
+  gespeicherten Segmentwerten, aber unter demselben Konfundierungsvorbehalt
+  wie Abschnitt 20-23 (Album = draussen = klares Wetter).
+
+Zwei Nebenbefunde: (1) Die vier bestaetigten Abende haben in der Maske
+89-100 % Saeule auch im Sichtbereich bis 60 km - "voller Himmel" ist fuer
+Andre kein Hindernis, sondern der Stoff.  Der Sichtterm zaehlt genau das als
+Blockade (Abschnitt 15.3).  (2) Tote Fenster sind an Referenzabenden fast
+fuenfmal haeufiger (14 gegen 3) - das Fenster traegt Signal, es ist nur an
+den Toeter-Abenden zu hart.
+
+**Verworfen als Erklaerung: die Wegdaten.  Naechster Schritt: T-0028 mit
+der Hoehenfrage an den vier Toeter-Segmenten, oder der Termumbau gegen
+Album/Referenz.  Beides offline, 0 EUR.**
+
+Nebenbefund zur Sorgfalt: die beiden Modellspalten der Tabelle in Befund 34
+("Modell gesamt" / "davon mid+high": 17/5, 40/1, 78/90, 100/99, 3/3) lassen
+sich aus dem IFS-Rohcache NICHT reproduzieren - weder als Faechermittel
+(25/15, 84/63, 91/82, 71/36, 32/29) noch als Berliner Punkt (7/0, 4/0,
+45/41, 100/92, 1/1) noch als A.  Woher sie kamen, ist nicht mehr
+rekonstruierbar.  Die qualitative Aussage haelt trotzdem: 2024-05-03 und
+2024-09-15 hat das Modell reichlich Wolke im Faecher, 2023-04-24 ueber
+Berlin keine in mid/high (A = 0.02).  Wer die Zahlen zitiert, nimmt die aus
+dieser Zeile.
+
+Pruefbefehl: `python3 skripte/fensterterm.py --nur-cache` (Masken liegen in
+`daten/satellit/`, 158 Produkte; ohne `--nur-cache` laedt es Fehlendes nach).
+Rohwerte je Faecherpunkt (Maske und drei Modellschichten) stehen in
+`daten/fensterterm_satellit.json`.
