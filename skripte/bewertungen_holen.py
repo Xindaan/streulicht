@@ -33,11 +33,29 @@ def hole(topic, seit="12h"):
             continue
         if n.get("event") != "message":
             continue
+        m = _nutzlast(n.get("message", ""))
+        if m is not None:
+            aus.append((n["time"], m))
+    return aus
+
+
+def _nutzlast(text):
+    """Die Maschinendaten aus einer Bewertungsnachricht.
+
+    Seit 15.08.2026 traegt die Nachricht ZWEI Leser: Zeile 1 ist der Text,
+    den Andre auf dem Sperrbildschirm sieht, Zeile 2 das JSON fuer dieses
+    Skript.  Vorher war die ganze Nachricht JSON - deshalb wird von hinten
+    nach vorn probiert, damit alte Eintraege im Topic weiter gelesen werden.
+    """
+    zeilen = [z for z in (text or "").splitlines() if z.strip()]
+    for z in reversed(zeilen):
         try:
-            aus.append((n["time"], json.loads(n.get("message", ""))))
+            m = json.loads(z)
         except ValueError:
             continue
-    return aus
+        if isinstance(m, dict) and m.get("tag"):
+            return m
+    return None
 
 
 def main():

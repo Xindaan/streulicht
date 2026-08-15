@@ -77,9 +77,19 @@ function umgebung({speicherGeht = true, fetchOk = true} = {}) {
       // eigentliche Datum als JSON-ZEICHENKETTE in `message`. Der Test
       // packt es aus, damit die Pruefungen die Note direkt sehen.
       const aussen = JSON.parse(opt.body);
-      const innen = JSON.parse(aussen.message);
+      // Die Nachricht hat ZWEI Leser: Zeile 1 Text fuer den Sperrbildschirm,
+      // Zeile 2 das JSON. Wie bewertungen_holen.py von hinten nach vorn
+      // probieren - damit prueft der Test denselben Vertrag wie der Poller.
+      const zeilen = aussen.message.split("\n").filter(z => z.trim());
+      let innen = null;
+      for (let i = zeilen.length - 1; i >= 0; i--) {
+        try { const m = JSON.parse(zeilen[i]); if (m && m.tag) { innen = m; break; } }
+        catch (e) { /* keine JSON-Zeile */ }
+      }
+      if (!innen) throw new Error("keine Maschinenzeile in der Nachricht");
       ctx._gesendet.push(Object.assign({_topic: aussen.topic,
-                                        _titel: aussen.title}, innen));
+                                        _titel: aussen.title,
+                                        _text: zeilen[0]}, innen));
       return {ok: true, status: 200};
     }
   };
@@ -113,6 +123,15 @@ async function lauf(opt) {
          "Erfassungszeitpunkt mitgeschickt");
   pruefe(getComputedStyleDisplay(u) === "none",
          "kein Nachsende-Knopf, wenn nichts offen ist");
+  const g = u.ctx._gesendet[0] || {};
+  pruefe(/^Bewertet: 3 von 5$/.test(g._titel || ""),
+         "Titel ist lesbar: \"" + g._titel + "\"");
+  pruefe(!/[{}\"]/.test(g._text || "x{"),
+         "erste Zeile ohne JSON-Zeichen: \"" + g._text + "\"");
+  pruefe(/August/.test(g._text || ""),
+         "erste Zeile nennt das Datum ausgeschrieben");
+  pruefe(/auf Nachfrage/.test(g._text || ""),
+         "erste Zeile nennt den Anlass in Worten");
 
   console.log("\n=== 2. Netzausfall: nichts geht verloren");
   u = await lauf({fetchOk: false});

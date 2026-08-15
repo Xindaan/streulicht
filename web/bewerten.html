@@ -158,15 +158,38 @@ function zeigeOffen() {
 //     Code, der gegen stillen Verlust gebaut wurde.
 const SENDE_TIMEOUT_MS = 12000;
 
+const WOCHENTAG = ["Sonntag", "Montag", "Dienstag", "Mittwoch",
+                  "Donnerstag", "Freitag", "Samstag"];
+const MONAT = ["Januar", "Februar", "M\u00e4rz", "April", "Mai", "Juni", "Juli",
+               "August", "September", "Oktober", "November", "Dezember"];
+
+function lesbar(eintrag) {
+  const d = new Date(eintrag.tag + "T12:00:00");
+  const datum = WOCHENTAG[d.getDay()] + ", " + d.getDate() + ". "
+              + MONAT[d.getMonth()];
+  const wie = eintrag.note === 0 ? "nicht gesehen"
+            : eintrag.note + " von 5";
+  const anlass = {aufgefordert: "auf Nachfrage", alarm: "nach Alarm"}[
+    eintrag.anlass] || "spontan";
+  return {titel: "Bewertet: " + wie, zeile: datum + " \u00b7 " + anlass};
+}
+
 async function uebertrage(eintrag) {
+  const t = lesbar(eintrag);
+  // ZWEI Leser, ein Kanal.  Die erste Zeile ist fuer Andre auf dem
+  // Sperrbildschirm, die zweite fuer bewertungen_holen.py.  Vorher stand
+  // dort nur das JSON - technisch richtig, auf dem Telefon aber
+  // Maschinenausgabe als Benachrichtigung.
+  const daten = JSON.stringify({ort: ORT, tag: eintrag.tag, note: eintrag.note,
+                                anlass: eintrag.anlass, erfasst: eintrag.erfasst});
   const r = await fetch("https://ntfy.sh/", {
     method: "POST",
     body: JSON.stringify({
       topic: TOPIC,
-      title: "Bewertung " + eintrag.tag,
-      tags: ["star"],
-      message: JSON.stringify({ort: ORT, tag: eintrag.tag, note: eintrag.note,
-                               anlass: eintrag.anlass, erfasst: eintrag.erfasst})
+      title: t.titel,
+      tags: [eintrag.note === 0 ? "grey_question" : "sunny"],
+      priority: 2,                       // leise: die eigene Quittung
+      message: t.zeile + "\n" + daten
     }),
     signal: AbortSignal.timeout(SENDE_TIMEOUT_MS)
   });
