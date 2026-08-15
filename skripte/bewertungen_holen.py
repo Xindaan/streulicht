@@ -15,6 +15,7 @@ import argparse
 import json
 import os
 import urllib.request
+from datetime import date, timedelta
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -53,9 +54,33 @@ def _nutzlast(text):
             m = json.loads(z)
         except ValueError:
             continue
-        if isinstance(m, dict) and m.get("tag"):
+        if isinstance(m, dict) and plausibel(m.get("tag")):
             return m
     return None
+
+
+# Vor diesem Tag gab es das Projekt nicht; danach kann kein Abend liegen,
+# der schon bewertet waere.
+ERSTER_ABEND = date(2026, 8, 15)
+
+
+def plausibel(tag):
+    """Ist `tag` ein Abend, den es geben kann?
+
+    Ohne diese Pruefung schleust jede verstuemmelte oder versehentlich
+    gesendete Nachricht einen Phantomabend in die Zustandsdatei - und weil
+    ntfy rund 12 h vorhaelt, holt ihn JEDER weitere Abruf erneut herein.
+    Genau so ist am 15.08.2026 ein Testeintrag mit dem Datum 2099-01-01
+    dreimal zurueckgekommen, nachdem er von Hand entfernt worden war.
+    """
+    if not isinstance(tag, str):
+        return False
+    try:
+        d = date.fromisoformat(tag)
+    except ValueError:
+        return False
+    # Ein Tag Luft nach vorn: die Seite rechnet in Ortszeit, der Poller in UTC.
+    return ERSTER_ABEND <= d <= date.today() + timedelta(days=1)
 
 
 def main():
