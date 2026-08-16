@@ -127,6 +127,14 @@
                                      in Insel-und-Leere.                  */
   --breite-bild: 480px;           /* Deckel fuer den Vertikalschnitt, damit
                                      seine Schriftgrade nicht mitwachsen  */
+  /* Desktopfassung (16.08.2026).  Breiter als --breite (1120), weil die
+     Zeitachse elf Spalten traegt: bei 1240 minus 2x40 Rand sind das 115 px
+     je Abend - genug fuer die Rangzahl unter der Marke, die auf dem Telefon
+     nicht hinpasste.  --rand-gross steht daneben, weil die Kopfleiste
+     randlos ist und ihr INHALT trotzdem mit der Inhaltsspalte fluchten
+     muss; beide Stellen brauchen denselben Wert. */
+  --breite-gross: 1240px;
+  --rand-gross: 40px;
   --tastflaeche: 44px;            /* ueber dem Hausstandard (34-40px):
                                      einhaendige Abendbedienung           */
 }

@@ -1,9 +1,11 @@
 # STATE
 
-Stand: 16.08.2026. **Der Betrieb laeuft, die Oberflaeche ist neu.** Repo
-oeffentlich, Pages liefert Prognose-, Bewertungs- und Bilanzseite, ntfy
-eingerichtet, fuenf launchd-Agenten geladen. Der UX-Overhaul (T-0031 bis
-T-0034) ist vollstaendig umgesetzt und die Echo-Pushs sind weg.
+Stand: 16.08.2026 mittags. **Der Betrieb laeuft, die Oberflaeche ist neu -
+auf beiden Schirmgroessen.** Repo oeffentlich, Pages liefert Prognose-,
+Bewertungs- und Bilanzseite, ntfy eingerichtet, fuenf launchd-Agenten
+geladen. Der UX-Overhaul (T-0031 bis T-0034) ist vollstaendig umgesetzt, die
+Echo-Pushs sind weg, und die Desktopfassung (T-0037) laeuft als Breakpoint
+in derselben Datei.
 Fachlich unveraendert: Anwesenheit der Wegwolken (35), ihre Hoehe (36) und
 der Term selbst (37) sind alle drei geprueft und erklaeren die toten Fenster
 nicht. Der Score bleibt, wie er ist.
@@ -155,17 +157,24 @@ der Livegang IST die Messung (Quantilbruecke T-0020).
 1. **Beobachten, nicht bauen.** Nach ein paar Tagen `daten/*.log` ansehen:
    feuert die Erinnerung im Fenster, kommen Bewertungen an, laeuft die
    Archivierung? Erst danach lohnt der naechste Umbau.
-2. **T-0036 gegenpruefen** — nach dem naechsten erfolgreichen 07:30-Lauf
-   einmal ansehen, ob der Vertikalschnitt die echten `segmente` benutzt
-   (der Zustand vom 15.08. hatte sie noch nicht; bis dahin rechnet das Bild
-   die Ringe aus dem Medianfeld nach). Ein Blick auf die Seite genuegt:
-   die Baender muessen sich sichtbar aendern.
+2. **T-0038 ansehen, wenn er wieder auftritt** &mdash; ein Abend knapp
+   unter der 80er-Schwelle zeigt auf der Achse "80." und steht an der Linie
+   "AUFFAELLIG 80.", waehrend der Hero "unauffaellig" sagt. Beides stimmt,
+   zusammen liest es sich falsch. Erst zaehlen, wie oft der Fall vorkommt.
 3. **T-0030 Wolkentyp/-unterkante** — die letzte offene Spur fuer
    2018-07-09 und 2024-05-03, nachdem T-0029 nicht traegt (Befund 37).
    n = 2, beide satellitenbestaetigt dicht: nur angehen, wenn das Produkt
    billig zu pruefen ist.
 
 ## Letzte Done
+
+- **16.08.2026 Desktopfassung (T-0037).** Prognoseseite und Bilanzseite
+  schalten ab 1000 px auf einen breiten Satz um - eine Datei, ein
+  Breakpoint. Achsenmarken stehen dafuer jetzt in Prozent statt in Pixeln;
+  das war der einzige Eingriff in bestehenden Code.
+- **16.08.2026 T-0036 beantwortet.** Der 07:30-Lauf schreibt `segmente`, und
+  der Vertikalschnitt sieht damit nachweislich anders aus als mit der
+  Ringnachrechnung. Der Zweig greift.
 
 - **16.08.2026 UX-Overhaul komplett (T-0031 bis T-0034).** Neue
   Prognoseseite (Topbar, Hero mit `begruendung()`, Himmelsband, Zeitachse

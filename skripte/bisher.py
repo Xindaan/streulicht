@@ -93,13 +93,13 @@ body{margin:0;background:var(--papier);color:var(--tinte);
  line-height:var(--zeilen-basis);letter-spacing:var(--sperrung-eng);
  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
 .rahmen{max-width:390px;margin:0 auto;min-height:100vh;padding-bottom:var(--s8)}
-.topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;
- justify-content:space-between;
+.topbar{position:sticky;top:0;z-index:5;
  padding:calc(14px + env(safe-area-inset-top)) 18px 12px;
  background:rgba(0,0,0,.72);
  -webkit-backdrop-filter:blur(18px) saturate(1.4);
  backdrop-filter:blur(18px) saturate(1.4);
  border-bottom:1px solid var(--karte)}
+.topbar-inhalt{display:flex;align-items:center;justify-content:space-between}
 .marke-wort{margin:0;font-size:17px;font-weight:800;
  letter-spacing:var(--sperrung-enger)}
 .ortspille{padding:3px 11px;border-radius:var(--radius-pille);
@@ -136,10 +136,29 @@ body{margin:0;background:var(--papier);color:var(--tinte);
  border-radius:var(--radius-pille);background:var(--akzent-flaeche);
  color:var(--akzent-tinte);font-size:14px;font-weight:700;
  text-decoration:none}
+
+/* Desktopfassung.  Kein eigener Entwurf - die Bilanzseite hat einen
+   Bruchteil des Inhalts der Prognoseseite und braucht kein Raster.  Sie
+   bekommt nur, was sie sonst neben der neuen Prognoseseite wie ein
+   Telefon-Bildschirmfoto aussehen liesse: dieselbe Kopfleiste im
+   1240er-Container und eine lesbare Spaltenbreite statt 390 px.
+   Derselbe Breakpoint wie dort, damit beide Seiten gleichzeitig
+   umschalten. */
+@media (min-width:1000px){
+ .rahmen{max-width:none;padding-bottom:72px}
+ .topbar{padding:0}
+ .topbar-inhalt{display:flex;align-items:center;justify-content:space-between;
+  height:56px;max-width:var(--breite-gross);margin:0 auto;
+  padding:0 var(--rand-gross)}
+ .inhalt{max-width:720px;margin:0 auto;padding:34px var(--rand-gross) 0}
+ .bkarte{padding:20px}
+ .zurueck{max-width:340px}
+}
 </style></head><body>
 <div class="rahmen">
-<header class="topbar"><p class="marke-wort">Bisher</p>
-<span class="ortspille">__ORT__</span></header>
+<header class="topbar"><div class="topbar-inhalt">
+<p class="marke-wort">Bisher</p>
+<span class="ortspille">__ORT__</span></div></header>
 <main class="inhalt">
 <p class="etikett">__KORPUS__</p>
 __KARTEN__

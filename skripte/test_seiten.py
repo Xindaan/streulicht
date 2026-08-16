@@ -15,6 +15,10 @@ Faelle:
   * UEBERHOEHUNGSANGABE.  Die Zahl steht als Aussage auf der Seite und wird
     aus der Zeichenflaeche gerechnet.  Aendert jemand die Flaeche und nicht
     die Zahl, luegt die Seite still.
+  * MARKEN IN PIXELN STATT PROZENT.  Seit der Desktopfassung (16.08.2026)
+    hat die Achse zwei Hoehen, 200 und 260 px.  Eine Marke mit `top:104px`
+    saehe in der einen richtig aus und in der anderen falsch - und zwar
+    plausibel falsch, also unauffaellig.
 
 Lauf:  python3 skripte/test_seiten.py
 """
@@ -128,6 +132,32 @@ def main():
         pruefe(not adressen,
                "keine externen Adressen, self-contained (%s)"
                % (adressen or "-"))
+
+        print("\n=== 5b. Desktopfassung im selben Dokument")
+        pruefe("@media (min-width:1000px){" in html,
+               "Breakpoint-Block vorhanden")
+        # Marken MUESSEN in Prozent stehen - mit zwei Achsenhoehen ist jede
+        # Pixelangabe in genau einer der beiden falsch.
+        pixelmarken = re.findall(r'class="(?:fahne|punkt)" style="top:[\d.]+px"',
+                                 html)
+        pruefe(not pixelmarken,
+               "Marken in Prozent, nicht in Pixeln (%d Pixelfunde)"
+               % len(pixelmarken))
+        pruefe(html.count('class="rang"') == n_marken,
+               "je Marke eine Rangzahl (%d/%d)"
+               % (html.count('class="rang"'), n_marken))
+        # Die Desktopmasse kommen aus tokens.css, nicht aus dem Stylesheet.
+        for t in ("--breite-gross", "--rand-gross"):
+            pruefe(("%s:" % t) in html and ("var(%s)" % t) in html,
+                   "%s ist definiert UND benutzt" % t)
+        pruefe(str(seite.ACHSE_PX_GROSS) + "px" in html,
+               "Achsenhoehe der Desktopfassung steht drin (%d px)"
+               % seite.ACHSE_PX_GROSS)
+        # Korpuszeile und Bilanzverweis stehen zweimal im Dokument (Leiste
+        # oben fuer den Desktop, Absatz bzw. Pille fuer das Telefon).  Genau
+        # zweimal - eine dritte Fassung waere ein vergessener Rest.
+        pruefe(html.count("bisher.html") == 2,
+               "Bilanzverweis genau zweimal (%d)" % html.count("bisher.html"))
 
     print("\n=== 6. Erzeugte Bewertungsseite")
     p = os.path.join(BASIS, "web", "bewerten-berlin.html")

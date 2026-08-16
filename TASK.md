@@ -147,13 +147,15 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   gemessen wird — beides erst nach sechs bis acht Wochen Betrieb sinnvoll
   (Quantilbruecke, T-0020). Bis dahin sagt die Seite ausdruecklich, dass die
   Alarmrate unbekannt ist.
-- T-0036 **Segmenttransmission im Vertikalschnitt verdrahtet, aber noch
-  ungenutzt.** `alarm.py` schreibt seit 16.08. `segmente` in den Zustand,
-  `schnitt_neu()` nimmt sie. Der Zustand vom 15.08. hat sie noch nicht, also
-  laeuft das Bild bis zum naechsten erfolgreichen Alarmlauf ueber die
-  Ringnachrechnung aus dem Medianfeld. Nach dem naechsten 07:30-Lauf einmal
-  gegenpruefen, dass die Baender sich sichtbar aendern - sonst greift der
-  Zweig nicht.
+- T-0038 **Rundung an der Schwelle.** Ein Abend mit p = 0,798 zeigt auf der
+  Achse die Rangzahl "80." und liegt sichtbar an der gestrichelten Linie
+  "AUFFAELLIG 80." - der Hero sagt trotzdem "unauffaellig", denn 0,798 < 0,80.
+  Beides stimmt, zusammen liest es sich wie ein Widerspruch. Auf dem Telefon
+  fiel es nicht auf, weil dort keine Rangzahl steht; mit der Desktopfassung
+  steht sie da. Moeglichkeiten: abrunden statt kaufmaennisch runden (79.),
+  eine Nachkommastelle nahe der Schwelle, oder die Stufenfarbe auf die
+  Rangzahl legen. Keine ist offensichtlich - erst ansehen, wie oft der Fall
+  eintritt.
 - T-0030 **Wolkentyp oder -unterkante als richtiges Instrument.** Was
   T-0028 gebraucht haette: ein Produkt, das low/mid/high trennt oder die
   Unterkante liefert. Kandidaten aus dem Data Store: `EO:EUM:DAT:0617`
@@ -173,6 +175,34 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   Frage, die am 14.08. fuenfmal von Hand am Foto beantwortet wurde.
 
 ## Done
+
+### 16.08.2026 &mdash; Desktopfassung (T-0037) und T-0036
+- T-0037 **Desktopfassung der Prognoseseite** nach
+  `docs/entwurf/handoff-desktop-2026-08-16.md`. Umgesetzt als **eine Datei
+  mit Breakpoint** (Variante (a) des Handoffs, ab 1000 px), nicht als zweite
+  Seite: eine URL, ein Lauf, und die Datenaufbereitung war ohnehin identisch.
+  Fuenf Aenderungen, alle rein raeumlich - kein Bauteil, keine Zahl, kein
+  Satz kommt hinzu: Himmelsband als 400-px-Kopf mit zwei Schleiern und dem
+  Hero darauf; die drei Zahlen als beschriftete Kennzahlen statt Punktkette;
+  Achse 260 px mit Rangzahl je Marke; Schnitt und Faecherkarte nebeneinander
+  (`repeat(auto-fit,minmax(420px,1fr))`); Korpuszeile und Bilanzverweis in
+  die Kopfleiste.
+  **Der einzige Umbau an bestehendem Code**, wie vom Handoff angekuendigt:
+  die Marken stehen jetzt in PROZENT statt in Pixeln. Nebengewinn - die
+  Zonen ebenfalls (5 % und 15 % sind bei 200 px genau 10/30, bei 260 px
+  genau 13/39, also beide Entwuerfe ohne zweite Pflegestelle).
+  Zwei Tokens neu: `--breite-gross` (1240) und `--rand-gross` (40).
+  `bisher.html` hat denselben Breakpoint bekommen (Kopfleiste im
+  1240er-Container, 720er Lesespalte) - nicht im Handoff, aber sie haette
+  sonst neben der neuen Prognoseseite wie ein Telefon-Bildschirmfoto
+  ausgesehen. Die Bewertungsseite bleibt bewusst auf 390 px: sie wird aus
+  dem Push heraus auf dem Telefon geoeffnet.
+- T-0036 **Segmenttransmission greift** (erledigt 16.08.2026). Der
+  07:30-Lauf hat `segmente` geschrieben (10 von 11 Abenden), und die
+  Gegenprobe zeigt: mit echten Segmenten faellt das Bild anders aus als mit
+  der Ringnachrechnung aus dem Medianfeld. Der Zweig ist also nicht nur
+  vorhanden, sondern wirksam.
+
 
 ### 16.08.2026 — UX-Overhaul (T-0031 bis T-0034)
 - T-0031 **UX-Overhaul umgesetzt** (16.08.2026, Handoff

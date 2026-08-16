@@ -53,6 +53,17 @@ Transportweg.
 | **Bewerten** | <https://xindaan.github.io/streulicht/bewerten-berlin.html> |
 | **Bisher** | <https://xindaan.github.io/streulicht/bisher.html> |
 
+**Zwei Saetze, eine Datei.** Bis 1000 px Fensterbreite laeuft die
+Telefonfassung, darueber die Desktopfassung
+(`docs/entwurf/handoff-desktop-2026-08-16.md`): das Himmelsband wird zum
+400 px hohen Kopf mit dem Hero darauf, die drei Zahlen werden beschriftete
+Kennzahlen, die Achse waechst auf 260 px und traegt die Rangzahl je Abend,
+Schnitt und Faecherkarte liegen nebeneinander, Korpuszeile und
+Bilanzverweis sitzen in der Kopfleiste. Pfeiltasten blaettern durch die
+Abende. **Der Inhalt ist in beiden Saetzen derselbe** - kein Bauteil, keine
+Zahl, kein Satz kommt hinzu. Die Bewertungsseite bleibt auf Telefonmass:
+sie wird aus dem Push heraus geoeffnet.
+
 Die Prognoseseite ist seit dem 16.08.2026 nach dem Entwurf in
 `docs/entwurf/handoff-ux-2026-08-16.md` gebaut: Hero mit Stufe und
 Klartextbegruendung, Himmelsband (Farbe traegt `median / s*`, eine

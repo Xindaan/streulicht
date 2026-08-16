@@ -108,7 +108,11 @@ MONAT = ("Januar", "Februar", "März", "April", "Mai", "Juni", "Juli",
 # Geometrie der Achse in Pixeln.  Bewusst hier und nicht im CSS: Zonen,
 # Verlaufslinie und Marken muessen exakt EIN Koordinatensystem benutzen,
 # und das rechnet sich in Python einmal statt in CSS dreimal.
+# ACHSE_PX steht nur noch IM STYLESHEET.  Die Marken werden in Prozent
+# gesetzt, sonst haette der Wechsel auf 260 px im Desktopsatz jede einzelne
+# verschoben - das war laut Handoff der einzige Umbau an bestehendem Code.
 ACHSE_PX = 200
+ACHSE_PX_GROSS = 260
 SCHWELLE_SELTEN = 0.95
 SCHWELLE_AUFFAELLIG = 0.80
 
@@ -134,6 +138,14 @@ def stufe(rang):
     if rang >= SCHWELLE_AUFFAELLIG:
         return "auffällig", "auffaellig"
     return "unauffällig", "unauffaellig"
+
+
+# Ausgeschrieben liest sich die Korpuszeile wie Sprache, als Ziffer wie ein
+# Zaehlerstand.  Nur bis zwoelf - darueber wird das Wort laenger als die Zahl
+# nuetzlich ist, und ein Fenster mit mehr als zwoelf Abenden gibt es nicht.
+ANZAHL_WORT = {n: "%s ABENDE" % w for n, w in enumerate(
+    ("NULL", "EIN", "ZWEI", "DREI", "VIER", "FUENF", "SECHS", "SIEBEN",
+     "ACHT", "NEUN", "ZEHN", "ELF", "ZWOELF"))}
 
 
 def kurzmarke(d, erster):
@@ -278,30 +290,45 @@ body{margin:0;background:var(--papier);color:var(--tinte);
  line-height:var(--zeilen-basis);letter-spacing:var(--sperrung-eng);
  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
 .rahmen{max-width:390px;margin:0 auto;padding-bottom:var(--s8)}
+/* Zwei Fassungen, EIN Dokument.  Was nur die eine braucht, traegt eine der
+   beiden Klassen; der Breakpoint schaltet sie um.  Zwei Dateien waeren
+   sauberer zu lesen, kosteten aber eine zweite URL und eine Weiche beim
+   Ausliefern - fuer ein privates Werkzeug der schlechtere Tausch. */
+.nurgross{display:none}
 
-/* --- Topbar -------------------------------------------------------- */
+/* --- Kopfleiste ----------------------------------------------------- */
 /* Klebend, weil die Seite gerollt wird und der Ort dabei aus dem Bild
    liefe - und der Ort ist ab dem zweiten Nutzer die wichtigste Angabe
    ueberhaupt (die Prognose gilt fuer genau einen Punkt). */
-.topbar{position:sticky;top:0;z-index:5;display:flex;
- align-items:center;justify-content:space-between;
- padding:calc(14px + env(safe-area-inset-top)) 18px 12px;
+.topbar{position:sticky;top:0;z-index:20;
  background:rgba(0,0,0,.72);
  -webkit-backdrop-filter:blur(18px) saturate(1.4);
  backdrop-filter:blur(18px) saturate(1.4);
  border-bottom:1px solid var(--karte)}
+.topbar-inhalt{display:flex;align-items:center;justify-content:space-between;
+ gap:24px;padding:calc(14px + env(safe-area-inset-top)) 18px 12px}
+.wortmarke{display:flex;align-items:baseline;gap:12px}
 .marke-wort{margin:0;font-size:17px;font-weight:800;
  letter-spacing:var(--sperrung-enger)}
 .ortspille{padding:3px 11px;border-radius:var(--radius-pille);
  background:var(--karte);color:var(--tinte2);font-size:12px;font-weight:700}
+.leiste-nav{display:none;align-items:center;gap:26px}
 
 /* --- Korpuszeile: benennt den Bestand, statt ihn vorauszusetzen ----- */
 .korpus{margin:0;padding:20px 18px 0;color:var(--gedaempft);
  font-size:12px;font-weight:700;letter-spacing:var(--sperrung-label);
  text-transform:uppercase}
 
-/* --- Hero ----------------------------------------------------------- */
-.hero{margin-top:16px;padding:0 18px}
+/* --- Kopfbild: Hero und Himmelsband ---------------------------------- */
+/* Auf dem Telefon stehen sie UNTEREINANDER (Text, dann Band, dann
+   Bandfuss) - die Reihenfolge macht `order`, nicht das Markup, damit die
+   Desktopfassung dieselben Knoten uebereinanderlegen kann. */
+.kopfbild{display:flex;flex-direction:column;margin-top:16px}
+.heroinhalt{order:1;padding:0 18px}
+.bandflaeche{order:2;height:76px;margin-top:20px;line-height:0}
+.bandflaeche svg{display:block;width:100%;height:100%}
+.bandfuss{order:3;margin:8px 18px 0;color:var(--gedaempft);font-size:12px}
+.schleier{display:none}
 .etikett{margin:0;color:var(--gedaempft);font-size:12px;font-weight:700;
  letter-spacing:var(--sperrung-label);text-transform:uppercase}
 .datum{margin:2px 0 0;font-size:23px;font-weight:700;
@@ -310,14 +337,19 @@ body{margin:0;background:var(--papier);color:var(--tinte);
  letter-spacing:-.04em}
 .grund{margin:6px 0 0;color:var(--tinte2);font-size:14px;text-wrap:pretty}
 .zahlen{margin:10px 0 0;color:var(--gedaempft);font-size:13px}
+/* Die drei Zahlen zweimal im Dokument: als Punktkette (Telefon) und als
+   beschriftete Bloecke (Desktop).  Bewusst zwei Darstellungen und EINE
+   Quelle - die Wortstellung unterscheidet sich ("Sonnenuntergang 20:30 Uhr"
+   gegen Label SONNENUNTERGANG ueber "20:30 Uhr"), das laesst sich nicht mit
+   CSS ineinander ueberfuehren.  waehle() schreibt beide. */
+.kennzahlen{display:none;gap:56px;margin:26px 0 0}
+.kzlabel{margin:0;color:var(--gedaempft);font-size:11px;font-weight:700;
+ letter-spacing:var(--sperrung-label);text-transform:uppercase}
+.kzwert{margin:3px 0 0;font-size:26px;font-weight:700;
+ letter-spacing:var(--sperrung-enger);color:var(--tinte)}
 .selten{color:var(--akzent-tinte)}
 .auffaellig{color:var(--akzent)}
 .unauffaellig{color:var(--gedaempft)}
-
-/* --- Himmelsband ---------------------------------------------------- */
-.bandflaeche{margin-top:20px;height:76px;line-height:0}
-.bandflaeche svg{display:block;width:100%;height:76px}
-.bandfuss{margin:8px 18px 0;color:var(--gedaempft);font-size:12px}
 
 /* --- Zeitachse ------------------------------------------------------ */
 .achsenkopf{display:flex;justify-content:space-between;
@@ -326,23 +358,28 @@ body{margin:0;background:var(--papier);color:var(--tinte);
  text-transform:uppercase}
 .achsenkopf span{font-weight:400}
 .achsenblock{margin-top:26px}
+/* Die Achsenhoehe steht im CSS, die Marken stehen in PROZENT.  Vorher
+   rechnete Python `top:%.1fpx` aus einer Konstante - bei zwei Hoehen (200
+   auf dem Telefon, 260 auf dem Desktop) haette keine einzige Marke mehr
+   gestimmt.  Prozent loest zugleich die Zonen: 5 % und 15 % sind bei 200 px
+   genau 10 und 30, bei 260 px genau 13 und 39 - also exakt die Masse aus
+   beiden Entwuerfen, ohne sie zweimal zu pflegen. */
 .achse{position:relative;height:__ACHSE__px;margin:0 18px}
-/* Gefuellte Zonen statt zweier Linien: sie zeigen, wie weit es bis zur
-   Schwelle ist.  Mit Linien allein saehe man Punkte im Nichts. */
 .zone{position:absolute;left:0;right:0;pointer-events:none}
-.zone-selten{top:0;height:__ZS__px;background:rgba(255,159,10,.18);
+.zone-selten{top:0;height:5%;background:rgba(255,159,10,.18);
  border-bottom:1px solid var(--akzent)}
-.zone-auffaellig{top:__ZS__px;height:__ZA__px;background:rgba(255,159,10,.07);
+.zone-auffaellig{top:5%;height:15%;background:rgba(255,159,10,.07);
  border-bottom:1px dashed var(--gitter)}
 .zonenname{position:absolute;right:0;transform:translateY(-100%);
- font-size:11px;font-weight:700;letter-spacing:.04em;pointer-events:none}
+ padding-bottom:2px;font-size:11px;font-weight:700;letter-spacing:.04em;
+ pointer-events:none}
 .linie{position:absolute;inset:0;width:100%;height:100%;
  overflow:visible;pointer-events:none}
 .marken{position:absolute;inset:0;display:flex}
 .marke{flex:1;min-width:0;height:100%;position:relative;border:0;
  background:transparent;border-radius:var(--radius-mikro);padding:0;
- cursor:pointer;font:inherit;color:var(--gedaempft)}
-.fahne{position:absolute;left:50%;width:1px;bottom:0;
+ cursor:pointer;font:inherit;letter-spacing:inherit;color:var(--gedaempft)}
+.fahne{position:absolute;left:50%;width:1px;margin-left:-.5px;bottom:0;
  background:linear-gradient(to bottom,rgba(142,142,147,.16),transparent)}
 .punkt{position:absolute;left:50%;width:11px;height:11px;
  margin:-5.5px 0 0 -5.5px;border:1.5px solid currentColor;
@@ -350,14 +387,21 @@ body{margin:0;background:var(--papier);color:var(--tinte);
  transition:transform var(--zeit) var(--kurve),box-shadow var(--zeit)}
 .selten .punkt{background:var(--akzent-tinte);
  box-shadow:0 0 12px rgba(255,179,64,.7)}
-.marke.an .fahne{width:2px;
+.marke.an .fahne{width:2px;margin-left:-1px;
  background:linear-gradient(to bottom,rgba(255,179,64,.62),transparent)}
 .marke.an .punkt{transform:scale(1.45)}
+/* Die Rangzahl unter der Marke gibt es nur auf dem grossen Schirm.  Auf
+   36 px Spaltenbreite ist dafuer kein Platz - genau deshalb musste man auf
+   dem Telefon jeden Abend antippen, um sein Perzentil zu erfahren. */
+.rang{display:none;position:absolute;left:0;right:0;font-size:12px;
+ font-weight:600;letter-spacing:0;text-align:center;color:var(--gedaempft);
+ transition:color var(--zeit) var(--kurve)}
+.marke.an .rang{color:var(--tinte)}
 @media (hover:hover){.marke:hover .punkt{transform:scale(1.2)}}
 .marke:focus-visible{outline:2px solid var(--akzent);outline-offset:2px}
 /* Die Beschriftung steht in einer EIGENEN Flexzeile mit denselben
-   flex:1-Spalten.  Im Knopf saesse sie sonst innerhalb der 200 px hohen
-   Tastflaeche und verschoebe die Marken. */
+   flex:1-Spalten.  Im Knopf saesse sie sonst innerhalb der Tastflaeche und
+   verschoebe die Marken. */
 .achsenfuss{display:flex;margin:8px 18px 0}
 .achsenfuss div{flex:1;min-width:0;text-align:center}
 .achsenfuss .wt{font-size:11px;color:var(--gedaempft)}
@@ -366,6 +410,7 @@ body{margin:0;background:var(--papier);color:var(--tinte);
 .achsenfuss .an .dt{color:var(--tinte)}
 
 /* --- Grafikkarten --------------------------------------------------- */
+.grafiken{display:block}
 .karte{margin:26px 18px 0;padding:14px 12px 12px;background:var(--karte);
  border:1px solid var(--achse);border-radius:var(--radius-karte);
  box-shadow:var(--schatten-ruhe)}
@@ -373,9 +418,11 @@ body{margin:0;background:var(--papier);color:var(--tinte);
 .kartentitel{margin:0 4px 10px;color:var(--gedaempft);font-size:12px;
  font-weight:700;letter-spacing:var(--sperrung-label);text-transform:uppercase}
 .karte svg{display:block;width:100%;height:auto}
-.kartenfuss{margin:10px 4px 0;color:var(--gedaempft);font-size:12px}
+.kartenfuss{margin:10px 4px 0;color:var(--gedaempft);font-size:12px;
+ text-wrap:pretty}
 
 /* --- Fusstext und Push-Auskunft ------------------------------------- */
+.schluss{display:block}
 .fuss{margin:26px 18px 0;color:var(--gedaempft);font-size:13px;
  line-height:1.55;text-wrap:pretty}
 .fuss b{color:var(--tinte2)}
@@ -387,37 +434,136 @@ body{margin:0;background:var(--papier);color:var(--tinte);
  color:var(--tinte2);font-size:14px;font-weight:600;text-decoration:none}
 .push{margin:22px 18px 0;padding:14px 16px;background:var(--karte);
  border-radius:var(--radius-kachel);color:var(--tinte2);font-size:13px;
- line-height:1.55}
+ line-height:1.55;text-wrap:pretty}
+
+/* ====================================================================
+   DESKTOPFASSUNG.  Der Inhalt ist identisch - kein Bauteil, keine Zahl,
+   kein Satz kommt hinzu.  Was sich aendert, ist die Anordnung an den fuenf
+   Stellen, an denen 390 px die Einschraenkung waren.
+   1000 px als Schwelle: darunter passt das Grafikraster (2 x 420 + 20) nicht.
+   ==================================================================== */
+@media (min-width:1000px){
+ .rahmen{max-width:none;padding-bottom:72px}
+ .nurgross{display:inline}
+ .nurklein{display:none}
+ .spalte{max-width:var(--breite-gross);margin:0 auto;
+  padding:0 var(--rand-gross)}
+
+ .topbar-inhalt{height:56px;padding:0 var(--rand-gross);
+  max-width:var(--breite-gross);margin:0 auto}
+ .leiste-nav{display:flex}
+ .leiste-korpus{color:var(--gedaempft);font-size:12px;font-weight:700;
+  letter-spacing:var(--sperrung-label);text-transform:uppercase}
+ .leiste-nav a{color:var(--tinte2);font-size:14px;font-weight:600;
+  text-decoration:none}
+ .korpus{display:none}
+
+ /* Das Himmelsband wird der Kopf der Seite: randlos, 400 px hoch, mit dem
+    Hero darauf.  Zwei Schleier, weil das Band seine Helligkeit aendern
+    SOLL - der waagerechte haelt die linke Haelfte dunkel, damit der Text
+    an einem gluehenden Abend lesbar bleibt, der senkrechte setzt oben und
+    unten ab.  Auf 76 px sah man den Unterschied zwischen einem stumpfen
+    und einem seltenen Abend gar nicht. */
+ .kopfbild{display:block;position:relative;height:400px;overflow:hidden;
+  margin-top:0}
+ .bandflaeche{position:absolute;inset:0;height:auto;margin:0}
+ .schleier{display:block;position:absolute;inset:0;pointer-events:none}
+ .s-quer{background:linear-gradient(100deg,rgba(0,0,0,.92) 0%,
+  rgba(0,0,0,.74) 34%,rgba(0,0,0,.18) 68%,rgba(0,0,0,.35) 100%)}
+ .s-hoch{background:linear-gradient(to bottom,rgba(0,0,0,.45) 0%,
+  transparent 26%,transparent 62%,rgba(0,0,0,.7) 100%)}
+ /* box-sizing ist hier nicht optional: height:100% plus 38 px Polsterung
+    ergaebe unter content-box 438 px in einer 400er Section mit
+    overflow:hidden - die Bodenluft verschwaende an JEDER Fensterbreite.
+    Der Reset ganz oben loest es mit. */
+ .heroinhalt{position:relative;height:100%;max-width:var(--breite-gross);
+  margin:0 auto;padding:0 var(--rand-gross) 38px;display:flex;
+  flex-direction:column;justify-content:flex-end}
+ .datum{margin:6px 0 0;font-size:28px}
+ .stufe{margin:10px 0 0;font-size:76px;line-height:1}
+ .grund{margin:12px 0 0;max-width:46ch;font-size:17px;line-height:1.45}
+ .zahlen{display:none}
+ .kennzahlen{display:flex}
+ /* Die Bandbeschriftung sitzt oben rechts IM Hero, muss also mit der
+    Inhaltsspalte fluchten und nicht mit dem Fensterrand. */
+ .bandfuss{position:absolute;top:26px;margin:0;
+  right:max(var(--rand-gross),
+   calc((100% - var(--breite-gross)) / 2 + var(--rand-gross)))}
+
+ .achsenblock{margin-top:48px}
+ .achsenkopf{padding:0 0 14px;align-items:baseline}
+ .achsenkopf span{font-size:13px}
+ .achse{height:__ACHSE_GROSS__px;margin:0}
+ .punkt{width:12px;height:12px;margin:-6px 0 0 -6px}
+ .marke.an .punkt{transform:scale(1.5)}
+ .selten .punkt{box-shadow:0 0 14px rgba(255,179,64,.7)}
+ .rang{display:block}
+ .achsenfuss{margin:12px 0 0}
+ .achsenfuss .wt{font-size:12px}
+ .achsenfuss .dt{font-size:13px}
+
+ /* minmax(420px,...) statt eines festen Verhaeltnisses: die Faecherkarte
+    ist die schmalere Spalte, ihre Beschriftung sitzt mit 13 Einheiten in
+    einer 420er viewBox und skaliert mit.  Ohne untere Schranke fiel sie in
+    einem halbbreiten Fenster auf 6,9 px - dieselbe Fehlerklasse, die
+    T-0010 schon einmal behoben hat.  Unterhalb ~900 px bricht das Raster
+    auf eine Spalte um, die Grafiken werden dabei GROESSER. */
+ .grafiken{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));
+  gap:20px;align-items:start;margin:44px 0 0}
+ .karte{margin:0;padding:16px 16px 14px}
+ .karte + .karte{margin-top:0}
+ .kartentitel{margin:0 0 12px}
+ .kartenfuss{margin:12px 2px 0}
+ .schluss{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));
+  gap:20px;align-items:start;margin:34px 0 0}
+ .fuss{margin:0;font-size:14px;line-height:1.6}
+ .push{margin:0;padding:16px 18px;font-size:14px;line-height:1.6}
+ .weiter{display:none}
+}
 
 @media (prefers-reduced-motion:reduce){
  *{transition:none!important;animation:none!important}}
 </style></head><body>
 <div class="rahmen">
-<header class="topbar"><p class="marke-wort">Streulicht</p>
-<span class="ortspille">__ORT__</span></header>
+<header class="topbar"><div class="topbar-inhalt">
+<div class="wortmarke"><p class="marke-wort">Streulicht</p>
+<span class="ortspille">__ORT__</span></div>
+<nav class="leiste-nav"><span class="leiste-korpus">__KORPUS__</span>
+<a href="bisher.html">Was bisher gemessen ist</a></nav>
+</div></header>
 
 <p class="korpus">__KORPUS__</p>
 
 <main>
-<section class="hero"><p class="etikett" id="etikett">__ETIKETT__</p>
-<p class="datum" id="datum">__DATUM__</p>
+<section class="kopfbild">
+<div class="bandflaeche" id="bandflaeche">__BAND__</div>
+<i class="schleier s-quer"></i><i class="schleier s-hoch"></i>
+<div class="heroinhalt">
+<p class="etikett" id="etikett">__ETIKETT__</p>
+<h1 class="datum" id="datum">__DATUM__</h1>
 <p class="stufe __KLASSE__" id="stufe">__STUFE__</p>
 <p class="grund" id="grund">__GRUND__</p>
-<p class="zahlen" id="zahlen">__ZAHLEN__</p></section>
-
-<div class="bandflaeche" id="bandflaeche">__BAND__</div>
+<p class="zahlen" id="zahlen">__ZAHLEN__</p>
+<div class="kennzahlen">
+<div><p class="kzlabel">Perzentil des Jahres</p>
+<p class="kzwert" id="kz0">__KZ0__</p></div>
+<div><p class="kzlabel">Wahrscheinlichkeit</p>
+<p class="kzwert" id="kz1">__KZ1__</p></div>
+<div><p class="kzlabel">Sonnenuntergang</p>
+<p class="kzwert" id="kz2">__KZ2__</p></div>
+</div></div>
 <p class="bandfuss">Lichteindruck, schematisch &#8212; aus dem Score dieses
 Abends.</p>
+</section>
 
+<div class="spalte">
 <section class="achsenblock">
 <div class="achsenkopf"><b>__ANZAHL_WORT__</b><span>Perzentil des
-Jahres</span></div>
+Jahres<span class="nurgross"> &#183; &#8592; &#8594; bl&auml;ttert</span></span></div>
 <div class="achse">
 <i class="zone zone-selten"></i><i class="zone zone-auffaellig"></i>
-<b class="zonenname" style="top:__ZS__px;color:var(--akzent-tinte)">SELTEN
-95.</b>
-<b class="zonenname" style="top:__ZAU__px;color:var(--gedaempft)">AUFF&Auml;LLIG
-80.</b>
+<b class="zonenname" style="top:5%;color:var(--akzent-tinte)">SELTEN 95.</b>
+<b class="zonenname" style="top:20%;color:var(--gedaempft)">AUFF&Auml;LLIG 80.</b>
 <svg class="linie" viewBox="0 0 100 100" preserveAspectRatio="none"
  aria-hidden="true"><polyline points="__LINIE__" fill="none"
  stroke="__LINIENFARBE__" stroke-width=".7"
@@ -425,17 +571,20 @@ Jahres</span></div>
 <div class="marken">__MARKEN__</div></div>
 <div class="achsenfuss">__ACHSENFUSS__</div></section>
 
-<section class="karte"><p class="kartentitel">Der Weg des Lichts</p>
+<section class="grafiken">
+<div class="karte"><p class="kartentitel">Der Weg des Lichts</p>
 <div id="schnitt">__SCHNITT__</div>
 <p class="kartenfuss">Der Strahl, der bei Sonnenuntergang von Westen
 ankommt, und die Wolkenschichten auf seinem Weg. H&ouml;he
-__UEBERHOEHT__-fach &uuml;berh&ouml;ht.</p></section>
+__UEBERHOEHT__-fach &uuml;berh&ouml;ht.</p></div>
 
-<section class="karte"><p class="kartentitel">Von oben</p>
+<div class="karte"><p class="kartentitel">Von oben</p>
 <div id="karte">__KARTE__</div>
 <p class="kartenfuss">Die Wolkendecke westlich von __ORT__ auf dem
-Abfrage&shy;f&auml;cher, und der Azimut des Sonnenuntergangs.</p></section>
+Abfrage&shy;f&auml;cher, und der Azimut des Sonnenuntergangs.</p></div>
+</section>
 
+<section class="schluss">
 <p class="fuss">Die Stufe kommt aus der Position in der Jahresverteilung:
 <b>selten</b> ab dem 95. Perzentil (rund 18 Abende im Jahr),
 <b>auff&auml;llig</b> ab dem 80. Bewusst keine Prozentzahl &mdash; belegt ist,
@@ -443,19 +592,22 @@ dass der Score au&szlig;ergew&ouml;hnliche Abende von gew&ouml;hnlichen
 trennt, nicht dass er unter den guten ordnet.</p>
 
 <p class="push">__PUSHTEXT__</p>
+</section>
 
 <a class="weiter" href="bisher.html">Was bisher gemessen ist</a>
-</main></div>
+</div></main></div>
 <script>
-const META=__META__;
+const META=__META__, BESTER=__BESTER__;
 const marken=[...document.querySelectorAll(".marke")];
 const fuesse=[...document.querySelectorAll(".achsenfuss div")];
+let gewaehlt=__GEWAEHLT__;
 function waehle(i){
+  gewaehlt=i;
   marken.forEach((x,k)=>x.classList.toggle("an",k===i));
   fuesse.forEach((x,k)=>x.classList.toggle("an",k===i));
   const m=META[i];
   document.getElementById("etikett").textContent=
-    i===__BESTER__?"Bester Abend im Fenster":"Gew\\u00e4hlter Abend";
+    i===BESTER?"Bester Abend im Fenster":"Gew\\u00e4hlter Abend";
   document.getElementById("datum").textContent=m.lang;
   const st=document.getElementById("stufe");
   st.textContent=m.stufe; st.className="stufe "+m.klasse;
@@ -465,16 +617,32 @@ function waehle(i){
   // Wahrscheinlichkeit der Anteil der Ensemble-Member ueber der Schwelle
   // ("wie sicher").  In der Rueckschau gibt es nur das Perzentil - dort
   // war nichts vorherzusagen.
-  const teile=[Math.round(m.p*100)+". Perzentil des Jahres"];
-  if(m.wahrsch!==null&&m.wahrsch!==undefined)
-    teile.push(Math.round(m.wahrsch*100)+" % Wahrscheinlichkeit");
+  const hatW=m.wahrsch!==null&&m.wahrsch!==undefined;
+  const rang=Math.round(m.p*100)+".";
+  const wahr=hatW?Math.round(m.wahrsch*100)+" %":"\\u2014";
+  const teile=[rang+" Perzentil des Jahres"];
+  if(hatW) teile.push(Math.round(m.wahrsch*100)+" % Wahrscheinlichkeit");
   teile.push("Sonnenuntergang "+m.zeit+" Uhr");
   document.getElementById("zahlen").textContent=teile.join(" \\u00b7 ");
+  document.getElementById("kz0").textContent=rang;
+  document.getElementById("kz1").textContent=wahr;
+  document.getElementById("kz2").textContent=m.zeit+" Uhr";
   document.getElementById("bandflaeche").innerHTML=m.band;
   document.getElementById("schnitt").innerHTML=m.svg;
   document.getElementById("karte").innerHTML=m.karte;
 }
 marken.forEach((b,i)=>b.onclick=()=>waehle(i));
+// Pfeiltasten: auf einem Geraet mit Tastatur ist Durchblaettern die
+// natuerliche Bewegung durch die Abende.  preventDefault NUR bei einem
+// Treffer, sonst nimmt die Seite auch das Rollen mit den Pfeilen weg.
+document.addEventListener("keydown",e=>{
+  let z=gewaehlt;
+  if(e.key==="ArrowRight") z=Math.min(META.length-1,gewaehlt+1);
+  else if(e.key==="ArrowLeft") z=Math.max(0,gewaehlt-1);
+  else return;
+  e.preventDefault();
+  if(z!==gewaehlt) waehle(z);
+});
 </script></body></html>"""
 
 
@@ -534,14 +702,19 @@ def main():
         date.fromisoformat(eintraege[0]["tag"]).strftime("%d.%m."),
         date.fromisoformat(eintraege[-1]["tag"]).strftime("%d.%m."))
 
-    y = lambda p: ACHSE_PX * (1.0 - p)                            # noqa: E731
+    # PROZENT, nicht Pixel: dieselbe Marke muss in einer 200 px und in einer
+    # 260 px hohen Achse sitzen.  y(p) ist damit dimensionslos und die
+    # Achsenhoehe eine reine CSS-Angabe.
+    y = lambda p: (1.0 - p) * 100.0                               # noqa: E731
     marken = "".join(
         '<button class="marke %s%s" data-i="%d" '
         'aria-label="%s, %s, %d. Perzentil">'
-        '<i class="fahne" style="top:%.1fpx"></i>'
-        '<i class="punkt" style="top:%.1fpx"></i></button>'
+        '<i class="fahne" style="top:%.3f%%"></i>'
+        '<i class="punkt" style="top:%.3f%%"></i>'
+        '<b class="rang" style="top:calc(%.3f%% + 14px)">%d.</b></button>'
         % (e["klasse"], " an" if i == gewaehlt else "", i,
-           e["lang"], e["stufe"], round(e["p"] * 100), y(e["p"]), y(e["p"]))
+           e["lang"], e["stufe"], round(e["p"] * 100),
+           y(e["p"]), y(e["p"]), y(e["p"]), round(e["p"] * 100))
         for i, e in enumerate(eintraege))
     achsenfuss = "".join(
         '<div%s><div class="wt">%s</div><div class="dt">%s</div></div>'
@@ -580,6 +753,13 @@ def main():
     if g["wahrsch"] is not None:
         zahlen.append("%d %% Wahrscheinlichkeit" % round(g["wahrsch"] * 100))
     zahlen.append("Sonnenuntergang %s Uhr" % g["zeit"])
+    # Dieselben Werte noch einmal als beschriftete Kennzahlen (Desktopsatz).
+    # In der Rueckschau gibt es keine Wahrscheinlichkeit - dort steht ein
+    # Gedankenstrich, keine Null: null Prozent waere eine Aussage.
+    kz = ["%d." % round(g["p"] * 100),
+          "%d %%" % round(g["wahrsch"] * 100) if g["wahrsch"] is not None
+          else "&#8212;",
+          "%s Uhr" % g["zeit"]]
 
     meta = json.dumps([{k: e[k] for k in ("tag", "lang", "p", "stufe",
                                           "klasse", "zeit", "wahrsch",
@@ -587,18 +767,13 @@ def main():
                                           "karte", "band")}
                        for e in eintraege], ensure_ascii=False)
 
-    zs = y(SCHWELLE_SELTEN)
-    za = y(SCHWELLE_AUFFAELLIG) - zs
     html = (VORLAGE
             .replace("__TOKENS__", tokens.quelltext())
             .replace("__ORT__", anzeige)
             .replace("__KORPUS__", korpus)
-            .replace("__ANZAHL_WORT__",
-                     {10: "ZEHN ABENDE"}.get(n, "%d ABENDE" % n))
+            .replace("__ANZAHL_WORT__", ANZAHL_WORT.get(n, "%d ABENDE" % n))
+            .replace("__ACHSE_GROSS__", str(ACHSE_PX_GROSS))
             .replace("__ACHSE__", str(ACHSE_PX))
-            .replace("__ZS__", "%.0f" % zs)
-            .replace("__ZAU__", "%.0f" % (zs + za))
-            .replace("__ZA__", "%.0f" % za)
             .replace("__LINIE__", linie)
             .replace("__LINIENFARBE__", tokens.werte()["--achse"])
             .replace("__MARKEN__", marken)
@@ -615,8 +790,12 @@ def main():
             .replace("__BAND__", g["band"])
             .replace("__SCHNITT__", g["svg"])
             .replace("__KARTE__", g["karte"])
+            .replace("__KZ0__", kz[0])
+            .replace("__KZ1__", kz[1])
+            .replace("__KZ2__", kz[2])
             .replace("__META__", meta)
-            .replace("__BESTER__", str(bester)))
+            .replace("__BESTER__", str(bester))
+            .replace("__GEWAEHLT__", str(gewaehlt)))
     ziel = os.path.join(BASIS, "web", "index.html")
     with open(ziel, "w", encoding="utf-8") as f:
         f.write(html)
