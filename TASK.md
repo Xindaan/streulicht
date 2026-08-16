@@ -141,6 +141,30 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   2024-09-15 = T-0018, 2018-07-09 und 2024-05-03 Weg auch im Mittel zu
   64-83 % dicht und satellitenbestaetigt. Hook `weg_agg` in `score()`
   bleibt, Default bitgenau (4058/4058). Betrieb unveraendert.
+- T-0031 **UX-Overhaul umsetzen** (Handoff: `docs/entwurf/handoff-ux-2026-08-16.md`,
+  Entwuerfe daneben als HTML). Hi-fi, pixelgenau nachzubauen, alle Werte aus
+  `stil/tokens.css`. Reihenfolge laut Handoff: Tokens ergaenzen -> schnitt.py
+  (Polygonbaender, doppelter Strahl, Himmelsverlauf, neue Flaeche 420x258) ->
+  faecher.py (Draufsicht, neu) -> seite.py (Topbar, Hero, Himmelsband,
+  Zeitachse mit Zonen) -> bewertungsseite.py -> rueckschau.py.
+  **Die JS-Logik in den Entwuerfen ist Dokumentation der Rechenwege, nicht die
+  Zielsprache** - alles Rechnende gehoert nach Python und laeuft zur
+  Erzeugungszeit.
+- T-0032 **Push-Auskunft auf der Prognoseseite** (Handoff 1.9). Die Seite sagt
+  heute nirgends, ob ein Push kommt - und "keiner reisst die Schwelle" ist der
+  haeufigste Fall. Kleinster Einzelgewinn im ganzen Handoff, unabhaengig vom
+  Rest baubar.
+- T-0033 **Vorauswahl: heute oder bester Abend?** Behoben am 16.08. auf "der
+  naechste Abend", weil Andre den Sprung in die Zukunft als Fehler gemeldet
+  hat. Der Entwurf loest dasselbe Problem anders: er waehlt weiter den BESTEN
+  Abend vor und beschriftet ihn mit "BESTER ABEND IM FENSTER". Beides ist
+  vertretbar; die Frage ist, ob die Seite zuerst "wie wird heute" oder "lohnt
+  sich diese Woche" beantwortet. Entscheidung offen.
+- T-0034 **Handoff-Punkt 7 ist ueberholt.** Die Umsetzungsreihenfolge sagt
+  "die Prognoseseite bleibt draussen (Verankerungsrisiko)". Das war meine
+  Entscheidung vom 15.08. und ist am selben Tag zurueckgenommen - der Alarm
+  traegt die Prognose ohnehin aufs Telefon, das Verstecken kostete nur Nutzen.
+  Die Seite IST ausgeliefert. Beim Umsetzen nicht versehentlich zurueckdrehen.
 - T-0030 **Wolkentyp oder -unterkante als richtiges Instrument.** Was
   T-0028 gebraucht haette: ein Produkt, das low/mid/high trennt oder die
   Unterkante liefert. Kandidaten aus dem Data Store: `EO:EUM:DAT:0617`

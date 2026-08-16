@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="color-scheme" content="dark">
+<style>
+html{color-scheme:dark}
+body{margin:0;background:#000000}
+a{color:#ffb340;text-decoration:none}
+a:hover{color:#ff9f0a}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#000000;color:#f2f2f7;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Segoe UI',system-ui,Roboto,sans-serif;font-size:15px;line-height:1.5;letter-spacing:-.022em;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased">
+<div style="max-width:720px;margin:0 auto;padding:26px 16px 56px">
+
+<header>
+<h1 style="margin:0;font-size:26px;font-weight:700;letter-spacing:-.03em">Streulicht <span style="color:#98989d;font-weight:400">Berlin</span></h1>
+<p style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:4px 0 0;color:#98989d;font-size:13px">10 Abende · 16.08. bis 25.08.<span style="padding:2px 10px;border-radius:999px;background:#2c2c2e;color:#98989d;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Rückschau</span></p>
+</header>
+
+<div style="position:relative;margin:26px 0;padding:16px 12px 12px;background:#1c1c1e;border:1px solid #38383a;border-radius:18px;box-shadow:0 .5px 1.5px rgba(0,0,0,.5), 0 1px 2px rgba(0,0,0,.4)">
+  <div id="sl-roller" style="overflow-x:auto;scrollbar-width:none;margin-right:30px;-webkit-overflow-scrolling:touch">
+    <div style="position:relative;display:flex;width:max-content;min-width:100%;padding-top:12px">
+      <i style="position:absolute;left:0;right:0;height:0;border-top:1px dashed #8e8e93;pointer-events:none;top:18.6px"></i>
+      <i style="position:absolute;left:0;right:0;height:0;border-top:1px dashed #8e8e93;pointer-events:none;top:38.4px"></i>
+      <sc-for list="{{ marken }}" as="m" hint-placeholder-count="10">
+        <button type="button" onClick="{{ m.waehle }}" aria-label="{{ m.aria }}" style="{{ m.knopfStil }}">
+          <span style="position:relative;width:100%;height:132px">
+            <i style="{{ m.punktStil }}"></i>
+          </span>
+          <span style="margin-top:8px;font-size:11px">{{ m.wt }}</span>
+          <span style="{{ m.dtStil }}">{{ m.kurz }}</span>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+  <div style="position:absolute;top:16px;right:12px;width:30px;pointer-events:none">
+    <b style="position:absolute;right:0;top:18.6px;transform:translateY(-50%);color:#98989d;font-size:11px;font-weight:600;letter-spacing:0">95.</b>
+    <b style="position:absolute;right:0;top:38.4px;transform:translateY(-50%);color:#98989d;font-size:11px;font-weight:600;letter-spacing:0">80.</b>
+  </div>
+</div>
+
+<main>
+<p style="margin:0;color:#98989d;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">{{ etikett }}</p>
+<p style="{{ stufeStil }}">{{ stufeText }}</p>
+<p style="margin:8px 0 0;color:#98989d;font-size:14px">{{ unter }}</p>
+<div id="sl-bild" style="max-width:480px;margin:26px 0 0;padding:12px;background:#1c1c1e;border:1px solid #38383a;border-radius:18px;box-shadow:0 .5px 1.5px rgba(0,0,0,.5), 0 1px 2px rgba(0,0,0,.4)"></div>
+<p style="max-width:480px;margin:8px 0 0;color:#98989d;font-size:12px">Höhe 22-fach überhöht · Wolken aus ERA5, Bänderdicke schematisch.</p>
+<p style="max-width:44rem;margin:34px 0 0;color:#98989d;font-size:13px;line-height:1.55;text-wrap:pretty">Die Stufe kommt aus der Position in der Jahresverteilung: <b>selten</b> ab dem 95. Perzentil (rund 18 Abende im Jahr), <b>auffällig</b> ab dem 80. Bewusst keine Prozentzahl — belegt ist, dass der Score außergewöhnliche Abende von gewöhnlichen trennt, nicht dass er unter den guten ordnet.</p>
+</main>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const SAEULE = 132;
+
+const META = [
+ {tag:"2026-08-16",lang:"Sonntag, 16. August",p:0.4811772758384668,stufe:"unauffällig",klasse:"unauffaellig",zeit:"20:30",wahrsch:0.0196078431372549},
+ {tag:"2026-08-17",lang:"Montag, 17. August",p:0.6824093086926762,stufe:"unauffällig",klasse:"unauffaellig",zeit:"20:28",wahrsch:0},
+ {tag:"2026-08-18",lang:"Dienstag, 18. August",p:0.47775496235455167,stufe:"unauffällig",klasse:"unauffaellig",zeit:"20:26",wahrsch:0.0392156862745098},
+ {tag:"2026-08-19",lang:"Mittwoch, 19. August",p:0.6947296372347707,stufe:"unauffällig",klasse:"unauffaellig",zeit:"20:24",wahrsch:0.0392156862745098},
+ {tag:"2026-08-20",lang:"Donnerstag, 20. August",p:0.6550308008213552,stufe:"unauffällig",klasse:"unauffaellig",zeit:"20:21",wahrsch:0.058823529411764705},
+ {tag:"2026-08-21",lang:"Freitag, 21. August",p:0.6331279945242985,stufe:"unauffällig",klasse:"unauffaellig",zeit:"20:19",wahrsch:0.058823529411764705},
+ {tag:"2026-08-22",lang:"Samstag, 22. August",p:0.6242299794661191,stufe:"unauffällig",klasse:"unauffaellig",zeit:"20:17",wahrsch:0.0392156862745098},
+ {tag:"2026-08-23",lang:"Sonntag, 23. August",p:0.7919233401779603,stufe:"unauffällig",klasse:"unauffaellig",zeit:"20:15",wahrsch:0.058823529411764705},
+ {tag:"2026-08-24",lang:"Montag, 24. August",p:0.5188227241615332,stufe:"unauffällig",klasse:"unauffaellig",zeit:"20:13",wahrsch:0.0784313725490196},
+ {tag:"2026-08-25",lang:"Dienstag, 25. August",p:0.7221081451060917,stufe:"unauffällig",klasse:"unauffaellig",zeit:"20:11",wahrsch:0.0784313725490196}
+];
+const WT = ["Mo","Di","Mi","Do","Fr","Sa","So"];
+const FARBE = {selten:"#ffb340", auffaellig:"#ff9f0a", unauffaellig:"#98989d"};
+
+function kurz(tag, erster) {
+  const d = new Date(tag + "T12:00:00");
+  return (erster || d.getDate() === 1)
+    ? d.getDate() + "." + (d.getMonth() + 1) + "."
+    : d.getDate() + ".";
+}
+
+class Component extends DCLogic {
+  state = { i: 7, svg: null };
+
+  componentDidMount() {
+    this.malen();
+    fetch("daten/schnitte.json").then(r => r.json())
+      .then(svg => this.setState({ svg }))
+      .catch(() => {});
+    this._raender = () => this.raender();
+    setTimeout(() => {
+      const r = document.getElementById("sl-roller");
+      if (r) { r.addEventListener("scroll", this._raender, {passive:true}); this.raender(); }
+    }, 0);
+  }
+
+  componentDidUpdate() { this.malen(); }
+
+  malen() {
+    const b = document.getElementById("sl-bild");
+    if (b && this.state.svg) b.innerHTML = this.state.svg[String(this.state.i)] || "";
+  }
+
+  raender() {
+    const r = document.getElementById("sl-roller");
+    if (!r) return;
+    const l = r.scrollLeft, max = r.scrollWidth - r.clientWidth;
+    const links = l > 1, rechts = l < max - 1;
+    let m = "none";
+    if (links && rechts) m = "linear-gradient(to right,transparent,#000 28px,#000 calc(100% - 28px),transparent)";
+    else if (links) m = "linear-gradient(to right,transparent,#000 28px)";
+    else if (rechts) m = "linear-gradient(to right,#000 calc(100% - 28px),transparent)";
+    r.style.maskImage = m; r.style.webkitMaskImage = m;
+  }
+
+  renderVals() {
+    const sel = this.state.i;
+    const marken = META.map((e, i) => {
+      const an = i === sel;
+      const farbe = FARBE[e.klasse];
+      const d = new Date(e.tag + "T12:00:00");
+      return {
+        wt: WT[(d.getDay() + 6) % 7],
+        kurz: kurz(e.tag, i === 0),
+        aria: e.lang + ", " + e.stufe,
+        knopfStil: "flex:1 0 44px;min-width:44px;display:flex;flex-direction:column;align-items:center;"
+          + "padding:0 0 8px;border:0;background:" + (an ? "#2c2c2e" : "transparent")
+          + ";color:" + farbe + ";font:inherit;letter-spacing:inherit;cursor:pointer;"
+          + "border-radius:13px;transition:background-color .15s cubic-bezier(.2,.7,.2,1)",
+        punktStil: "position:absolute;left:50%;width:10px;height:10px;margin:-5px 0 0 -5px;"
+          + "border:1.5px solid currentColor;border-radius:999px;top:"
+          + (SAEULE * (1 - e.p)).toFixed(1) + "px;"
+          + (e.klasse === "selten" ? "background:" + farbe + ";" : "")
+          + "transition:transform .15s cubic-bezier(.2,.7,.2,1)"
+          + (an ? ";transform:scale(1.5)" : ""),
+        dtStil: "font-size:12px;font-weight:600;color:" + (an ? "#f2f2f7" : "#d1d1d6"),
+        waehle: () => this.setState({ i })
+      };
+    });
+    const e = META[sel];
+    const teile = [];
+    if (e.wahrsch !== null && e.wahrsch !== undefined)
+      teile.push(Math.round(e.wahrsch * 100) + " % Wahrscheinlichkeit");
+    teile.push("Sonnenuntergang " + e.zeit + " Uhr");
+    teile.push(Math.round(e.p * 100) + ". Perzentil des Jahres");
+    return {
+      marken,
+      etikett: e.lang,
+      stufeText: e.stufe,
+      stufeStil: "margin:4px 0 0;font-size:40px;font-weight:800;line-height:1.05;"
+        + "letter-spacing:-.03em;color:" + FARBE[e.klasse],
+      unter: teile.join(" · ")
+    };
+  }
+}
+</script>
+</body>
+</html>

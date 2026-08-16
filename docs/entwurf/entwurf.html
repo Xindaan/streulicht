@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="color-scheme" content="dark">
+<meta name="design_doc_mode" content="canvas">
+<style>
+html{color-scheme:dark}
+body{margin:0;background:#08080a}
+a{color:#ffb340;text-decoration:none}
+a:hover{color:#ff9f0a}
+::-webkit-scrollbar{display:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</helmet>
+<div style="min-height:100vh;width:max-content;min-width:100%;background:#08080a;color:#f2f2f7;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Segoe UI',system-ui,Roboto,sans-serif;font-size:15px;line-height:1.5;letter-spacing:-.022em;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;padding:56px 56px 80px">
+
+<div style="display:flex;align-items:baseline;gap:16px;margin:0 0 8px">
+  <h2 style="margin:0;font-size:26px;font-weight:800;letter-spacing:-.03em">Streulicht — Entwurf</h2>
+  <span style="color:#98989d;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Telefon zuerst · nur Dunkel · Hausstandard</span>
+</div>
+<p style="margin:0 0 34px;color:#98989d;font-size:14px;max-width:70ch;text-wrap:pretty">Vier Flächen, eine Sprache. Die Zeitachse ist die Navigation, nicht ein Kachelstreifen; die Stufe führt, die Prozentzahl steht daneben; und der Vertikalschnitt ist dasselbe Bild wie heute, nur gezeichnet statt geplottet.</p>
+
+<div style="display:flex;gap:34px;align-items:flex-start">
+
+<!-- ══════════════ 1 · PROGNOSE ══════════════ -->
+<section id="prognose" data-screen-label="Prognose">
+<p style="margin:0 0 12px;color:#98989d;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">1 · Prognose</p>
+<div style="width:390px;border:1px solid #1c1c1e;border-radius:22px;background:#000;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.5), 0 22px 50px rgba(0,0,0,.6)">
+
+  <div style="position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;background:rgba(0,0,0,.72);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border-bottom:1px solid #1c1c1e">
+    <span style="font-size:17px;font-weight:800;letter-spacing:-.03em">Streulicht</span>
+    <span style="padding:3px 11px;border-radius:999px;background:#1c1c1e;color:#d1d1d6;font-size:12px;font-weight:700;letter-spacing:.02em">Berlin</span>
+  </div>
+
+  <div style="padding:20px 18px 0">
+    <p style="margin:0;color:#98989d;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">{{ korpus }}</p>
+    <p style="margin:16px 0 0;color:#98989d;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">{{ heroEyebrow }}</p>
+    <h1 style="margin:2px 0 0;font-size:23px;font-weight:700;letter-spacing:-.03em;color:#f2f2f7">{{ heroDatum }}</h1>
+    <p style="{{ heroStufeStil }}">{{ heroStufe }}</p>
+    <p style="margin:6px 0 0;color:#d1d1d6;font-size:14px;text-wrap:pretty">{{ heroGrund }}</p>
+    <p style="margin:10px 0 0;color:#98989d;font-size:13px">{{ heroZahlen }}</p>
+  </div>
+
+  <div style="margin:20px 0 0">
+    <div id="sl-band" style="height:76px;width:100%"></div>
+    <p style="margin:8px 18px 0;color:#98989d;font-size:12px">Lichteindruck, schematisch — aus dem Score dieses Abends.</p>
+  </div>
+
+  <div style="margin:26px 0 0;padding:0 0 4px">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 18px 10px">
+      <span style="color:#98989d;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Zehn Abende</span>
+      <span style="color:#98989d;font-size:12px">Perzentil des Jahres</span>
+    </div>
+    <div style="position:relative;padding:0 18px">
+      <div style="position:relative;height:200px">
+        <div style="position:absolute;left:0;right:0;top:0;height:10px;background:rgba(255,159,10,.18);border-bottom:1px solid #ff9f0a"></div>
+        <div style="position:absolute;left:0;right:0;top:10px;height:30px;background:rgba(255,159,10,.07);border-bottom:1px dashed #8e8e93"></div>
+        <span style="position:absolute;right:0;top:10px;transform:translateY(-100%);padding:0 0 2px;color:#ffb340;font-size:11px;font-weight:700;letter-spacing:.04em">SELTEN 95.</span>
+        <span style="position:absolute;right:0;top:40px;transform:translateY(-100%);padding:0 0 2px;color:#98989d;font-size:11px;font-weight:700;letter-spacing:.04em">AUFFÄLLIG 80.</span>
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none">
+          <polyline points="{{ linie }}" fill="none" stroke="#48484a" stroke-width="0.7" vector-effect="non-scaling-stroke"></polyline>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex">
+          <sc-for list="{{ marken }}" as="m" hint-placeholder-count="10">
+            <button type="button" onClick="{{ m.waehle }}" aria-label="{{ m.aria }}" style="{{ m.knopfStil }}">
+              <i style="{{ m.hairStil }}"></i>
+              <i style="{{ m.punktStil }}"></i>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;margin:8px 0 0">
+        <sc-for list="{{ marken }}" as="m" hint-placeholder-count="10">
+          <span style="{{ m.labelStil }}"><b style="display:block;font-size:11px;font-weight:400">{{ m.wt }}</b><b style="{{ m.dtStil }}">{{ m.kurz }}</b></span>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin:26px 18px 0;padding:14px 12px 12px;background:#1c1c1e;border:1px solid #38383a;border-radius:18px;box-shadow:0 .5px 1.5px rgba(0,0,0,.5), 0 1px 2px rgba(0,0,0,.4)">
+    <p style="margin:0 4px 10px;color:#98989d;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Der Weg des Lichts</p>
+    <div id="sl-schnitt" style="min-height:200px"></div>
+    <p style="margin:10px 4px 0;color:#98989d;font-size:12px;text-wrap:pretty">{{ schnittFuss }}</p>
+  </div>
+
+  <sc-if value="{{ zeigeFaecher }}" hint-placeholder-val="{{ true }}">
+  <div style="margin:16px 18px 0;padding:14px 12px 12px;background:#1c1c1e;border:1px solid #38383a;border-radius:18px;box-shadow:0 .5px 1.5px rgba(0,0,0,.5), 0 1px 2px rgba(0,0,0,.4)">
+    <p style="margin:0 4px 10px;color:#98989d;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Von oben</p>
+    <div id="sl-faecher" style="min-height:150px"></div>
+    <p style="margin:10px 4px 0;color:#98989d;font-size:12px;text-wrap:pretty">Die Wolkendecke westlich von Berlin auf dem Abfragefächer, und der Azimut des Sonnenuntergangs.</p>
+  </div>
+  </sc-if>
+
+  <p style="margin:26px 18px 0;color:#98989d;font-size:13px;line-height:1.55;text-wrap:pretty">Die Stufe kommt aus der Position in der Jahresverteilung: <b style="color:#d1d1d6">selten</b> ab dem 95. Perzentil (rund 18 Abende im Jahr), <b style="color:#d1d1d6">auffällig</b> ab dem 80. Bewusst keine Prozentzahl — belegt ist, dass der Score außergewöhnliche Abende von gewöhnlichen trennt, nicht dass er unter den guten ordnet.</p>
+
+  <div style="margin:22px 18px 0;padding:14px 16px;background:#1c1c1e;border-radius:13px">
+    <p style="margin:0;color:#d1d1d6;font-size:13px;text-wrap:pretty">{{ pushSatz }}</p>
+  </div>
+
+  <div style="height:34px"></div>
+</div>
+</section>
+
+<!-- ══════════════ 2 · BEWERTEN ══════════════ -->
+<section data-screen-label="Bewerten">
+<p style="margin:0 0 12px;color:#98989d;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">2 · Bewerten — vor der Abgabe <span style="color:#636366;font-weight:400;letter-spacing:.02em;text-transform:none">· Beispielabend 23.08., für den eine Prognose vorliegt</span></p>
+<div style="width:390px;min-height:720px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:34px 26px;border:1px solid #1c1c1e;border-radius:22px;background:#000;box-shadow:0 2px 8px rgba(0,0,0,.5), 0 22px 50px rgba(0,0,0,.6)">
+  <p style="margin:0;color:#98989d;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Sonntag, 23. August</p>
+  <h1 style="margin:0;max-width:15ch;font-size:23px;font-weight:700;line-height:1.3;letter-spacing:-.03em;text-align:center;text-wrap:balance">Wie war der Sonnenuntergang?</h1>
+  <div style="display:flex;gap:10px;justify-content:center">
+    <sc-for list="{{ noten }}" as="n" hint-placeholder-count="5">
+      <button type="button" onClick="{{ n.waehle }}" style="{{ n.stil }}">{{ n.zahl }}</button>
+    </sc-for>
+  </div>
+  <div style="display:flex;justify-content:space-between;width:100%;max-width:262px;color:#98989d;font-size:12px">
+    <span>1 = nichts</span><span>5 = spektakulär</span>
+  </div>
+  <button type="button" onClick="{{ nichtGesehen }}" style="{{ nichtGesehenStil }}" style-hover="border-color:#8e8e93">Nicht gesehen</button>
+  <p style="margin:0;padding:12px 16px;background:#1c1c1e;border-radius:13px;color:#d1d1d6;font-size:13px;text-align:center;line-height:1.5;text-wrap:pretty">Und ein Foto nach Westen, wenn Du magst — später blind benotet ist es das Einzige, was die Erinnerung an den Alarm aus der Bewertung herausrechnet.</p>
+  <p style="margin:0;color:#98989d;font-size:12px;text-align:center;line-height:1.55;max-width:26ch;text-wrap:pretty">Erst bewerten, dann nachsehen — sonst misst die Bewertung die Vorhersage statt den Himmel.</p>
+</div>
+</section>
+
+<!-- ══════════════ 3 · NACH DER ABGABE ══════════════ -->
+<section data-screen-label="Bewerten danach">
+<p style="margin:0 0 12px;color:#98989d;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">3 · Bewerten — danach freigelegt</p>
+<div style="width:390px;min-height:720px;display:flex;flex-direction:column;padding:34px 0;border:1px solid #1c1c1e;border-radius:22px;background:#000;box-shadow:0 2px 8px rgba(0,0,0,.5), 0 22px 50px rgba(0,0,0,.6)">
+  <div style="padding:0 26px">
+    <p style="margin:0;color:#ffb340;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Angekommen</p>
+    <h1 style="margin:6px 0 0;font-size:26px;font-weight:700;letter-spacing:-.03em">Danke — 4 von 5</h1>
+    <p style="margin:6px 0 0;color:#98989d;font-size:14px">Sonntag, 23. August · auf Nachfrage bewertet</p>
+  </div>
+  <div style="margin:26px 0 0">
+    <div id="sl-band-rueck" style="height:76px;width:100%"></div>
+  </div>
+  <div style="padding:20px 26px 0">
+    <p style="margin:0;color:#98989d;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Vorhergesagt war</p>
+    <p style="margin:4px 0 0;font-size:32px;font-weight:800;letter-spacing:-.03em;color:#98989d">unauffällig</p>
+    <p style="margin:6px 0 0;color:#98989d;font-size:13px">79. Perzentil des Jahres · 6 % Wahrscheinlichkeit</p>
+    <p style="margin:20px 0 0;color:#d1d1d6;font-size:13px;line-height:1.55;text-wrap:pretty">Jetzt gehört die Zahl dem Himmel und nicht der Vorhersage. Genau dafür lag sie vorher verdeckt.</p>
+  </div>
+  <div style="flex:1"></div>
+  <div style="padding:0 26px">
+    <a href="#prognose" style="display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:999px;background:#332412;color:#ffb340;font-size:14px;font-weight:700">Prognose der nächsten Abende</a>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════ 4 · RÜCKSCHAU ══════════════ -->
+<section data-screen-label="Rückschau">
+<p style="margin:0 0 12px;color:#98989d;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">4 · Rückschau</p>
+<div style="width:390px;min-height:720px;display:flex;flex-direction:column;border:1px solid #1c1c1e;border-radius:22px;background:#000;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.5), 0 22px 50px rgba(0,0,0,.6)">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;background:rgba(0,0,0,.72);backdrop-filter:blur(18px) saturate(1.4);border-bottom:1px solid #1c1c1e">
+    <span style="font-size:17px;font-weight:800;letter-spacing:-.03em">Rückschau</span>
+    <span style="padding:3px 11px;border-radius:999px;background:#1c1c1e;color:#d1d1d6;font-size:12px;font-weight:700">Berlin</span>
+  </div>
+  <div style="padding:20px 18px 0">
+    <p style="margin:0;color:#98989d;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">1 Bewertung seit dem 15. August 2026</p>
+    <div style="margin:14px 0 0;padding:16px;background:#1c1c1e;border:1px solid #38383a;border-radius:18px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between">
+        <span style="font-size:15px;font-weight:700">Sa 15.08.</span>
+        <span style="display:flex;align-items:baseline;gap:3px"><b style="font-size:26px;font-weight:800;letter-spacing:-.03em;color:#ffb340">3</b><span style="color:#98989d;font-size:13px">/5</span></span>
+      </div>
+      <div style="display:flex;gap:3px;margin:12px 0 0">
+        <i style="flex:1;height:6px;border-radius:999px;background:#ffb340"></i>
+        <i style="flex:1;height:6px;border-radius:999px;background:#ffb340"></i>
+        <i style="flex:1;height:6px;border-radius:999px;background:#ffb340"></i>
+        <i style="flex:1;height:6px;border-radius:999px;background:#2c2c2e"></i>
+        <i style="flex:1;height:6px;border-radius:999px;background:#2c2c2e"></i>
+      </div>
+      <p style="margin:12px 0 0;color:#98989d;font-size:13px">Spontan bewertet · keine Prognose für diesen Abend gerechnet</p>
+    </div>
+    <p style="margin:22px 0 0;color:#98989d;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Was hier später steht</p>
+    <p style="margin:8px 0 0;color:#d1d1d6;font-size:14px;line-height:1.55;text-wrap:pretty">Trefferquote, Alarmrate und die Schwelle, gegen die beide gemessen werden. Alle drei brauchen Abende, die es noch nicht gibt.</p>
+    <div style="margin:16px 0 0;padding:14px 16px;background:#1c1c1e;border-radius:13px">
+      <p style="margin:0;color:#98989d;font-size:13px;line-height:1.55;text-wrap:pretty">Die Schwelle stammt aus Analysefeldern, der Alarm rechnet auf Ensemble-Membern. Ob dieselbe Schwelle dieselbe Rate ergibt, ist nie gemessen worden — der Livegang ist die Messung. Nach sechs bis acht Wochen wird sie nachgezogen.</p>
+    </div>
+    <p style="margin:22px 0 0;color:#98989d;font-size:13px;line-height:1.55;text-wrap:pretty">Bis dahin gilt die Alarmrate als unbekannt, nicht als 18,5 pro Jahr.</p>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════ 5 · PUSH ══════════════ -->
+<section data-screen-label="Push">
+<p style="margin:0 0 12px;color:#98989d;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">5 · Push auf dem Sperrbildschirm <span style="color:#636366;font-weight:400;letter-spacing:.02em;text-transform:none">· konstruierter Abend über der Schwelle</span></p>
+<div style="width:390px;min-height:720px;display:flex;flex-direction:column;align-items:center;padding:44px 16px 26px;border:1px solid #1c1c1e;border-radius:22px;background:radial-gradient(120% 60% at 50% 100%, #241a0d 0%, #0b0b0d 55%, #000 100%);box-shadow:0 2px 8px rgba(0,0,0,.5), 0 22px 50px rgba(0,0,0,.6)">
+  <p style="margin:0;color:#d1d1d6;font-size:13px;font-weight:600;letter-spacing:.02em">Samstag, 22. August</p>
+  <p style="margin:2px 0 0;font-size:68px;font-weight:300;letter-spacing:-.04em;line-height:1.05">07:31</p>
+  <div style="width:100%;margin:34px 0 0;display:flex;flex-direction:column;gap:10px">
+    <div style="padding:13px 15px;border-radius:18px;background:rgba(44,44,46,.72);backdrop-filter:blur(18px) saturate(1.4);border:1px solid rgba(142,142,147,.18)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="width:20px;height:20px;border-radius:6px;background:#332412;display:flex;align-items:center;justify-content:center"><i style="width:8px;height:8px;border-radius:999px;background:#ffb340"></i></span>
+        <span style="font-size:13px;font-weight:700;letter-spacing:-.01em">Streulicht Berlin</span>
+        <span style="flex:1"></span>
+        <span style="color:#98989d;font-size:12px">jetzt</span>
+      </div>
+      <p style="margin:7px 0 0;font-size:14px;line-height:1.45;text-wrap:pretty">So 23.08., 20:15 Uhr — 62 %. Mittelhohe Wolken, Licht kommt von Westen frei durch.</p>
+    </div>
+    <div style="padding:13px 15px;border-radius:18px;background:rgba(44,44,46,.5);backdrop-filter:blur(18px) saturate(1.4);border:1px solid rgba(142,142,147,.12)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="width:20px;height:20px;border-radius:6px;background:#1c1c1e;display:flex;align-items:center;justify-content:center"><i style="width:8px;height:8px;border-radius:999px;background:#8e8e93"></i></span>
+        <span style="font-size:13px;font-weight:700;letter-spacing:-.01em">Wie war er?</span>
+        <span style="flex:1"></span>
+        <span style="color:#98989d;font-size:12px">gestern</span>
+      </div>
+      <p style="margin:7px 0 0;color:#d1d1d6;font-size:14px;line-height:1.45;text-wrap:pretty">Sonnenuntergang Berlin ist durch. Eine Zahl von 1 bis 5 — und ein Foto nach Westen, wenn Du magst.</p>
+    </div>
+  </div>
+  <div style="flex:1"></div>
+  <p style="margin:0 0 10px;padding:6px 12px;border:1px solid #38383a;border-radius:999px;color:#8e8e93;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Konstruierte 62 % — kein echter Abend</p>
+  <p style="margin:0;color:#98989d;font-size:12px;text-align:center;max-width:30ch;line-height:1.55;text-wrap:pretty">Ein Alarm je Abend, höchstens. Die Aufforderung kommt jeden Abend — sonst entstehen nur Labels für Alarmabende. In dieser Woche reißt kein Abend die Schwelle; ohne einen erfundenen Wert wäre hier nichts zu zeigen.</p>
+</div>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;demoAbend&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Echte Woche&quot;,&quot;Seltener Abend (Demo)&quot;],&quot;default&quot;:&quot;Echte Woche&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Daten&quot;},&quot;faecherKarte&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Grafik&quot;},&quot;bandStaerke&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1,&quot;min&quot;:0.4,&quot;max&quot;:1.6,&quot;step&quot;:0.05,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Grafik&quot;}}">
+const R_EFF = 8494.7, R_ERDE = 6371.0;
+const XMAX = 460.0, YMAX = 12.5;
+const SCHIRME = {high: 9.5, mid: 4.2};
+const GRENZE_LOW_MID = 2.0, GRENZE_MID_HIGH = 6.3;
+const DISTANZEN = [0, 60, 120, 180, 240, 300, 360, 420];
+const BAENDER = [["high", 7.6, 10.4], ["mid", 2.9, 5.4], ["low", 0.25, 1.6]];
+const SSTERN = 0.7065, PSTERN = 0.5;
+const BERLIN = [52.52, 13.405];
+
+const T = {karte:"#1c1c1e", flaeche2:"#2c2c2e", tinte:"#f2f2f7", tinte2:"#d1d1d6",
+  gedaempft:"#98989d", achse:"#38383a", gitter:"#8e8e93", akzent:"#ff9f0a",
+  akzentTinte:"#ffb340", akzentFlaeche:"#332412", wolke:"#c7c7cc", boden:"#2c2c2e"};
+
+const ABENDE = [
+ {tag:"2026-08-16",lang:"Sonntag, 16. August",kurzlang:"So 16.08.",p:0.4811772758384668,zeit:"20:30",wahrsch:0.0196078431372549,median:0.03046174748206077,schirm:"mid",A:0.9854974154866479,sicht:1.0,weg:0.8592998061018372,azimut:293.98},
+ {tag:"2026-08-17",lang:"Montag, 17. August",kurzlang:"Mo 17.08.",p:0.6824093086926762,zeit:"20:28",wahrsch:0,median:0.12565762655518667,schirm:"mid",A:0.7526519578219829,sicht:0.9983333333333333,weg:0.6357490506979582,azimut:293.39},
+ {tag:"2026-08-18",lang:"Dienstag, 18. August",kurzlang:"Di 18.08.",p:0.47775496235455167,zeit:"20:26",wahrsch:0.0392156862745098,median:0.028493035070409328,schirm:"mid",A:0.9986338572190898,sicht:1.0,weg:0.9346100039308689,azimut:292.88},
+ {tag:"2026-08-19",lang:"Mittwoch, 19. August",kurzlang:"Mi 19.08.",p:0.6947296372347707,zeit:"20:24",wahrsch:0.0392156862745098,median:0.1326935308570825,schirm:"mid",A:0.9680119259807052,sicht:1.0,weg:0.9476652138329098,azimut:292.31},
+ {tag:"2026-08-20",lang:"Donnerstag, 20. August",kurzlang:"Do 20.08.",p:0.6550308008213552,zeit:"20:21",wahrsch:0.058823529411764705,median:0.10825866647465401,schirm:"high",A:0.9780648362005724,sicht:1.0,weg:0.9509718905600879,azimut:291.73},
+ {tag:"2026-08-21",lang:"Freitag, 21. August",kurzlang:"Fr 21.08.",p:0.6331279945242985,zeit:"20:19",wahrsch:0.058823529411764705,median:0.0973072770831319,schirm:"mid",A:0.9819439082285464,sicht:1.0,weg:0.8323147117109151,azimut:291.16},
+ {tag:"2026-08-22",lang:"Samstag, 22. August",kurzlang:"Sa 22.08.",p:0.6242299794661191,zeit:"20:17",wahrsch:0.0392156862745098,median:0.09084316176100526,schirm:"high",A:0.9660752296750375,sicht:0.9633333333333334,weg:0.9102871629125128,azimut:290.58},
+ {tag:"2026-08-23",lang:"Sonntag, 23. August",kurzlang:"So 23.08.",p:0.7919233401779603,zeit:"20:15",wahrsch:0.058823529411764705,median:0.2519189744863096,schirm:"mid",A:0.9322339698319623,sicht:1.0,weg:0.9240695934779303,azimut:290.0},
+ {tag:"2026-08-24",lang:"Montag, 24. August",kurzlang:"Mo 24.08.",p:0.5188227241615332,zeit:"20:13",wahrsch:0.0784313725490196,median:0.041911513287501825,schirm:"high",A:1.0,sicht:1.0,weg:1.0,azimut:289.42},
+ {tag:"2026-08-25",lang:"Dienstag, 25. August",kurzlang:"Di 25.08.",p:0.7221081451060917,zeit:"20:11",wahrsch:0.0784313725490196,median:0.15897395780700202,schirm:"high",A:0.9978599840195681,sicht:1.0,weg:0.9183198890524695,azimut:288.84}
+];
+
+const WT = ["Mo","Di","Mi","Do","Fr","Sa","So"];
+const grad = x => x * Math.PI / 180;
+
+function stufe(p) {
+  if (p >= 0.95) return ["selten", T.akzentTinte];
+  if (p >= 0.80) return ["auffällig", T.akzent];
+  return ["unauffällig", T.gedaempft];
+}
+
+// Halbsatz aus alarm.py begruendung() -- dieselben Schwellen, derselbe Wortlaut.
+function begruendung(e) {
+  const teile = [];
+  const s = {high:"Hohe Wolken", mid:"Mittelhohe Wolken"}[e.schirm] || "Wolken";
+  teile.push((e.A || 0) >= 0.35 ? s : "Wenig " + s.toLowerCase());
+  if ((e.weg || 0) >= 0.6) teile.push("Licht kommt von Westen frei durch");
+  else if ((e.weg || 0) >= 0.3) teile.push("Lichtweg nach Westen teils frei");
+  if ((e.sicht || 1) < 0.5) teile.push("aber tiefe Decke über der Stadt");
+  return teile.join(", ") + ".";
+}
+
+// Zielpunkt auf der Grosskreisbahn, wie sonnen/geometrie.zielpunkt
+function zielpunkt(lat, lon, azimut, d) {
+  const dr = d / R_ERDE, b = grad(azimut), la = grad(lat), lo = grad(lon);
+  const la2 = Math.asin(Math.sin(la) * Math.cos(dr) + Math.cos(la) * Math.sin(dr) * Math.cos(b));
+  const lo2 = lo + Math.atan2(Math.sin(b) * Math.sin(dr) * Math.cos(la),
+    Math.cos(dr) - Math.sin(la) * Math.sin(la2));
+  return [la2 * 180 / Math.PI, lo2 * 180 / Math.PI];
+}
+
+function mischen(a, b, t) {
+  const h = c => [parseInt(c.slice(1,3),16), parseInt(c.slice(3,5),16), parseInt(c.slice(5,7),16)];
+  const [r1,g1,b1] = h(a), [r2,g2,b2] = h(b);
+  const m = (x,y) => Math.round(x + (y - x) * Math.max(0, Math.min(1, t)));
+  return "rgb(" + m(r1,r2) + "," + m(g1,g2) + "," + m(b1,b2) + ")";
+}
+
+const DUMPF = ["#1e1e22","#26262a","#2e2d2b","#28282b","#202024"];
+const GLUT  = ["#1c1226","#5e2a28","#c8661c","#ffb340","#ffe6bd"];
+
+function bandSVG(median, staerke) {
+  const t = Math.max(0, Math.min(1, (median / SSTERN) * staerke));
+  const stops = DUMPF.map((d, i) =>
+    '<stop offset="' + (i / (DUMPF.length - 1)).toFixed(3) + '" stop-color="'
+    + mischen(d, GLUT[i], t) + '"/>').join("");
+  return '<svg viewBox="0 0 100 20" preserveAspectRatio="none" style="display:block;width:100%;height:100%">'
+    + '<defs><linearGradient id="hb" x1="0" x2="1" y1="0" y2="0">' + stops + '</linearGradient>'
+    + '<linearGradient id="hbv" x1="0" x2="0" y1="0" y2="1">'
+    + '<stop offset="0" stop-color="#000" stop-opacity=".55"/>'
+    + '<stop offset="0.62" stop-color="#000" stop-opacity="0"/>'
+    + '<stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient></defs>'
+    + '<rect width="100" height="20" fill="url(#hb)"/>'
+    + '<rect width="100" height="20" fill="url(#hbv)"/></svg>';
+}
+
+class Component extends DCLogic {
+  // Auswahl und Note liegen als Instanzfelder, nicht im Zustand: renderVals()
+  // laeuft in dieser Umgebung mit dem Stand VOR einer setState-Aktualisierung,
+  // und die aus ihnen gerechneten Inline-Stile haengen dann einen Klick
+  // zurueck.  Felder plus forceUpdate() ist synchron und deckungsgleich.
+  //
+  // note: null = noch nichts abgegeben.  0 ist eine ECHTE Antwort
+  // ("nicht gesehen", ntfy-Tag grey_question) und darf sich das Sentinel
+  // nicht mit dem Anfangszustand teilen.
+  i = 7;
+  note = null;
+  state = { felder: null };
+
+  componentDidMount() {
+    this.malen();
+    fetch("daten/felder.json").then(r => r.json())
+      .then(felder => this.setState({ felder })).catch(() => {});
+  }
+  componentDidUpdate() { this.malen(); }
+
+  // Ein zusaetzlicher Durchlauf nach dem Setzen: renderVals() laeuft in
+  // dieser Umgebung mit dem Stand VOR der Aktualisierung, sonst haengen die
+  // aus dem Zustand gerechneten Inline-Stile einen Klick zurueck.
+  setz(teil) { Object.assign(this, teil); this.forceUpdate(); }
+
+  abend() {
+    const e = Object.assign({}, ABENDE[this.i]);
+    if ((this.props.demoAbend || "Echte Woche") !== "Echte Woche") {
+      e.median = 0.781; e.p = 0.972; e.wahrsch = 0.62; e.demo = true;
+    }
+    return e;
+  }
+
+  zellen() {
+    const f = this.state.felder;
+    if (!f) return null;
+    const roh = f[ABENDE[this.i].tag] || [];
+    const karte = new Map();
+    for (const [la, lo, low, mid, high] of roh)
+      karte.set(Math.round(la / 0.5) + "/" + Math.round(lo / 0.5), {low, mid, high, lat: la, lon: lo});
+    return { liste: roh, karte };
+  }
+
+  // Bedeckung der Mittelachse in Entfernung d, Schicht s -- wie schnitt.hole()
+  deckung(z, d, s) {
+    const e = ABENDE[this.i];
+    const [la, lo] = zielpunkt(BERLIN[0], BERLIN[1], e.azimut, d);
+    const c = z.karte.get(Math.round(la / 0.5) + "/" + Math.round(lo / 0.5));
+    return c && c[s] != null ? c[s] / 100 : null;
+  }
+
+  // Linear zwischen den Faecherstuetzstellen -- wie schnitt.wert().  Ohne das
+  // rastet jede Abfrage auf die 0.5-Grad-Zelle und die Baender bekommen
+  // Treppenkanten, die wie Struktur aussehen, aber keine sind.
+  verlauf(z, s) {
+    const vs = DISTANZEN.map(x => [x, this.deckung(z, x, s)]).filter(v => v[1] != null);
+    return d => {
+      if (!vs.length) return 0;
+      if (d <= vs[0][0]) return vs[0][1];
+      for (let k = 0; k + 1 < vs.length; k++) {
+        const [x0, c0] = vs[k], [x1, c1] = vs[k + 1];
+        if (x0 <= d && d <= x1) return c0 + (x1 > x0 ? (d - x0) / (x1 - x0) : 0) * (c1 - c0);
+      }
+      return d <= vs[vs.length - 1][0] + 60 ? vs[vs.length - 1][1] : 0;
+    };
+  }
+
+  malen() {
+    const e = this.abend(), z = this.zellen();
+    const staerke = this.props.bandStaerke ?? 1;
+    for (const id of ["sl-band", "sl-band-rueck"]) {
+      const n = document.getElementById(id);
+      // Der Rueckschau-Streifen zeigt den 23.08. -- denselben Abend, den
+      // Schirm 2 und 3 bewerten, und damit dessen echten Median.
+      if (n) n.innerHTML = bandSVG(id === "sl-band" ? e.median : 0.2519189744863096, staerke);
+    }
+    const s = document.getElementById("sl-schnitt");
+    if (s) s.innerHTML = z ? this.schnittSVG(z) : "";
+    const f = document.getElementById("sl-faecher");
+    if (f) f.innerHTML = z ? this.faecherSVG(z) : "";
+  }
+
+  strahl() {
+    const e = ABENDE[this.i];
+    const h = SCHIRME[e.schirm] || 4.2;
+    const D = Math.sqrt(2 * R_EFF * h);
+    const zz = d => Math.max(0, Math.pow(D - d, 2) / (2 * R_EFF));
+    return { h, D, zz };
+  }
+
+  // Restliche Transmission je Ring, Aufbau wie score.py: ein Wert je
+  // 60-km-Ring, Schicht nach der Hoehe des Strahls in der Ringmitte.
+  transmission(z) {
+    const { D, zz } = this.strahl();
+    const ringe = [];
+    const vl = {low: this.verlauf(z, "low"), mid: this.verlauf(z, "mid"), high: this.verlauf(z, "high")};
+    for (let k = 0; k + 1 < DISTANZEN.length; k++) {
+      const a = DISTANZEN[k], b = Math.min(DISTANZEN[k + 1], D);
+      if (a >= D) break;
+      const m = 0.5 * (a + b), zh = zz(m);
+      const s = zh < GRENZE_LOW_MID ? "low" : (zh < GRENZE_MID_HIGH ? "mid" : "high");
+      ringe.push({ a, b, c: vl[s](m) || 0 });
+    }
+    return d => {
+      let rest = 1;
+      for (const r of ringe) if (d < r.b) rest *= (1 - r.c);
+      return rest;
+    };
+  }
+
+  schnittSVG(z) {
+    const VBW = 420, VBH = 258, X0 = 44, Y0 = 16, BR = 346, HO = 190;
+    const px = (d, zk) => [X0 + BR * d / XMAX, Y0 + HO * (1 - zk / YMAX)];
+    const o = ['<svg viewBox="0 0 ' + VBW + ' ' + VBH + '" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:auto">'];
+    o.push('<defs>'
+      + '<linearGradient id="himmel" x1="0" x2="0" y1="0" y2="1">'
+      + '<stop offset="0" stop-color="#101014"/><stop offset="1" stop-color="#1d1d20"/></linearGradient>'
+      + '<radialGradient id="glut" cx="0.5" cy="0.5" r="0.5">'
+      + '<stop offset="0" stop-color="' + T.akzentTinte + '" stop-opacity=".55"/>'
+      + '<stop offset="1" stop-color="' + T.akzentTinte + '" stop-opacity="0"/></radialGradient>'
+      + '<filter id="weich" x="-30%" y="-30%" width="160%" height="160%">'
+      + '<feGaussianBlur stdDeviation="3.2"/></filter>'
+      + '<filter id="wolkig" x="-10%" y="-40%" width="120%" height="180%">'
+      + '<feGaussianBlur stdDeviation="2.6"/></filter>');
+    // Wolkenbaender: horizontaler Verlauf aus der Bedeckung, vertikal weiche Kanten
+    const baender = [];
+    BAENDER.forEach(([schicht, unten, oben], nr) => {
+      const stops = [];
+      let leer = true;
+      const w = this.verlauf(z, schicht);
+      for (let d = 0; d <= XMAX; d += 6) {
+        const c = w(d) || 0;
+        if (c > 0.02) leer = false;
+        stops.push('<stop offset="' + (d / XMAX).toFixed(4) + '" stop-color="' + T.wolke
+          + '" stop-opacity="' + Math.min(0.85, 0.72 * c).toFixed(3) + '"/>');
+      }
+      if (leer) return;
+      o.push('<linearGradient id="cg' + nr + '" x1="0" x2="1" y1="0" y2="0">' + stops.join("") + '</linearGradient>');
+      // Baender als Polygon statt Rechteck: die Dicke folgt der Bedeckung.
+      // Ein graues Rechteck behauptet eine gleichmaessige Platte; eine Kontur,
+      // die dort schmal wird, wo weniger Wolke ist, liest sich als Wolke.
+      const zc = 0.5 * (unten + oben), halb = 0.5 * (oben - unten);
+      const oberkante = [], unterkante = [];
+      for (let d = 0; d <= XMAX; d += 10) {
+        const f = 0.28 + 0.72 * Math.min(1, (w(d) || 0));
+        oberkante.push(px(d, zc + halb * f).map(v => v.toFixed(1)).join(","));
+        unterkante.push(px(d, zc - halb * f).map(v => v.toFixed(1)).join(","));
+      }
+      baender.push('<polygon points="' + oberkante.concat(unterkante.reverse()).join(" ")
+        + '" fill="url(#cg' + nr + ')" filter="url(#wolkig)"/>');
+    });
+    o.push('</defs>');
+    const [gx, gy] = px(0, 0);
+    o.push('<rect x="' + X0 + '" y="' + Y0 + '" width="' + BR + '" height="' + (gy - Y0).toFixed(1)
+      + '" fill="url(#himmel)" rx="6"/>');
+    // Hoehenlinien
+    for (const zk of [4, 8, 12]) {
+      const y = px(0, zk)[1];
+      o.push('<line x1="' + X0 + '" y1="' + y.toFixed(1) + '" x2="' + (X0 + BR) + '" y2="' + y.toFixed(1)
+        + '" stroke="' + T.achse + '" stroke-width="0.8"/>');
+    }
+    o.push(baender.join(""));
+    // Beleuchtungsstrahl: Glut darunter, klare Linie darueber
+    const { D, zz } = this.strahl();
+    const trans = this.transmission(z);
+    const [sx, sy] = px(D, 0);
+    // Horizontwaesche: das Licht, das unter der Decke bis zum Beobachter
+    // kommt.  Deckkraft folgt der Transmission bei d = 0, ist also dieselbe
+    // Zahl, die auch die Strahlhelligkeit traegt -- keine freie Dekoration.
+    const t0 = this.transmission(z)(0);
+    o.push('<radialGradient id="waesche" cx="0.5" cy="0.5" r="0.5">'
+      + '<stop offset="0" stop-color="' + T.akzentTinte + '" stop-opacity="' + (0.55 * t0).toFixed(3) + '"/>'
+      + '<stop offset="0.55" stop-color="' + T.akzentTinte + '" stop-opacity="' + (0.22 * t0).toFixed(3) + '"/>'
+      + '<stop offset="1" stop-color="' + T.akzentTinte + '" stop-opacity="0"/></radialGradient>');
+    o.push('<clipPath id="plot"><rect x="' + X0 + '" y="' + Y0 + '" width="' + BR + '" height="'
+      + (gy - Y0).toFixed(1) + '" rx="6"/></clipPath>');
+    o.push('<g clip-path="url(#plot)"><ellipse cx="' + sx.toFixed(1) + '" cy="' + gy.toFixed(1) + '" rx="'
+      + (sx - X0 + 30).toFixed(1) + '" ry="38" fill="url(#waesche)"/></g>');
+    o.push('<ellipse cx="' + sx.toFixed(1) + '" cy="' + sy.toFixed(1) + '" rx="54" ry="30" fill="url(#glut)"/>');
+    const seg = [];
+    for (let d = 0; d < D; d += 6) {
+      const d1 = Math.min(d + 6, D);
+      const [x0, y0] = px(d, zz(d)), [x1, y1] = px(d1, zz(d1));
+      const tr = trans(0.5 * (d + d1));
+      seg.push({x0, y0, x1, y1, tr});
+    }
+    for (const s of seg)
+      o.push('<line x1="' + s.x0.toFixed(1) + '" y1="' + s.y0.toFixed(1) + '" x2="' + s.x1.toFixed(1)
+        + '" y2="' + s.y1.toFixed(1) + '" stroke="' + mischen("#3a2a12", "#ffb340", s.tr)
+        + '" stroke-width="' + (3 + 6 * s.tr).toFixed(1) + '" stroke-linecap="round" opacity="'
+        + (0.18 + 0.42 * s.tr).toFixed(2) + '" filter="url(#weich)"/>');
+    for (const s of seg)
+      o.push('<line x1="' + s.x0.toFixed(1) + '" y1="' + s.y0.toFixed(1) + '" x2="' + s.x1.toFixed(1)
+        + '" y2="' + s.y1.toFixed(1) + '" stroke="' + mischen("#3a2a12", "#ffb340", s.tr)
+        + '" stroke-width="' + (1.3 + 1.9 * s.tr).toFixed(1) + '" stroke-linecap="round"/>');
+    o.push('<circle cx="' + sx.toFixed(1) + '" cy="' + sy.toFixed(1) + '" r="16" fill="' + T.akzentTinte + '" opacity=".22" filter="url(#weich)"/>');
+    o.push('<circle cx="' + sx.toFixed(1) + '" cy="' + sy.toFixed(1) + '" r="6.5" fill="' + T.akzentTinte + '"/>');
+    // Boden und Ortsmarke
+    o.push('<rect x="' + X0 + '" y="' + gy.toFixed(1) + '" width="' + BR + '" height="5" fill="' + T.boden
+      + '" stroke="' + T.gitter + '" stroke-width="0.7"/>');
+    o.push('<line x1="' + gx + '" y1="' + (gy - 7).toFixed(1) + '" x2="' + gx + '" y2="' + (gy + 5).toFixed(1)
+      + '" stroke="' + T.tinte2 + '" stroke-width="1.2"/>');
+    // Beschriftung: nur, was von seiner Position lebt
+    o.push('<style>text{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;fill:' + T.gedaempft + '}</style>');
+    for (const zk of [0, 4, 8, 12])
+      o.push('<text x="' + (X0 - 9) + '" y="' + (px(0, zk)[1] + 5).toFixed(1)
+        + '" font-size="15" text-anchor="end">' + zk + '</text>');
+    o.push('<text x="' + (X0 - 26) + '" y="' + (Y0 - 2) + '" font-size="14">km</text>');
+    for (const d of [0, 200, 400])
+      o.push('<text x="' + px(d, 0)[0].toFixed(1) + '" y="' + (gy + 26).toFixed(1)
+        + '" font-size="15" text-anchor="middle">' + d + '</text>');
+    o.push('<text x="' + (X0 + BR) + '" y="' + (gy + 46).toFixed(1) + '" font-size="15" text-anchor="end">km westlich</text>');
+    o.push('<text x="' + gx + '" y="' + (gy + 46).toFixed(1) + '" font-size="15" fill="' + T.tinte2 + '" text-anchor="middle">Berlin</text>');
+    o.push('</svg>');
+    return o.join("");
+  }
+
+  faecherSVG(z) {
+    const VBW = 420, VBH = 214, SK = 0.60, CX = 392, CY = 186;
+    const e = ABENDE[this.i];
+    const schirm = e.schirm;
+    const xy = (lat, lon) => {
+      const dx = (lon - BERLIN[1]) * 111.32 * Math.cos(grad(BERLIN[0]));
+      const dy = (lat - BERLIN[0]) * 110.57;
+      return [CX + dx * SK, CY - dy * SK];
+    };
+    const o = ['<svg viewBox="0 0 ' + VBW + ' ' + VBH + '" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:auto">'];
+    o.push('<style>text{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;fill:' + T.gedaempft + '}</style>');
+    o.push('<defs><filter id="fw" x="-40%" y="-40%" width="180%" height="180%">'
+      + '<feGaussianBlur stdDeviation="5"/></filter>'
+      + '<filter id="fwolke" x="-10%" y="-10%" width="120%" height="120%">'
+      + '<feGaussianBlur stdDeviation="6"/></filter>'
+      + '<linearGradient id="fray" x1="1" x2="0" y1="0" y2="0">'
+      + '<stop offset="0" stop-color="' + T.akzent + '" stop-opacity=".25"/>'
+      + '<stop offset="0.58" stop-color="' + T.akzentTinte + '" stop-opacity=".9"/>'
+      + '<stop offset="1" stop-color="' + T.akzentTinte + '" stop-opacity=".12"/>'
+      + '</linearGradient></defs>');
+    o.push('<rect width="' + VBW + '" height="' + VBH + '" rx="8" fill="#101014"/>');
+    for (const km of [200, 400])
+      o.push('<circle cx="' + CX + '" cy="' + CY + '" r="' + (km * SK).toFixed(1)
+        + '" fill="none" stroke="' + T.achse + '" stroke-width="0.9" stroke-dasharray="1 5"/>');
+    const cw = 0.5 * 111.32 * Math.cos(grad(53.5)) * SK, ch = 0.5 * 110.57 * SK;
+    o.push('<g filter="url(#fwolke)">');
+    for (const [la, lo, low, mid, high] of z.liste) {
+      const c = ({low, mid, high})[schirm] / 100;
+      const [x, y] = xy(la, lo);
+      o.push('<rect x="' + (x - cw / 2).toFixed(1) + '" y="' + (y - ch / 2).toFixed(1) + '" width="'
+        + cw.toFixed(1) + '" height="' + ch.toFixed(1) + '" rx="5" fill="' + T.wolke
+        + '" opacity="' + Math.max(0.06, Math.min(0.6, 0.6 * c)).toFixed(3) + '"/>');
+    }
+    o.push('</g>');
+    const { D } = this.strahl();
+    const [zx, zy] = (() => { const [la, lo] = zielpunkt(BERLIN[0], BERLIN[1], e.azimut, 460); return xy(la, lo); })();
+    o.push('<line x1="' + CX + '" y1="' + CY + '" x2="' + zx.toFixed(1) + '" y2="' + zy.toFixed(1)
+      + '" stroke="url(#fray)" stroke-width="5" opacity=".45" filter="url(#fw)"/>');
+    o.push('<line x1="' + CX + '" y1="' + CY + '" x2="' + zx.toFixed(1) + '" y2="' + zy.toFixed(1)
+      + '" stroke="url(#fray)" stroke-width="1.4"/>');
+    const [tx, ty] = (() => { const [la, lo] = zielpunkt(BERLIN[0], BERLIN[1], e.azimut, D); return xy(la, lo); })();
+    o.push('<circle cx="' + tx.toFixed(1) + '" cy="' + ty.toFixed(1) + '" r="13" fill="' + T.akzentTinte + '" opacity=".2" filter="url(#fw)"/>');
+    o.push('<circle cx="' + tx.toFixed(1) + '" cy="' + ty.toFixed(1) + '" r="4.5" fill="' + T.akzentTinte + '"/>');
+    o.push('<circle cx="' + CX + '" cy="' + CY + '" r="3.5" fill="' + T.tinte + '"/>');
+    o.push('<text x="' + (CX - 9) + '" y="' + (CY + 17) + '" font-size="14" fill="' + T.tinte2 + '" text-anchor="end">Berlin</text>');
+    for (const km of [200, 400])
+      o.push('<text x="' + (CX - km * SK).toFixed(1) + '" y="' + (VBH - 8) + '" font-size="13" text-anchor="middle">' + km + '</text>');
+    o.push('<text x="14" y="24" font-size="13">Norden oben · km von Berlin</text>');
+    o.push('</svg>');
+    return o.join("");
+  }
+
+  renderVals() {
+    const sel = this.i;
+    const H = 200;
+    const marken = ABENDE.map((e, i) => {
+      const an = i === sel;
+      const demo = an && (this.props.demoAbend || "Echte Woche") !== "Echte Woche";
+      const p = demo ? 0.972 : e.p;
+      const [name, farbe] = stufe(p);
+      const d = new Date(e.tag + "T12:00:00");
+      const top = H * (1 - p);
+      return {
+        wt: WT[(d.getDay() + 6) % 7],
+        kurz: d.getDate() + ".",
+        aria: e.lang + ", " + name,
+        knopfStil: "position:relative;flex:1;min-width:0;height:100%;padding:0;border:0;"
+          + "background:transparent;border-radius:8px;cursor:pointer",
+        hairStil: "position:absolute;left:50%;width:" + (an ? 2 : 1) + "px;top:" + top.toFixed(1)
+          + "px;bottom:0;margin-left:" + (an ? "-1px" : "-.5px")
+          + ";background:linear-gradient(to bottom,"
+          + (an ? "rgba(255,179,64,.62)" : "rgba(142,142,147,.16)") + ",transparent)",
+        punktStil: "position:absolute;left:50%;top:" + top.toFixed(1) + "px;width:11px;height:11px;"
+          + "margin:-5.5px 0 0 -5.5px;border:1.5px solid " + farbe + ";border-radius:999px;"
+          + (p >= 0.95 ? "background:" + farbe + ";box-shadow:0 0 12px rgba(255,179,64,.7);" : "background:#000;")
+          + "transition:transform .15s cubic-bezier(.2,.7,.2,1),box-shadow .15s"
+          + (an ? ";transform:scale(1.45)" : ""),
+        labelStil: "flex:1;min-width:0;text-align:center;color:" + (an ? T.tinte2 : T.gedaempft),
+        dtStil: "display:block;font-size:12px;font-weight:600;color:" + (an ? T.tinte : T.tinte2),
+        waehle: () => this.setz({ i })
+      };
+    });
+    const linie = ABENDE.map((e, i) => {
+      const demo = i === sel && (this.props.demoAbend || "Echte Woche") !== "Echte Woche";
+      const p = demo ? 0.972 : e.p;
+      return ((i + 0.5) / ABENDE.length * 100).toFixed(2) + "," + ((1 - p) * 100).toFixed(2);
+    }).join(" ");
+
+    const e = this.abend();
+    const [name, farbe] = stufe(e.p);
+    const bester = ABENDE.reduce((a, b) => b.p > a.p ? b : a);
+    const maxW = Math.max(...ABENDE.map(x => x.wahrsch));
+    const { D } = this.strahl();
+
+    return {
+      korpus: "10 Abende vorausgerechnet · 2 bis 10 Tage",
+      heroEyebrow: sel === ABENDE.indexOf(bester) ? "Bester Abend im Fenster" : "Gewählter Abend",
+      heroDatum: e.lang,
+      heroStufe: name,
+      heroStufeStil: "margin:8px 0 0;font-size:44px;font-weight:800;line-height:1.02;"
+        + "letter-spacing:-.04em;color:" + farbe,
+      heroGrund: begruendung(e),
+      heroZahlen: Math.round(e.p * 100) + ". Perzentil des Jahres · "
+        + Math.round(e.wahrsch * 100) + " % Wahrscheinlichkeit · Sonnenuntergang " + e.zeit + " Uhr",
+      marken, linie,
+      zeigeFaecher: this.props.faecherKarte ?? true,
+      schnittFuss: "Das Licht streift den Boden " + Math.round(D)
+        + " km westlich. Höhe 22-fach überhöht, Bänderdicke schematisch.",
+      pushSatz: e.demo
+        ? "Dieser Abend reißt die Schwelle von 50 %. Der Push geht morgens um 7:30 raus — einmal, nicht zweimal."
+        : "Kein Abend im Fenster reißt die Schwelle von 50 % (höchstens " + Math.round(maxW * 100)
+          + " %). Es kommt kein Push. Das ist der normale Zustand: rund 18 Abende im Jahr sind es nicht.",
+      noten: [1, 2, 3, 4, 5].map(n => ({
+        zahl: n,
+        stil: "width:48px;height:48px;min-width:44px;min-height:44px;border-radius:999px;"
+          + "border:1px solid " + (this.note === n ? T.akzent : T.achse) + ";"
+          + "background:" + (this.note === n ? T.akzentFlaeche : T.karte) + ";"
+          + "color:" + (this.note === n ? T.akzentTinte : T.tinte) + ";"
+          + "font:inherit;font-size:19px;font-weight:600;cursor:pointer;"
+          + "transition:transform .12s cubic-bezier(.2,.7,.2,1),background .15s,border-color .15s",
+        waehle: () => this.setz({ note: n })
+      })),
+      nichtGesehenStil: "min-height:44px;padding:0 20px;border:1px solid "
+        + (this.note === 0 ? T.akzent : T.achse) + ";border-radius:999px;background:"
+        + (this.note === 0 ? T.akzentFlaeche : "transparent") + ";color:"
+        + (this.note === 0 ? T.akzentTinte : T.gedaempft)
+        + ";font:inherit;font-size:14px;letter-spacing:inherit;cursor:pointer;"
+        + "transition:border-color .15s cubic-bezier(.2,.7,.2,1),background .15s,color .15s",
+      nichtGesehen: () => this.setz({ note: 0 })
+    };
+  }
+}
+</script>
+</body>
+</html>
