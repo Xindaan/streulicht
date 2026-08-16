@@ -231,7 +231,19 @@ def main():
     if not eintraege:
         raise SystemExit("keine Abende")
 
-    beste = max(range(len(eintraege)), key=lambda i: eintraege[i]["p"])
+    # Vorausgewaehlt ist der NAECHSTE Abend, nicht der beste.  Hier stand
+    # `max(... key=p)`, und das war aus der Rueckschau uebernommen, wo alle
+    # Abende gleich weit weg sind (naemlich vorbei) und der auffaelligste
+    # der interessante ist.  In der Prognose ist es umgekehrt: wer die Seite
+    # oeffnet, will zuerst wissen, wie HEUTE ABEND wird - und landete
+    # stattdessen irgendwo in der naechsten Woche.
+    #
+    # "Naechster" heisst: der erste Abend, der noch nicht vorbei ist.  Die
+    # Liste ist aufsteigend sortiert, also Index 0 - ausser der Lauf ist
+    # aelter als sein erster Abend, dann der erste noch kuenftige.
+    heute_iso = date.today().isoformat()
+    kuenftig = [i for i, e in enumerate(eintraege) if e["tag"] >= heute_iso]
+    beste = kuenftig[0] if kuenftig else len(eintraege) - 1
     spanne = "%s bis %s" % (
         date.fromisoformat(eintraege[0]["tag"]).strftime("%d.%m."),
         date.fromisoformat(eintraege[-1]["tag"]).strftime("%d.%m."))
@@ -361,7 +373,7 @@ h1 span{color:var(--gedaempft);font-weight:400}
 </style></head><body>
 <div class="rahmen">
 <header><h1>Streulicht <span>Berlin</span></h1>
-<p class="spanne">__SPANNE__<span class="pille">R&uuml;ckschau</span></p></header>
+<p class="spanne">__SPANNE__<span class="pille">__PILLE__</span></p></header>
 
 <div class="achse-karte"><div class="achse-rollen">
 <div class="achse" id="achse">__SCHWELLEN____MARKEN__</div></div>
@@ -444,6 +456,8 @@ new ResizeObserver(()=>{
             .replace("__MARKEN__", marken)
             .replace("__SPANNE__", "%d Abende &middot; %s"
                      % (len(eintraege), spanne))
+            .replace("__PILLE__",
+                     "R&uuml;ckschau" if a.rueckschau else "Vorhersage")
             .replace("__UEBERHOEHT__", "%.0f" % ueberhoehung(True))
             .replace("__OBEN__", str(ACHSE_OBEN_PX))
             .replace("__SAEULE__", str(SAEULE_PX))
