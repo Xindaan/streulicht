@@ -21,12 +21,14 @@ VORLAGE = os.path.join(BASIS, "web", "bewerten.html")
 
 
 def erzeuge(ort, vorlage):
-    fehlend = [s for s in ("__NTFY_BEWERTUNG__", "__ORT__") if s not in vorlage]
+    fehlend = [s for s in ("__NTFY_BEWERTUNG__", "__ORT__", "__SEITE__")
+               if s not in vorlage]
     if fehlend:
         raise SystemExit("Vorlage ohne Platzhalter %s - schon gefuellt?"
                          % ", ".join(fehlend))
     return (vorlage.replace("__NTFY_BEWERTUNG__", ort["ntfy_bewertung"])
-                   .replace("__ORT__", ort["name"]))
+                   .replace("__ORT__", ort["name"])
+                   .replace("__SEITE__", ort.get("_seite", "")))
 
 
 def main():
@@ -39,7 +41,12 @@ def main():
     with open(VORLAGE) as f:
         vorlage = f.read()
 
+    basis_url = (kfg.get("seiten_basis") or "").rstrip("/")
     for ort in kfg["orte"]:
+        # Klickziel der Quittung: dieselbe Seite. Leer, solange nichts
+        # ausgeliefert ist - dann faellt die Seite auf location.href zurueck.
+        ort["_seite"] = ("%s/bewerten-%s.html" % (basis_url, ort["name"])
+                         if basis_url else "")
         fehlt = [k for k in ("name", "ntfy_bewertung") if not ort.get(k)]
         if fehlt:
             print("   %s: uebersprungen, %s fehlt"
@@ -60,7 +67,7 @@ def main():
         if os.path.exists(p):
             with open(p) as f:
                 s = f.read()
-            if "__NTFY" in s or "__ORT__" in s:
+            if "__NTFY" in s or "__ORT__" in s or "__SEITE__" in s:
                 rest.append(ort["name"])
     if rest:
         raise SystemExit("Platzhalter uebrig in: %s" % ", ".join(rest))

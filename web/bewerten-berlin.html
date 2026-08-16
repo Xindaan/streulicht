@@ -76,6 +76,7 @@
 <script>
 const TOPIC = "sl-bew-2m65326hwe64";
 const ORT   = "berlin";
+const SEITE = "https://xindaan.github.io/streulicht/bewerten-berlin.html";
 const SPEICHER = "su-bewertungen-" + ORT;
 
 // Kam die Bewertung auf Aufforderung (Push) oder spontan?  Der Unterschied
@@ -176,20 +177,29 @@ function lesbar(eintrag) {
 
 async function uebertrage(eintrag) {
   const t = lesbar(eintrag);
-  // ZWEI Leser, ein Kanal.  Die erste Zeile ist fuer Andre auf dem
-  // Sperrbildschirm, die zweite fuer bewertungen_holen.py.  Vorher stand
-  // dort nur das JSON - technisch richtig, auf dem Telefon aber
-  // Maschinenausgabe als Benachrichtigung.
-  const daten = JSON.stringify({ort: ORT, tag: eintrag.tag, note: eintrag.note,
-                                anlass: eintrag.anlass, erfasst: eintrag.erfasst});
+  // Die Maschinendaten reisen im KLICKZIEL mit, nicht im Nachrichtentext.
+  //
+  // Vorgeschichte: erst stand das JSON allein im Text (rohe Maschinenausgabe
+  // auf dem Sperrbildschirm), dann Text in Zeile 1 und JSON in Zeile 2 - und
+  // iOS zeigt den GANZEN Koerper, also weiterhin beides. Der Koerper ist
+  // Anzeige, kein Transport.
+  //
+  // `click` wird von ntfy mitgefuehrt, beim Abholen zurueckgegeben und im
+  // Sperrbildschirm nicht dargestellt. Nebeneffekt, der passt: ein Tipp auf
+  // die Quittung oeffnet die Bewertungsseite.
+  const daten = {ort: ORT, tag: eintrag.tag, note: eintrag.note,
+                 anlass: eintrag.anlass, erfasst: eintrag.erfasst};
+  const ziel = (SEITE || location.href.split("?")[0])
+             + "?d=" + encodeURIComponent(JSON.stringify(daten));
   const r = await fetch("https://ntfy.sh/", {
     method: "POST",
     body: JSON.stringify({
       topic: TOPIC,
       title: t.titel,
       tags: [eintrag.note === 0 ? "grey_question" : "sunny"],
-      priority: 2,                       // leise: die eigene Quittung
-      message: t.zeile + "\n" + daten
+      priority: 2,
+      message: t.zeile,
+      click: ziel
     }),
     signal: AbortSignal.timeout(SENDE_TIMEOUT_MS)
   });

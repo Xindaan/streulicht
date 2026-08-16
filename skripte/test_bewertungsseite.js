@@ -50,6 +50,8 @@ function umgebung({speicherGeht = true, fetchOk = true} = {}) {
     },
     location: {search: "?a=1"},
     URLSearchParams: URLSearchParams,
+    decodeURIComponent: decodeURIComponent,
+    encodeURIComponent: encodeURIComponent,
     Date: Date,
     JSON: JSON,
     Array: Array,
@@ -77,19 +79,18 @@ function umgebung({speicherGeht = true, fetchOk = true} = {}) {
       // eigentliche Datum als JSON-ZEICHENKETTE in `message`. Der Test
       // packt es aus, damit die Pruefungen die Note direkt sehen.
       const aussen = JSON.parse(opt.body);
-      // Die Nachricht hat ZWEI Leser: Zeile 1 Text fuer den Sperrbildschirm,
-      // Zeile 2 das JSON. Wie bewertungen_holen.py von hinten nach vorn
-      // probieren - damit prueft der Test denselben Vertrag wie der Poller.
-      const zeilen = aussen.message.split("\n").filter(z => z.trim());
-      let innen = null;
-      for (let i = zeilen.length - 1; i >= 0; i--) {
-        try { const m = JSON.parse(zeilen[i]); if (m && m.tag) { innen = m; break; } }
-        catch (e) { /* keine JSON-Zeile */ }
-      }
-      if (!innen) throw new Error("keine Maschinenzeile in der Nachricht");
+      // Die Maschinendaten reisen im KLICKZIEL, nicht im Nachrichtenkoerper -
+      // der ist Anzeige (iOS zeigt ihn ganz). Derselbe Vertrag wie in
+      // bewertungen_holen.py: ?d=<urlencodiertes JSON>.
+      const q = (aussen.click || "").split("?d=")[1];
+      if (!q) throw new Error("kein Klickziel mit Nutzlast");
+      const innen = JSON.parse(decodeURIComponent(q));
+      if (/[{}]/.test(aussen.message || ""))
+        throw new Error("JSON im sichtbaren Nachrichtentext: " + aussen.message);
       ctx._gesendet.push(Object.assign({_topic: aussen.topic,
                                         _titel: aussen.title,
-                                        _text: zeilen[0]}, innen));
+                                        _text: aussen.message,
+                                        _klick: aussen.click}, innen));
       return {ok: true, status: 200};
     }
   };
@@ -127,7 +128,13 @@ async function lauf(opt) {
   pruefe(/^Bewertet: 3 von 5$/.test(g._titel || ""),
          "Titel ist lesbar: \"" + g._titel + "\"");
   pruefe(!/[{}\"]/.test(g._text || "x{"),
-         "erste Zeile ohne JSON-Zeichen: \"" + g._text + "\"");
+         "sichtbarer Text ohne JSON-Zeichen: \"" + g._text + "\"");
+  pruefe((g._text || "").split("\n").length === 1,
+         "sichtbarer Text ist EINE Zeile (iOS zeigt den ganzen Koerper)");
+  pruefe(/\?d=/.test(g._klick || ""),
+         "Maschinendaten stecken im Klickziel");
+  pruefe(/bewerten-berlin\.html/.test(g._klick || ""),
+         "Klickziel oeffnet die Bewertungsseite");
   pruefe(/August/.test(g._text || ""),
          "erste Zeile nennt das Datum ausgeschrieben");
   pruefe(/auf Nachfrage/.test(g._text || ""),

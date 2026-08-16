@@ -14,6 +14,7 @@ Bias.
 import argparse
 import json
 import os
+import urllib.parse
 import urllib.request
 from datetime import date, timedelta
 
@@ -34,10 +35,28 @@ def hole(topic, seit="12h"):
             continue
         if n.get("event") != "message":
             continue
-        m = _nutzlast(n.get("message", ""))
+        m = _nutzlast_klick(n.get("click", "")) or _nutzlast(n.get("message", ""))
         if m is not None:
             aus.append((n["time"], m))
     return aus
+
+
+def _nutzlast_klick(url):
+    """Maschinendaten aus dem Klickziel - seit 16.08.2026 der Transportweg.
+
+    Der Nachrichtenkoerper ist ANZEIGE, kein Transport: iOS zeigt ihn ganz,
+    also stand dort erst rohes JSON und danach Text plus JSON - beides falsch.
+    `click` wird von ntfy mitgefuehrt, beim Abholen zurueckgegeben und im
+    Sperrbildschirm NICHT dargestellt.
+    """
+    if not url or "?d=" not in url:
+        return None
+    roh = urllib.parse.unquote(url.split("?d=", 1)[1])
+    try:
+        m = json.loads(roh)
+    except ValueError:
+        return None
+    return m if isinstance(m, dict) and plausibel(m.get("tag")) else None
 
 
 def _nutzlast(text):
@@ -105,6 +124,28 @@ def main():
         eintrag = zustand.setdefault(ort["name"], {"abende": {}, "alarme": {}})
         for zeit, m in hole(topic, a.seit):
             if m.get("ort") and m["ort"] != ort["name"]:
+                continue
+            # Selbsttests gehoeren nicht in die Messdaten.  Zweimal am
+            # 15./16.08. habe ich beim Vorfuehren echte Noten ins
+            # Produktivtopic geschickt - einmal mit heutigem Datum, was
+            # Andres eigene Bewertung ueberschrieben haette.  ntfy haelt
+            # rund 12 h vor, ein Loeschen im Zustand allein reicht also
+            # nicht: der naechste Abruf holt sie zurueck.
+            if m.get("anlass") == "selbsttest":
+                continue
+            # WIDERRUF: loescht die Bewertung des Tages.  Ueberspringen allein
+            # genuegt nicht - der Poller liest bei jedem Lauf ALLE Nachrichten
+            # des Fensters chronologisch, eine falsche aeltere setzt die Note
+            # also immer wieder neu.  Nur ein spaeterer Widerruf kommt dagegen
+            # an.  Gebraucht am 16.08., als ein Selbsttest mit heutigem Datum
+            # im Produktivtopic landete; taugt aber auch fuer den Fall, dass
+            # Andre sich vertippt.
+            if m.get("anlass") == "widerruf":
+                ab = eintrag["abende"].get(m.get("tag"))
+                if ab:
+                    for k in ("bewertung", "bewertung_anlass",
+                              "bewertung_zeit", "bewertung_erfasst"):
+                        ab.pop(k, None)
                 continue
             tag, note = m.get("tag"), m.get("note")
             if not tag or note is None:
