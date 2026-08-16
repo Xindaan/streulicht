@@ -60,6 +60,8 @@ def baue(trocken):
     r = lauf(py, os.path.join(BASIS, "skripte", "bewertungsseite.py"))
     print("   Bewertungsseiten:\n" + "\n".join(
         "      " + z for z in r.stdout.strip().splitlines()))
+    r = lauf(py, os.path.join(BASIS, "skripte", "bisher.py"))
+    print("   " + r.stdout.strip().splitlines()[-1])
     return prognose
 
 
@@ -75,8 +77,12 @@ def veroeffentliche(trocken):
     # traegt sie hier ein und denkt dabei einmal darueber nach.
     web = os.path.join(BASIS, "web")
     seiten = [n for n in sorted(os.listdir(web))
-              if n == "index.html" or (n.startswith("bewerten-")
-                                       and n.endswith(".html"))]
+              if n in ("index.html", "bisher.html")
+              or (n.startswith("bewerten-") and n.endswith(".html"))]
+    # ACHTUNG beim Ergaenzen: `rueckschau.html` ist die LOKALE Diagnose ueber
+    # vier Jahre (9,5 MB, Andres Albumabende).  Die ausgelieferte Bilanzseite
+    # heisst `bisher.html`.  Wer die beiden verwechselt, veroeffentlicht
+    # Privates - deshalb heissen sie verschieden (siehe skripte/bisher.py).
     if not seiten:
         raise SystemExit("nichts zu veroeffentlichen")
     gesamt = sum(os.path.getsize(os.path.join(BASIS, "web", n))

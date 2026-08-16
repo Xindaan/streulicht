@@ -319,6 +319,14 @@ def lauf_ort(ort, kfg, zustand, trocken):
             "A": besterdet["A"] if besterdet else None,
             "sicht": besterdet["sicht"] if besterdet else None,
             "weg": besterdet["weg"] if besterdet else None,
+            # Die Segmentliste des besten Members: (d_nah, d_fern, Schichten,
+            # Bedeckung).  Der Vertikalschnitt zeichnet damit die ECHTE
+            # Transmission je Ring, statt sie aus dem Medianfeld nachzurechnen -
+            # letzteres ist fuer das Bild vertretbar, aber es ist eine zweite
+            # Rechnung neben der, die den Score gemacht hat.
+            "segmente": [[a, b, list(sch), c]
+                         for a, b, sch, c in (besterdet["segmente"]
+                                              if besterdet else [])],
             "n_member": v["n_member"], "n_member_gesamt": v["n_member_gesamt"],
             "feld": feld_seite}
     return ergebnisse
@@ -357,11 +365,15 @@ def lokalzeit(tag, stunde_utc, zone):
     return dt
 
 
-def sende(topic, titel, text, prio="default"):
+def sende(topic, titel, text, prio="default", klick=None):
+    kopf = {"Title": titel.encode("utf-8").decode("latin-1", "replace"),
+            "Priority": prio, "Tags": "sunrise"}
+    # Ein Alarm ohne Ziel ist eine Sackgasse: er sagt "heute abend lohnt es
+    # sich" und laesst den Leser dann selbst die Seite suchen.
+    if klick:
+        kopf["Click"] = klick
     req = urllib.request.Request(
-        "%s/%s" % (NTFY, topic), data=text.encode("utf-8"),
-        headers={"Title": titel.encode("utf-8").decode("latin-1", "replace"),
-                 "Priority": prio, "Tags": "sunrise"})
+        "%s/%s" % (NTFY, topic), data=text.encode("utf-8"), headers=kopf)
     with urllib.request.urlopen(req, timeout=30) as f:
         return f.status
 
@@ -439,7 +451,9 @@ def main():
             if a.trocken:
                 print("     [trocken] wuerde senden: %s" % text)
             else:
-                sende(ort["ntfy_alarm"], titel, text, "high")
+                basis_url = (kfg.get("seiten_basis") or "").rstrip("/")
+                sende(ort["ntfy_alarm"], titel, text, "high",
+                      "%s/index.html" % basis_url if basis_url else None)
                 eintrag["alarme"][tag] = {"gesendet": datetime.now(
                     timezone.utc).isoformat(timespec="seconds"), "p": e["p"]}
                 print("     -> Push gesendet")

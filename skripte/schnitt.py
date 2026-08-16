@@ -349,3 +349,238 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ===========================================================================
+# Neue Fassung des Vertikalschnitts (Entwurf 16.08.2026, Handoff 1.6).
+#
+# Warum daneben statt darin: die alte Fassung traegt diagnose.html und
+# rueckschau.html in 840 x 490 und ist dort richtig.  Der Handoff laesst sie
+# ausdruecklich unveraendert; hier entsteht nur die Telefonfassung.
+#
+# Der Unterschied ist nicht Kosmetik.  Ein graues Rechteck behauptet eine
+# gleichmaessige Platte - die Kontur wird jetzt dort schmal, wo weniger Wolke
+# ist, und liest sich dadurch als Wolke.  Der Strahl wird doppelt gezeichnet
+# (Glut darunter, klare Linie darueber), weil eine einzelne Linie bei hoher
+# Transmission duenn und unwichtig aussieht, obwohl sie das Ereignis ist.
+# ===========================================================================
+
+from datetime import date as _datum  # noqa: E402
+
+FL_NEU = dict(vb=(420, 258), x0=44, y0=16, br=346, ho=190)
+BAENDER = (("high", 7.6, 10.4), ("mid", 2.9, 5.4), ("low", 0.25, 1.6))
+
+
+def _mische(a, b, t):
+    """Farbmischung zweier #rrggbb, t in [0,1]."""
+    t = max(0.0, min(1.0, t))
+    ha, hb = a.lstrip("#"), b.lstrip("#")
+    return "#%02x%02x%02x" % tuple(
+        round(int(ha[i:i + 2], 16) + t * (int(hb[i:i + 2], 16)
+                                          - int(ha[i:i + 2], 16)))
+        for i in (0, 2, 4))
+
+
+def _tok(name):
+    """Reiner Tokenwert ohne var() - fuer Berechnungen und Verlaufsstopps."""
+    return tokens.werte()[name]
+
+
+def schnitt_neu(tag, feld, segmente=None, breite=BREITE, laenge=LAENGE):
+    """Vertikalschnitt fuer die Produktseite.  Gibt nur das SVG zurueck.
+
+    `segmente` ist die Segmentliste des Score-Laufs [(d_nah, d_fern, Schichten,
+    Bedeckung)].  Liegt sie vor, traegt sie die Transmission - das ist DIE
+    Rechnung, die auch den Score gemacht hat.  Fehlt sie, werden die Ringe aus
+    dem Feld nachgerechnet; fuer das Bild vertretbar, aber eine zweite Rechnung
+    neben der ersten.
+    """
+    fl = FL_NEU
+    X0, Y0, BR, HO = fl["x0"], fl["y0"], fl["br"], fl["ho"]
+    VBW, VBH = fl["vb"]
+
+    def px(d_km, z_km):
+        return (X0 + BR * d_km / XMAX, Y0 + HO * (1.0 - z_km / YMAX))
+
+    t = _datum.fromisoformat(tag) if isinstance(tag, str) else tag
+    stunde, azimut = sonnenuntergang(t, breite, laenge)
+    punkte = {(d, dv): (la, lo) for d, dv, la, lo in
+              faecherpunkte(breite, laenge, azimut)}
+
+    def hole(d, dv, schicht):
+        p = punkte.get((d, dv))
+        if p is None:
+            return None
+        e = feld.get(zelle(*p))
+        if e is None or e.get(schicht) is None:
+            return None
+        return e[schicht] / 100.0
+
+    def deckung(d, schicht):
+        """Linear zwischen den Stuetzstellen.  Ohne das rasten die Baender auf
+        die 0.5-Grad-Zelle und bekommen Treppenkanten, die wie Struktur
+        aussehen und keine sind."""
+        vs = [(x, hole(x, 0.0, schicht)) for x in DISTANZEN_KM]
+        vs = [(x, c) for x, c in vs if c is not None]
+        if not vs:
+            return 0.0
+        if d <= vs[0][0]:
+            return vs[0][1]
+        for (x0, c0), (x1, c1) in zip(vs, vs[1:]):
+            if x0 <= d <= x1:
+                f = (d - x0) / (x1 - x0) if x1 > x0 else 0.0
+                return c0 + f * (c1 - c0)
+        return vs[-1][1] if d <= vs[-1][0] + 60 else 0.0
+
+    s_wert, det = score(hole)
+    name = (det or {}).get("schirm") or SCHIRME[0][0]
+    hoehe = dict(SCHIRME)[name]
+    d_tan = tangentendistanz_km(hoehe)
+
+    # --- Transmission je Ring ---------------------------------------------
+    if segmente:
+        ringe = [(a, b, c) for a, b, _sch, c in segmente]
+    else:
+        ringe = []
+        for a, b in zip(DISTANZEN_KM, DISTANZEN_KM[1:]):
+            if a >= d_tan:
+                break
+            b = min(b, d_tan)
+            zh = strahlhoehe_km(0.5 * (a + b), d_tan)
+            sch = ("low" if zh < GRENZE_LOW_MID_KM
+                   else ("mid" if zh < GRENZE_MID_HIGH_KM else "high"))
+            ringe.append((a, b, deckung(0.5 * (a + b), sch)))
+
+    def rest(d):
+        r = 1.0
+        for a, b, c in ringe:
+            if d < b:
+                r *= (1.0 - (c or 0.0))
+        return r
+
+    HIMMEL_O, HIMMEL_U = _tok("--himmel-oben"), _tok("--himmel-unten")
+    DUMPF, GLUT = _tok("--band-dumpf"), _tok("--band-glut")
+    DUNKEL = _tok("--strahl-dunkel")
+
+    o = ['<svg viewBox="0 0 %d %d" xmlns="http://www.w3.org/2000/svg" '
+         'role="img" aria-label="Vertikalschnitt nach Westen">' % (VBW, VBH),
+         '<style>text{font-family:%s;fill:%s}</style>'
+         % (_tok("--schrift"), farbe("--gedaempft")),
+         '<defs>',
+         '<linearGradient id="himmel" x1="0" x2="0" y1="0" y2="1">'
+         '<stop offset="0" stop-color="%s"/>'
+         '<stop offset="1" stop-color="%s"/></linearGradient>' % (HIMMEL_O, HIMMEL_U),
+         '<filter id="weich" x="-20%" y="-40%" width="140%" height="180%">'
+         '<feGaussianBlur stdDeviation="2.6"/></filter>',
+         '<filter id="glut" x="-20%" y="-60%" width="140%" height="220%">'
+         '<feGaussianBlur stdDeviation="3.2"/></filter>',
+         '<clipPath id="rahmen"><rect x="%.1f" y="%.1f" width="%.1f" '
+         'height="%.1f" rx="6"/></clipPath>' % (X0, Y0, BR, HO)]
+
+    # Verlauf je Band: die Deckkraft traegt die Bedeckung, nicht die Farbe.
+    sichtbar = []
+    for nr, (sch, unten, oben) in enumerate(BAENDER):
+        werte_b = [deckung(d, sch) for d in range(0, int(XMAX) + 1, 10)]
+        if max(werte_b) <= 0.02:
+            continue
+        sichtbar.append((nr, sch, unten, oben))
+        stopps = []
+        for d in range(0, int(XMAX) + 1, 60):
+            c = deckung(d, sch)
+            stopps.append('<stop offset="%.3f" stop-color="%s" '
+                          'stop-opacity="%.3f"/>'
+                          % (d / XMAX, DUMPF, min(0.85, 0.72 * c)))
+        o.append('<linearGradient id="cg%d" x1="0" x2="1" y1="0" y2="0">%s'
+                 '</linearGradient>' % (nr, "".join(stopps)))
+
+    sx, sy = px(d_tan, 0.0)
+    t0 = rest(0.0)
+    o.append('<radialGradient id="halo"><stop offset="0" stop-color="%s" '
+             'stop-opacity=".55"/><stop offset="1" stop-color="%s" '
+             'stop-opacity="0"/></radialGradient>' % (GLUT, GLUT))
+    o.append('<radialGradient id="waesche"><stop offset="0" stop-color="%s" '
+             'stop-opacity="%.3f"/><stop offset=".55" stop-color="%s" '
+             'stop-opacity="%.3f"/><stop offset="1" stop-color="%s" '
+             'stop-opacity="0"/></radialGradient>'
+             % (GLUT, 0.55 * t0, GLUT, 0.22 * t0, GLUT))
+    o.append('</defs>')
+
+    o.append('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="6" '
+             'fill="url(#himmel)"/>' % (X0, Y0, BR, HO))
+    o.append('<g clip-path="url(#rahmen)">')
+
+    # --- Wolkenbaender als Polygon ----------------------------------------
+    for nr, sch, unten, oben in sichtbar:
+        zc, halb = 0.5 * (unten + oben), 0.5 * (oben - unten)
+        obe, unt = [], []
+        for d in range(0, int(XMAX) + 1, 10):
+            f = 0.28 + 0.72 * min(1.0, deckung(d, sch))
+            obe.append(px(d, zc + halb * f))
+            unt.append(px(d, zc - halb * f))
+        pfad = " ".join("%.1f,%.1f" % p for p in obe + list(reversed(unt)))
+        o.append('<polygon points="%s" fill="url(#cg%d)" filter="url(#weich)"/>'
+                 % (pfad, nr))
+
+    # --- Horizontwaesche: das Licht, das unter der Decke ankommt -----------
+    o.append('<ellipse cx="%.1f" cy="%.1f" rx="%.1f" ry="38" '
+             'fill="url(#waesche)"/>' % (sx, sy, max(30.0, sx - X0 + 30.0)))
+
+    # --- Strahl, doppelt: Glut darunter, klare Linie darueber -------------
+    # Der Filter haengt am GRUPPENelement, nicht an jeder Linie.  Pro Linie
+    # waere es eine eigene Filterflaeche - bei ~50 Segmenten sichtbar traege
+    # auf dem Telefon, und die Ueberlappungen addieren sich zu Baendern.
+    stufen = []
+    for d in range(0, int(d_tan), 8):
+        d2 = min(d + 8, d_tan)
+        tr = rest(0.5 * (d + d2))
+        stufen.append((px(d, strahlhoehe_km(d, d_tan)),
+                       px(d2, strahlhoehe_km(d2, d_tan)),
+                       tr, _mische(DUNKEL, GLUT, tr)))
+    o.append('<g filter="url(#glut)" stroke-linecap="round">')
+    for (x1, y1), (x2, y2), tr, f in stufen:
+        o.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" '
+                 'stroke-width="%.2f" opacity="%.3f"/>'
+                 % (x1, y1, x2, y2, f, 3.0 + 6.0 * tr, 0.18 + 0.42 * tr))
+    o.append('</g><g stroke-linecap="round">')
+    for (x1, y1), (x2, y2), tr, f in stufen:
+        o.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" '
+                 'stroke-width="%.2f"/>' % (x1, y1, x2, y2, f, 1.3 + 1.9 * tr))
+    o.append('</g>')
+
+    # --- Sonne: Halo statt Zacken -----------------------------------------
+    o.append('<ellipse cx="%.1f" cy="%.1f" rx="54" ry="30" fill="url(#halo)"/>'
+             % (sx, sy - 6))
+    o.append('<circle cx="%.1f" cy="%.1f" r="16" fill="%s" opacity=".22" '
+             'filter="url(#glut)"/>' % (sx, sy - 6, GLUT))
+    o.append('<circle cx="%.1f" cy="%.1f" r="6.5" fill="%s"/>'
+             % (sx, sy - 6, GLUT))
+    o.append('</g>')
+
+    # --- Boden und Ortsstrich ---------------------------------------------
+    gx0, gy = px(0.0, 0.0)
+    gx1, _ = px(XMAX, 0.0)
+    o.append('<rect x="%.1f" y="%.1f" width="%.1f" height="5" fill="%s" '
+             'stroke="%s" stroke-width="0.7"/>'
+             % (gx0, gy, gx1 - gx0, farbe("--boden"), farbe("--gitter")))
+    o.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" '
+             'stroke-width="1.2"/>' % (gx0, gy - 7, gx0, gy + 5, farbe("--tinte2")))
+
+    # --- Beschriftung: nur Achsenzahlen, alles Lesbare gehoert ins HTML ----
+    for z in (0, 4, 8, 12):
+        _, y = px(0.0, z)
+        o.append('<text x="%.1f" y="%.1f" font-size="15" text-anchor="end">%d'
+                 '</text>' % (X0 - 9, y + 5, z))
+    # "km" gehoert UEBER die Zahlenspalte, nicht daneben: neben der 12 stossen
+    # beide zusammen, weil beide rechtsbuendig auf dieselbe Kante laufen.
+    o.append('<text x="%.1f" y="%.1f" font-size="13" text-anchor="end">km</text>'
+             % (X0 - 9, Y0 - 4))
+    for d in (0, 200, 400):
+        x, _ = px(d, 0.0)
+        o.append('<text x="%.1f" y="%.1f" font-size="15" text-anchor="middle">'
+                 '%d</text>' % (x, gy + 26, d))
+    o.append('<text x="%.1f" y="%.1f" font-size="15" text-anchor="end">'
+             'km westlich</text>' % (gx1, gy + 46))
+    o.append('<text x="%.1f" y="%.1f" font-size="15" text-anchor="middle" '
+             'fill="%s">Berlin</text>' % (gx0, gy + 46, farbe("--tinte2")))
+    o.append('</svg>')
+    return "".join(o), s_wert, det, d_tan

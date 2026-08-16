@@ -1,3 +1,7 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Streulicht &mdash; bisher</title><style>
 /* ==========================================================================
    Design-Tokens -- einzige Quelle fuer Farbe, Typo, Abstand, Radius, Schatten.
 
@@ -130,3 +134,72 @@
   --tastflaeche: 44px;            /* ueber dem Hausstandard (34-40px):
                                      einhaendige Abendbedienung           */
 }
+
+*{box-sizing:border-box}
+html{color-scheme:dark}
+body{margin:0;background:var(--papier);color:var(--tinte);
+ font-family:var(--schrift);font-size:var(--grad-basis);
+ line-height:var(--zeilen-basis);letter-spacing:var(--sperrung-eng);
+ font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+.rahmen{max-width:390px;margin:0 auto;min-height:100vh;padding-bottom:var(--s8)}
+.topbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;
+ justify-content:space-between;
+ padding:calc(14px + env(safe-area-inset-top)) 18px 12px;
+ background:rgba(0,0,0,.72);
+ -webkit-backdrop-filter:blur(18px) saturate(1.4);
+ backdrop-filter:blur(18px) saturate(1.4);
+ border-bottom:1px solid var(--karte)}
+.marke-wort{margin:0;font-size:17px;font-weight:800;
+ letter-spacing:var(--sperrung-enger)}
+.ortspille{padding:3px 11px;border-radius:var(--radius-pille);
+ background:var(--karte);color:var(--tinte2);font-size:12px;font-weight:700}
+.inhalt{padding:20px 18px 0}
+.etikett{margin:0;color:var(--gedaempft);font-size:12px;font-weight:700;
+ letter-spacing:var(--sperrung-label);text-transform:uppercase}
+.bkarte{margin-top:14px;padding:16px;background:var(--karte);
+ border:1px solid var(--achse);border-radius:var(--radius-karte)}
+.bkopf{display:flex;justify-content:space-between;align-items:baseline;
+ font-size:15px;font-weight:700}
+.bkopf b{font-size:26px;font-weight:800;letter-spacing:var(--sperrung-enger);
+ color:var(--akzent-tinte)}
+.von{font-size:13px;font-weight:400;color:var(--gedaempft)}
+.note-null{font-size:13px;font-weight:400;color:var(--gedaempft)}
+.balken{display:flex;gap:3px;margin-top:12px}
+.balken i{flex:1;height:6px;border-radius:var(--radius-pille);
+ background:var(--flaeche2)}
+.balken i.voll{background:var(--akzent-tinte)}
+.bzeile{margin:12px 0 0;color:var(--gedaempft);font-size:13px}
+.leer{margin:14px 0 0;padding:16px;background:var(--karte);
+ border-radius:var(--radius-karte);color:var(--tinte2);font-size:14px;
+ line-height:1.55}
+.abschnitt{margin-top:22px}
+.abschnitt p{margin:6px 0 0;color:var(--tinte2);font-size:14px;
+ line-height:1.55;text-wrap:pretty}
+.kasten{margin-top:14px;padding:14px 16px;background:var(--karte);
+ border-radius:var(--radius-kachel);color:var(--gedaempft);font-size:13px;
+ line-height:1.55;text-wrap:pretty}
+.schluss{margin-top:22px;color:var(--gedaempft);font-size:13px;
+ line-height:1.55}
+.zurueck{display:flex;align-items:center;justify-content:center;
+ margin-top:26px;min-height:var(--tastflaeche);padding:0 18px;
+ border-radius:var(--radius-pille);background:var(--akzent-flaeche);
+ color:var(--akzent-tinte);font-size:14px;font-weight:700;
+ text-decoration:none}
+</style></head><body>
+<div class="rahmen">
+<header class="topbar"><p class="marke-wort">Bisher</p>
+<span class="ortspille">Berlin</span></header>
+<main class="inhalt">
+<p class="etikett">1 BEWERTUNG SEIT DEM 15. AUGUST 2026</p>
+<article class="bkarte"><div class="bkopf"><span>Sa 15.08.</span><span><b>1</b><span class="von">/5</span></span></div><div class="balken"><i class="voll"></i><i></i><i></i><i></i><i></i></div><p class="bzeile">Auf Nachfrage bewertet &#183; keine Prognose f&uuml;r diesen Abend gerechnet</p></article>
+<section class="abschnitt"><p class="etikett">Was hier sp&auml;ter steht</p>
+<p>Trefferquote, Alarmrate und die Schwelle, gegen die beide gemessen werden.
+Alle drei brauchen Abende, die es noch nicht gibt.</p>
+<div class="kasten">Die Schwelle stammt aus Analysefeldern, der Alarm rechnet
+auf Ensemble-Membern. Ob dieselbe Schwelle dieselbe Rate ergibt, ist nie
+gemessen worden &mdash; der Livegang ist die Messung. Nach sechs bis acht
+Wochen wird sie nachgezogen.</div>
+<p class="schluss">Bis dahin gilt die Alarmrate als unbekannt, nicht als 18,5
+pro Jahr.</p></section>
+<a class="zurueck" href="index.html">Prognose der n&auml;chsten Abende</a>
+</main></div></body></html>

@@ -141,30 +141,19 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   2024-09-15 = T-0018, 2018-07-09 und 2024-05-03 Weg auch im Mittel zu
   64-83 % dicht und satellitenbestaetigt. Hook `weg_agg` in `score()`
   bleibt, Default bitgenau (4058/4058). Betrieb unveraendert.
-- T-0031 **UX-Overhaul umsetzen** (Handoff: `docs/entwurf/handoff-ux-2026-08-16.md`,
-  Entwuerfe daneben als HTML). Hi-fi, pixelgenau nachzubauen, alle Werte aus
-  `stil/tokens.css`. Reihenfolge laut Handoff: Tokens ergaenzen -> schnitt.py
-  (Polygonbaender, doppelter Strahl, Himmelsverlauf, neue Flaeche 420x258) ->
-  faecher.py (Draufsicht, neu) -> seite.py (Topbar, Hero, Himmelsband,
-  Zeitachse mit Zonen) -> bewertungsseite.py -> rueckschau.py.
-  **Die JS-Logik in den Entwuerfen ist Dokumentation der Rechenwege, nicht die
-  Zielsprache** - alles Rechnende gehoert nach Python und laeuft zur
-  Erzeugungszeit.
-- T-0032 **Push-Auskunft auf der Prognoseseite** (Handoff 1.9). Die Seite sagt
-  heute nirgends, ob ein Push kommt - und "keiner reisst die Schwelle" ist der
-  haeufigste Fall. Kleinster Einzelgewinn im ganzen Handoff, unabhaengig vom
-  Rest baubar.
-- T-0033 **Vorauswahl: heute oder bester Abend?** Behoben am 16.08. auf "der
-  naechste Abend", weil Andre den Sprung in die Zukunft als Fehler gemeldet
-  hat. Der Entwurf loest dasselbe Problem anders: er waehlt weiter den BESTEN
-  Abend vor und beschriftet ihn mit "BESTER ABEND IM FENSTER". Beides ist
-  vertretbar; die Frage ist, ob die Seite zuerst "wie wird heute" oder "lohnt
-  sich diese Woche" beantwortet. Entscheidung offen.
-- T-0034 **Handoff-Punkt 7 ist ueberholt.** Die Umsetzungsreihenfolge sagt
-  "die Prognoseseite bleibt draussen (Verankerungsrisiko)". Das war meine
-  Entscheidung vom 15.08. und ist am selben Tag zurueckgenommen - der Alarm
-  traegt die Prognose ohnehin aufs Telefon, das Verstecken kostete nur Nutzen.
-  Die Seite IST ausgeliefert. Beim Umsetzen nicht versehentlich zurueckdrehen.
+- T-0035 **Zweite Bewertungsquelle fuer die Bilanzseite.** `bisher.html`
+  zeigt heute nur die eigenen Noten. Trefferquote und Alarmrate brauchen
+  ausserdem die Alarme (`zustand["alarme"]`) und eine Schwelle, gegen die
+  gemessen wird — beides erst nach sechs bis acht Wochen Betrieb sinnvoll
+  (Quantilbruecke, T-0020). Bis dahin sagt die Seite ausdruecklich, dass die
+  Alarmrate unbekannt ist.
+- T-0036 **Segmenttransmission im Vertikalschnitt verdrahtet, aber noch
+  ungenutzt.** `alarm.py` schreibt seit 16.08. `segmente` in den Zustand,
+  `schnitt_neu()` nimmt sie. Der Zustand vom 15.08. hat sie noch nicht, also
+  laeuft das Bild bis zum naechsten erfolgreichen Alarmlauf ueber die
+  Ringnachrechnung aus dem Medianfeld. Nach dem naechsten 07:30-Lauf einmal
+  gegenpruefen, dass die Baender sich sichtbar aendern - sonst greift der
+  Zweig nicht.
 - T-0030 **Wolkentyp oder -unterkante als richtiges Instrument.** Was
   T-0028 gebraucht haette: ein Produkt, das low/mid/high trennt oder die
   Unterkante liefert. Kandidaten aus dem Data Store: `EO:EUM:DAT:0617`
@@ -184,6 +173,38 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   Frage, die am 14.08. fuenfmal von Hand am Foto beantwortet wurde.
 
 ## Done
+
+### 16.08.2026 — UX-Overhaul (T-0031 bis T-0034)
+- T-0031 **UX-Overhaul umgesetzt** (16.08.2026, Handoff
+  `docs/entwurf/handoff-ux-2026-08-16.md`). Alle sieben Punkte der
+  Umsetzungsreihenfolge:
+  Tokens (`--himmel-oben/-unten`, `--band-dumpf/-glut`) ·
+  `skripte/schnitt.py` bekommt `schnitt_neu()` mit Polygonbaendern,
+  doppeltem Strahl, Sonnenhalo, Horizontwaesche und Himmelsverlauf auf
+  420x258 — die alte `svg()` bleibt unveraendert fuer `diagnose.html` und
+  `rueckschau.html` ·
+  `skripte/faecher.py` (neu, Draufsicht) · `skripte/band.py` (neu,
+  Himmelsband) · `skripte/seite.py` neu aufgebaut (Topbar, Korpuszeile,
+  Hero mit `begruendung()`, Himmelsband, Zeitachse mit Zonen und
+  Verlaufslinie, zwei Grafikkarten, Fusstext, Push-Auskunft) ·
+  `web/bewerten.html` mit Note `null`/0/1-5 und Freilegung nach der Abgabe ·
+  `skripte/bisher.py` (neu) statt `rueckschau.py` — siehe T-0035 ·
+  `skripte/ausliefern.py` mit erweiterter Liste.
+  Zwei Abweichungen vom Entwurf, beide begruendet: Vorauswahl (T-0033) und
+  Anfangszustand serverseitig statt per Skript (die Seite war ohne
+  JavaScript leer).
+- T-0032 **Push-Auskunft auf der Prognoseseite** — erledigt mit T-0031. Sagt
+  jetzt beide Faelle: "Kein Abend im Fenster reisst die Schwelle von 50 %
+  (hoechstens 12 %). Es kommt kein Push." bzw. den Alarmfall mit Uhrzeit.
+- T-0033 **Vorauswahl: entschieden fuer den naechsten Abend** (16.08.2026).
+  Andres Meldung wiegt schwerer als der Entwurf: wer die Seite aufmacht,
+  fragt zuerst "wie wird es heute abend". Vom Entwurf uebernommen ist sein
+  Eyebrow-Text - faellt die Vorauswahl auf den besten Abend im Fenster,
+  sagt die Seite "Bester Abend im Fenster" statt "Gewaehlter Abend".
+- T-0034 **Handoff-Punkt 7 ueberholt, nicht zurueckgedreht.** Die
+  Prognoseseite bleibt ausgeliefert; `ausliefern.py` fuehrt sie weiter in
+  der Liste, dazu neu `bisher.html`.
+
 
 - **T-0027 Fensterterm gegen die Satellitenwahrheit** (15.08.2026, Befund 35)
   — `skripte/fensterterm.py`: der Fensterterm dreimal mit derselben Formel

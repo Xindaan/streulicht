@@ -1,10 +1,12 @@
 # STATE
 
-Stand: 15.08.2026 abends. **Der Betrieb laeuft.** Repo oeffentlich, Pages
-liefert die Bewertungsseite, ntfy eingerichtet, vier launchd-Agenten geladen.
-Fachlich: Anwesenheit der Wegwolken (35), ihre Hoehe (36) und der Term
-selbst (37) sind alle drei geprueft und erklaeren die toten Fenster nicht.
-Der Score bleibt, wie er ist.
+Stand: 16.08.2026. **Der Betrieb laeuft, die Oberflaeche ist neu.** Repo
+oeffentlich, Pages liefert Prognose-, Bewertungs- und Bilanzseite, ntfy
+eingerichtet, fuenf launchd-Agenten geladen. Der UX-Overhaul (T-0031 bis
+T-0034) ist vollstaendig umgesetzt und die Echo-Pushs sind weg.
+Fachlich unveraendert: Anwesenheit der Wegwolken (35), ihre Hoehe (36) und
+der Term selbst (37) sind alle drei geprueft und erklaeren die toten Fenster
+nicht. Der Score bleibt, wie er ist.
 
 ## Ziel
 
@@ -147,24 +149,38 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
 
 ## Next actions
 
-**Der Betrieb steht.** Repo oeffentlich, Pages liefert die Bewertungsseite
-aus, ntfy eingerichtet, vier launchd-Agenten geladen und getestet. Was jetzt
-fehlt, ist Zeit: der Livegang IST die Messung (Quantilbruecke T-0020).
+**Der Betrieb steht, gebaut ist alles Geplante.** Was jetzt fehlt, ist Zeit:
+der Livegang IST die Messung (Quantilbruecke T-0020).
 
 1. **Beobachten, nicht bauen.** Nach ein paar Tagen `daten/*.log` ansehen:
    feuert die Erinnerung im Fenster, kommen Bewertungen an, laeuft die
    Archivierung? Erst danach lohnt der naechste Umbau.
-2. **T-0030 Wolkentyp/-unterkante** — die letzte offene Spur fuer
+2. **T-0036 gegenpruefen** — nach dem naechsten erfolgreichen 07:30-Lauf
+   einmal ansehen, ob der Vertikalschnitt die echten `segmente` benutzt
+   (der Zustand vom 15.08. hatte sie noch nicht; bis dahin rechnet das Bild
+   die Ringe aus dem Medianfeld nach). Ein Blick auf die Seite genuegt:
+   die Baender muessen sich sichtbar aendern.
+3. **T-0030 Wolkentyp/-unterkante** — die letzte offene Spur fuer
    2018-07-09 und 2024-05-03, nachdem T-0029 nicht traegt (Befund 37).
    n = 2, beide satellitenbestaetigt dicht: nur angehen, wenn das Produkt
-   billig zu pruefen ist. Erst nachsehen, ob es Unterkante oder
-   Schichtzuordnung ueberhaupt fuehrt.
-3. **Nach der Beobachtungsphase**: T-0023 (Bewertungsverlust ausschliessen,
-   localStorage + Nachsenden) — T-0021 und T-0022 sind im Code schon drin
-   (`erinnerung.py`, `alarm.py` verlauf), im Betrieb aber noch nicht
-   beobachtet.
+   billig zu pruefen ist.
 
 ## Letzte Done
+
+- **16.08.2026 UX-Overhaul komplett (T-0031 bis T-0034).** Neue
+  Prognoseseite (Topbar, Hero mit `begruendung()`, Himmelsband, Zeitachse
+  mit Zonen, Vertikalschnitt und Faecherkarte, Push-Auskunft), neue
+  Bewertungsseite (Note 0 als echte Antwort, Prognose erst NACH der Abgabe),
+  neue Bilanzseite `bisher.html`. Neue Module `faecher.py`, `band.py`,
+  `bisher.py`; `schnitt_neu()` in `schnitt.py`.
+- **16.08.2026 Echo-Pushs behoben.** Die Bewertungsquittung ging als Push an
+  dasselbe Geraet zurueck, von dem sie kam - Andre ist auf das
+  Bewertungstopic abonniert, weil die Abenderinnerung darueber laeuft. Sie
+  geht jetzt mit Prioritaet 1 (min) raus: der Poller liest weiter, das
+  Telefon schweigt. Ausserdem: der Alarm-Push hat ein Klickziel bekommen
+  (er war eine Sackgasse), und die Erinnerung haengt `?a=2` an, wenn fuer
+  den Abend ein Alarm rausging - der Anlass "alarm" konnte vorher gar nicht
+  entstehen.
 
 - Repo angelegt, `sonnen/geometrie.py` und `sonnen/feuchte.py` verifiziert.
 - Sonnenuntergangszeiten gegen Open-Meteo unabhaengig bestaetigt (19:33 UTC

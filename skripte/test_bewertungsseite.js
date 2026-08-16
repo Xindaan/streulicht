@@ -26,8 +26,11 @@ function pruefe(bed, text) {
 
 // --- Minimalumgebung: nur so viel DOM, wie die Seite anfasst ---------------
 function knopfAttrappe(text) {
-  return {textContent: text, disabled: false, title: "", style: {},
+  return {textContent: text, innerHTML: "", className: "", href: "",
+          disabled: false, title: "", style: {},
           classList: {_s: new Set(), add(c) { this._s.add(c); },
+                      remove(c) { this._s.delete(c); },
+                      toggle(c, an) { an ? this._s.add(c) : this._s.delete(c); },
                       contains(c) { return this._s.has(c); }},
           onclick: null, click() { this.onclick && this.onclick(); }};
 }
@@ -37,11 +40,27 @@ function umgebung({speicherGeht = true, fetchOk = true} = {}) {
   const speicher = {};
   const el = {
     datum: knopfAttrappe(""), status: knopfAttrappe(""),
-    nachsenden: knopfAttrappe(""), knoepfe: {
+    nachsenden: knopfAttrappe(""), nichtgesehen: knopfAttrappe("Nicht gesehen"),
+    knoepfe: {
       appendChild(b) { knoepfe.push(b); },
       querySelectorAll() { return knoepfe; }
     }
   };
+  // Die fuenf Ziffern stehen seit 16.08.2026 im Markup.  Der Pruefstand
+  // legt sie deshalb vorher an, statt auf createElement zu warten.
+  for (let n = 1; n <= 5; n++) {
+    const b = knopfAttrappe(String(n));
+    b.value = String(n);
+    knoepfe.push(b);
+  }
+  // Die Quittung (Schirm 3 des Entwurfs): dieselben Attrappen, damit
+  // freilegen() nicht an einem fehlenden Knoten scheitert - und damit der
+  // Test SIEHT, was dort steht.
+  for (const id of ["erfassen", "quittung", "qkopf", "qdanke", "qwann",
+                    "qband", "qstufe", "qzahlen", "qtext", "qcta",
+                    "qstatus", "nachsenden2"]) {
+    el[id] = knopfAttrappe("");
+  }
   const ctx = {
     console,
     document: {
@@ -90,6 +109,7 @@ function umgebung({speicherGeht = true, fetchOk = true} = {}) {
       ctx._gesendet.push(Object.assign({_topic: aussen.topic,
                                         _titel: aussen.title,
                                         _text: aussen.message,
+                                        _prio: aussen.priority,
                                         _klick: aussen.click}, innen));
       return {ok: true, status: 200};
     }
@@ -139,6 +159,43 @@ async function lauf(opt) {
          "erste Zeile nennt das Datum ausgeschrieben");
   pruefe(/auf Nachfrage/.test(g._text || ""),
          "erste Zeile nennt den Anlass in Worten");
+  // Prioritaet 1 = min: die Quittung geht an dasselbe Geraet zurueck, von
+  // dem sie kommt (Andre ist auf dieses Topic abonniert, weil die
+  // Abenderinnerung darueber laeuft). Bei min stellt ntfy zu, ohne zu
+  // benachrichtigen - der Poller liest weiter, das Telefon schweigt.
+  pruefe(g._prio === 1, "Quittung mit min-Prioritaet (ist: " + g._prio + ")");
+
+  console.log("\n=== 1b. Nach der Abgabe wird die Prognose freigelegt");
+  pruefe(u.el.erfassen.style.display === "none", "Erfassungsschirm weg");
+  pruefe(u.el.quittung.classList.contains("an"), "Quittung sichtbar");
+  pruefe(/3 von 5/.test(u.el.qdanke.textContent || ""),
+         "Quittung nennt die Note: \"" + u.el.qdanke.textContent + "\"");
+  const hatPrognose = /Perzentil|keine Prognose/.test(
+    u.el.qzahlen.textContent || "");
+  pruefe(hatPrognose, "Prognosezeile gefuellt: \""
+         + u.el.qzahlen.textContent + "\"");
+  pruefe(!!(u.el.qstufe.textContent || "").trim(), "Stufe gesetzt");
+
+  console.log("\n=== 1c. Vor der Abgabe steht die Prognose NICHT im Dokument");
+  {
+    const vorher = umgebung({});
+    vm.createContext(vorher.ctx);
+    vm.runInContext(js, vorher.ctx);
+    await new Promise(r => setTimeout(r, 10));
+    pruefe(vorher.el.qstufe.textContent === "" &&
+           vorher.el.qzahlen.textContent === "" &&
+           vorher.el.qband.innerHTML === "",
+           "Quittungsfelder leer, solange nichts abgegeben ist");
+    // Und im ausgelieferten HTML darf ausserhalb des Skriptblocks keine
+    // Stufe stehen - sonst waere die Blindheit nur optisch.
+    // NUR das Markup, nicht der Style-Block: dort stehen die Stufenklassen
+    // .auffaellig/.unauffaellig als CSS-Selektor, und ein Selektor ist kein
+    // sichtbarer Text.  Die erste Fassung dieser Pruefung hat genau darauf
+    // angeschlagen und einen Fehler gemeldet, den es nicht gab.
+    const koerper = html.split("</style>")[1].split("<script>")[0];
+    pruefe(!/unauff|auff\u00e4llig|Perzentil des Jahres|selten/.test(koerper),
+           "kein Prognosetext im sichtbaren Dokument");
+  }
 
   console.log("\n=== 2. Netzausfall: nichts geht verloren");
   u = await lauf({fetchOk: false});
@@ -152,8 +209,13 @@ async function lauf(opt) {
          "als unbestaetigt markiert");
   pruefe(getComputedStyleDisplay(u) !== "none",
          "Nachsende-Knopf sichtbar");
-  pruefe(u.el.status.textContent.toLowerCase().indexOf("noch nicht angekommen") >= 0,
-         "Status sagt die Wahrheit: \"" + u.el.status.textContent + "\"");
+  // Nach der Abgabe traegt die QUITTUNG den Zustand - der Erfassungsschirm
+  // ist weg.  Genau hier lag der Fehler, den dieser Test gefunden hat: der
+  // Nachsende-Knopf sass auf dem verschwundenen Schirm.
+  pruefe(/noch nicht angekommen/i.test(u.el.qkopf.textContent || ""),
+         "Quittung sagt die Wahrheit: \"" + u.el.qkopf.textContent + "\"");
+  pruefe(u.el.nachsenden2.style.display !== "none",
+         "Nachsende-Knopf auch auf der Quittung erreichbar");
 
   console.log("\n=== 3. Neustart nach Netzausfall: wird nachgesendet");
   const u2 = umgebung({});
@@ -183,6 +245,39 @@ async function lauf(opt) {
   await new Promise(r => setTimeout(r, 20));
   const liste = JSON.parse(u.speicher["su-bewertungen-berlin"] || "[]");
   pruefe(liste.length === 1, "genau ein Eintrag je Tag (%d)".replace("%d", liste.length));
+
+  console.log("\n=== 6. \"Nicht gesehen\" ist Note 0, keine Abwesenheit");
+  u = await lauf({});
+  u.el.nichtgesehen.click();
+  await new Promise(r => setTimeout(r, 20));
+  pruefe(u.ctx._gesendet.length === 1, "Note 0 wird gesendet");
+  pruefe(u.ctx._gesendet[0] && u.ctx._gesendet[0].note === 0,
+         "note === 0 im Rumpf (ist: " +
+         JSON.stringify((u.ctx._gesendet[0] || {}).note) + ")");
+  pruefe((u.ctx._gesendet[0] || {})._titel === "Bewertet: nicht gesehen",
+         "eigener Titel: \"" + (u.ctx._gesendet[0] || {})._titel + "\"");
+  pruefe(u.el.nichtgesehen.classList.contains("gewaehlt"),
+         "Pille traegt den Auswahlzustand");
+  pruefe(/nicht gesehen/.test(u.el.qdanke.textContent || ""),
+         "Quittung sagt \"nicht gesehen\": \"" + u.el.qdanke.textContent + "\"");
+
+  console.log("\n=== 7. Abend ohne Prognose wird benannt, nicht geschaetzt");
+  {
+    const ohne = umgebung({});
+    vm.createContext(ohne.ctx);
+    // PROGNOSE leeren, bevor das Skript laeuft: genau der Fall 15.08.2026,
+    // an dem es die Seite schon gab und den Alarmlauf noch nicht.
+    vm.runInContext(js.replace(/const PROGNOSE = .*;/, "const PROGNOSE = {};"),
+                    ohne.ctx);
+    await new Promise(r => setTimeout(r, 10));
+    ohne.knoepfe[3].click();
+    await new Promise(r => setTimeout(r, 20));
+    pruefe(/keine Prognose f\u00fcr diesen Abend gerechnet/.test(
+             ohne.el.qzahlen.textContent || ""),
+           "sagt es im Klartext: \"" + ohne.el.qzahlen.textContent + "\"");
+    pruefe(ohne.el.qband.innerHTML === "",
+           "und zeigt kein erfundenes Himmelsband");
+  }
 
   console.log("");
   if (fehler.length) {

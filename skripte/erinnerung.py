@@ -134,7 +134,18 @@ def main():
             print("   %s %s: nicht in der Wochenstichprobe" % (ort["name"], tag))
             continue
 
-        klick = ("%s/bewerten-%s.html?a=1" % (basis_url, ort["name"])
+        # ?a=2 statt ?a=1, wenn fuer DIESEN Abend ein Alarm rausging.
+        #
+        # Ohne das konnte der Anlass "alarm" nie entstehen: gesetzt wird er
+        # allein ueber diesen Parameter, und der Alarm selbst geht morgens um
+        # 7:30 raus - da bewertet niemand einen Sonnenuntergang.  Die
+        # Unterscheidung ist aber der Kern der Auswertung: bewertet Andre
+        # nach einem Alarm systematisch anders als an einem gewoehnlichen
+        # Abend, ist die Bewertungsreihe verzerrt und muss getrennt
+        # ausgewertet werden.
+        alarmiert = str(tag) in eintrag.get("alarme", {})
+        klick = ("%s/bewerten-%s.html?a=%d"
+                 % (basis_url, ort["name"], 2 if alarmiert else 1)
                  if basis_url else None)
         titel = "Wie war er?"
         text = ("Sonnenuntergang %s ist durch. Eine Zahl von 1 bis 5 - "

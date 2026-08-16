@@ -32,9 +32,18 @@ Passwort, und wer ihn hat, kann beliebige Pushs schicken. Der Push kommt,
 sobald ein Abend im Vorlauf die Schwelle reisst — hoechstens einmal je Abend.
 
 **Bewerten.** `web/bewerten-<ort>.html` auf dem Telefon oeffnen. Fuenf
-Knoepfe, sonst nichts. Die Seite zeigt bewusst **keine** Prognose: wer vorher
-die Vorhersage sieht, bewertet die Vorhersage statt den Himmel. Erst bewerten,
-dann nachsehen.
+Ziffern und "Nicht gesehen" — Note 0 ist eine echte Antwort, kein leeres Feld.
+Vorher zeigt die Seite **keine** Prognose: wer die Vorhersage sieht, bevor er
+bewertet, bewertet die Vorhersage statt den Himmel. **Nach** der Abgabe legt
+sie frei, was vorhergesagt war (seit 16.08.2026) — das traegt die Blindheit,
+ohne die Neugier zu bestrafen.
+
+**Warum die Quittung nicht klingelt.** Die abgegebene Note reist als
+ntfy-Nachricht zum Poller; sie geht damit an dasselbe Topic, das auch die
+Abenderinnerung traegt, und landete deshalb als Push auf demselben Telefon,
+von dem sie kam. Sie laeuft jetzt mit Prioritaet 1 (min): zugestellt, aber
+ohne Benachrichtigung. Loeschen ginge nicht — die Nachricht IST der
+Transportweg.
 
 ## Die Seiten
 
@@ -42,6 +51,20 @@ dann nachsehen.
 |---|---|
 | **Prognose** | <https://xindaan.github.io/streulicht/> |
 | **Bewerten** | <https://xindaan.github.io/streulicht/bewerten-berlin.html> |
+| **Bisher** | <https://xindaan.github.io/streulicht/bisher.html> |
+
+Die Prognoseseite ist seit dem 16.08.2026 nach dem Entwurf in
+`docs/entwurf/handoff-ux-2026-08-16.md` gebaut: Hero mit Stufe und
+Klartextbegruendung, Himmelsband (Farbe traegt `median / s*`, eine
+gewoehnliche Woche bleibt sichtbar stumpf), Zeitachse mit den beiden warmen
+Zonen, Vertikalschnitt, Faecherkarte von oben — und ein Absatz, der sagt, **ob
+ein Push kommt**. Das war vorher nirgends zu lesen, obwohl "keiner reisst die
+Schwelle" der haeufigste Fall ist.
+
+`bisher.html` ist die Bilanz: die bisherigen Bewertungen und eine ehrliche
+Auskunft darueber, was noch fehlt. **Nicht zu verwechseln mit
+`rueckschau.html`** — das ist die lokale Diagnose ueber vier Jahre
+Klimatologie (9,5 MB, gitignoriert, nie ausgeliefert).
 
 Die Prognoseseite zeigt je Abend **zwei Zahlen, die nicht dasselbe sind**:
 
@@ -55,11 +78,12 @@ die ZAHL nicht: S ist ein Produkt nichtlinearer Terme, der Score des
 Medianfelds ist nicht der Median der Scores (Jensen). Deshalb kommt jede Zahl
 aus dem Zustand, nur das Bild aus dem Feld.
 
-`python3 skripte/seite.py --rueckschau` baut stattdessen das Entwurfsmuster
-aus historischen Abenden - das, was die Seite vor dem 15.08. immer zeigte.
+`python3 skripte/seite.py --rueckschau` baut dieselbe Seite aus historischen
+Abenden statt aus der Prognose — nuetzlich, um die Darstellung an Abenden zu
+sehen, die tatsaechlich ausgeloest haetten.
 
 **Ausgeliefert wird ueber einen Wegwerfzweig.** `skripte/ausliefern.py` baut
-beide Seiten und schreibt sie als EINZELNEN Commit nach `gh-pages`, mit
+alle drei Seiten und schreibt sie als EINZELNEN Commit nach `gh-pages`, mit
 `--force`. Grund: die Prognoseseite ist 220 kB und wird taeglich neu erzeugt -
 taeglich nach `main` waeren das ueber 100 MB im Jahr fuer Staende, die
 niemanden interessieren. Auf dem Wegwerfzweig gibt es keine Historie, die
@@ -249,11 +273,30 @@ deshalb aus **Terminal.app** starten.
 | `skripte/abbruchtest.py` | Validierung gegen Fotoarchiv |
 | `skripte/erinnerung.py` | taegliche Bewertungsaufforderung (T-0021) |
 | `skripte/bewertungsseite.py` | erzeugt `web/bewerten-<ort>.html` je Ort |
+| `skripte/seite.py` | erzeugt die Prognoseseite `web/index.html` |
+| `skripte/bisher.py` | erzeugt die Bilanzseite `web/bisher.html` |
+| `skripte/schnitt.py` | Vertikalschnitt als SVG (`schnitt_neu` fuer die Seite) |
+| `skripte/faecher.py` | Faecherkarte von oben als SVG |
+| `skripte/band.py` | Himmelsband: Lichteindruck als Farbverlauf |
 | `skripte/satellit.py` | MSG-Wolkenmaske als Beobachtungswahrheit |
 | `skripte/ausliefern.py` | baut die Seiten und pusht nach `gh-pages` |
 | `skripte/fensterterm.py` | Fensterterm gegen die Maske: Phantom oder bestaetigt (T-0027) |
 | `skripte/wegterm.py` | Wegterm anders aggregiert, fuenf Varianten gegen Album/Referenz (T-0029) |
 | `sonnen/grib2.py` | GRIB2-Leser fuer die Wolkenmaske, ohne Fremdbibliothek |
+
+### Tests
+
+```bash
+python3 skripte/test_member.py      # Member-Verdichtung, Faecher, Deckung
+python3 skripte/test_advektion.py   # semi-Lagrangesche Verschiebung
+python3 skripte/test_grib2.py       # GRIB2-Leser, Vorzeichen-Betrag, Sektionen
+python3 skripte/test_seiten.py      # erzeugte Seiten und die neuen Grafiken
+node   skripte/test_bewertungsseite.js   # Warteschlange und Freilegung
+```
+
+`test_seiten.py` braucht `daten/zustand.json` und die erzeugten Seiten (also
+einen Alarmlauf und `skripte/ausliefern.py --trocken` davor); ohne sie endet
+er mit Code 2 statt falsch gruen zu melden.
 
 Messwerte und Begruendungen: `docs/befunde-e1.md`. Jede Zahl dort ist mit
 ihrem Pruefbefehl belegt, auch die drei, bei denen die erste Annahme falsch war.

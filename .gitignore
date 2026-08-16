@@ -16,3 +16,5 @@ konfig_geheim.json
 *geheim*
 *secret*
 .env
+.vorschau/
+.claude/launch.json
