@@ -206,7 +206,16 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
      Teil, nicht der ausgefallene Lauf.
   Ausserdem: `de.greatbelow.streulicht.seite` laeuft jetzt 08:10 **und**
   12:10, fuer den Fall, dass der Alarm laenger gebraucht hat als bis 08:10.
-  Braucht ein `launchctl`-Nachladen (siehe README).
+  Nachgeladen am 17.08.2026; der Kickstart-Lauf um 13:20 hat gepusht und
+  damit belegt, dass der Push aus dem launchd-Kontext funktioniert - die
+  Stoerung um 08:15 war das Netz, kein Zugriffsproblem.
+  **Nachgetragene Messung zum Kontingent:** die Zahlen von heute liessen
+  sich nicht nachholen. Drei Versuche (12:25, 13:03, 14:15), der dritte
+  meldete "Daily API request limit exceeded". Ein Alarmlauf wiegt schwer
+  (51 Member x 88 Schritte x 9 Variablen ueber ~210 Zellen); es sind zwei
+  bis drei pro Tag drin, nicht mehr. Beim Nachholen also EINEN Versuch,
+  nicht drei - sonst ist das Budget fuer den naechsten Morgen mit
+  verbrannt. Steht in der README unter Troubleshooting.
 
 
 ### 16.08.2026 &mdash; Desktopfassung (T-0037) und T-0036

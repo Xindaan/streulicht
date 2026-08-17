@@ -289,6 +289,19 @@ eingebetteten Bundle `com.anthropic.claude-code`, dessen Pfad die
 Versionsnummer traegt. Die Skripte `fotos_zaehlen.py` und `fotos_detail.py`
 deshalb aus **Terminal.app** starten.
 
+**„Kontingent: Daily API request limit exceeded".** Ein Alarmlauf ist teuer:
+51 Member x 88 Zeitschritte x 9 Variablen ueber rund 210 Zellen. Open-Meteo
+zaehlt nach Gewicht, nicht nach Aufrufen — **zwei bis drei vollstaendige
+Laeufe pro Tag, dann ist das Tagesbudget weg.** Gemessen am 17.08.2026: nach
+drei Versuchen (12:25, 13:03, 14:15) meldete der dritte nicht mehr das
+Stunden-, sondern das Tageslimit.
+
+Konsequenz fuers Nachholen: **einen** manuellen Lauf, nicht drei. Scheitert
+er, ist der naechste sinnvolle Zeitpunkt der regulaere 07:30-Lauf am
+Folgetag — das Tagesbudget setzt um 00:00 UTC zurueck. Die Seite zeigt in
+der Zwischenzeit den Hinweisstreifen mit dem Alter der Zahlen; das ist der
+richtige Zustand, kein Defekt.
+
 ## Entwicklung
 
 | Datei | Zweck |
