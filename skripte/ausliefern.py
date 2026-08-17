@@ -29,6 +29,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ZWEIG = "gh-pages"                 # fest verdrahtet, siehe Sicherung oben
@@ -36,11 +37,25 @@ VERBOTEN = {"main", "master", "HEAD"}
 
 
 def lauf(*args, **kw):
+    """Wie subprocess.run, aber ein Fehlschlag NENNT den Grund.
+
+    Vorher stand hier `check=True` und `capture_output=True` - die
+    Ausnahme meldete damit nur "returned non-zero exit status 128" und warf
+    genau die Zeile weg, die erklaert, warum.  Am Morgen des 17.08.2026 war
+    das der einzige Hinweis auf einen fehlgeschlagenen Push, und die Ursache
+    liess sich nur ueber die Logs der drei anderen Agenten rekonstruieren.
+    Ein Werkzeug, das im Fehlerfall schweigt, kostet mehr als es spart.
+    """
     kw.setdefault("cwd", BASIS)
-    kw.setdefault("check", True)
     kw.setdefault("capture_output", True)
     kw.setdefault("text", True)
-    return subprocess.run(list(args), **kw)
+    kw["check"] = False
+    r = subprocess.run(list(args), **kw)
+    if r.returncode != 0:
+        raise SystemExit("FEHLGESCHLAGEN (%d): %s\n%s"
+                         % (r.returncode, " ".join(args),
+                            (r.stderr or r.stdout or "").strip()[-1200:]))
+    return r
 
 
 def baue(trocken):
@@ -109,8 +124,23 @@ def veroeffentliche(trocken):
         lauf("git", "-c", "user.name=streulicht",
              "-c", "user.email=noreply@greatbelow.de",
              "commit", "-q", "-m", "Seiten", cwd=tmp)
-        lauf("git", "push", "--force", "-q", fern,
-             "%s:%s" % (ZWEIG, ZWEIG), cwd=tmp)
+        # Wiederholen, aber nur ein paar Mal: der haeufigste Fehlschlag ist
+        # kein Zugriffsproblem, sondern ein Rechner, der noch kein Netz hat.
+        # Am 17.08.2026 war der Mac von 07:30 bis nach 08:15 ohne
+        # Namensaufloesung - Alarm, Archiv, Bewertungsabruf und dieser Push
+        # sind alle vier daran gescheitert, jeder genau einmal.
+        for versuch in range(1, 4):
+            r = subprocess.run(["git", "push", "--force", "-q", fern,
+                                "%s:%s" % (ZWEIG, ZWEIG)],
+                               cwd=tmp, capture_output=True, text=True)
+            if r.returncode == 0:
+                break
+            grund = (r.stderr or "").strip()
+            print("   Push-Versuch %d fehlgeschlagen: %s"
+                  % (versuch, grund.splitlines()[-1] if grund else "?"))
+            if versuch == 3:
+                raise SystemExit("Push endgueltig fehlgeschlagen:\n" + grund)
+            time.sleep(120)
         print("   nach %s gepusht (Wegwerfzweig, ein Commit)" % ZWEIG)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

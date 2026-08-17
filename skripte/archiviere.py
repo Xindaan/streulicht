@@ -24,6 +24,8 @@ from datetime import date, datetime, timedelta, timezone
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sonnen.geometrie import sonnenuntergang  # noqa: E402
 from sonnen.score import faecherpunkte  # noqa: E402
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from netz import warte_auf_netz  # noqa: E402
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODELL = "ecmwf_ifs025"
@@ -75,6 +77,10 @@ def main():
     ap.add_argument("--laenge", type=float, default=13.405)
     ap.add_argument("--name", default="berlin")
     a = ap.parse_args()
+
+    # Erst Netz, dann rechnen: der Rechner kann gerade erst
+    # aufgewacht sein (siehe skripte/netz.py).
+    warte_auf_netz()
 
     heute = datetime.now(timezone.utc).date()
     ziel_dir = os.path.join(BASIS, "daten", "archiv", a.name)

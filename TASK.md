@@ -156,6 +156,14 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   eine Nachkommastelle nahe der Schwelle, oder die Stufenfarbe auf die
   Rangzahl legen. Keine ist offensichtlich - erst ansehen, wie oft der Fall
   eintritt.
+- T-0040 **Der Betrieb meldet seinen eigenen Ausfall nicht.** Am 17.08.2026
+  sind vier Agenten am fehlenden Netz gestorben, jeder mit Exitcode 1 - und
+  aufgefallen ist es erst, weil Andre auf die Seite geschaut hat. `launchctl
+  list` fuehrt den Code, niemand liest ihn. Denkbar: ein sechster Agent, der
+  einmal taeglich die Exitcodes und das Alter von `daten/zustand.json`
+  prueft und bei Auffaelligkeit EINEN Push schickt. Vorsicht bei der
+  Schwelle - eine Ueberwachung, die zu oft piept, wird stummgeschaltet und
+  ist dann schlechter als keine.
 - T-0030 **Wolkentyp oder -unterkante als richtiges Instrument.** Was
   T-0028 gebraucht haette: ein Produkt, das low/mid/high trennt oder die
   Unterkante liefert. Kandidaten aus dem Data Store: `EO:EUM:DAT:0617`
@@ -175,6 +183,31 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   Frage, die am 14.08. fuenfmal von Hand am Foto beantwortet wurde.
 
 ## Done
+
+### 17.08.2026 &mdash; Der Morgen ohne Netz (T-0039)
+- T-0039 **Stiller Ausfall der Auslieferung behoben.** Der Mac hatte von
+  07:30 bis nach 08:15 keine Namensaufloesung. `alarm.py`, `archiviere.py`,
+  `bewertungen_holen.py` und der `git push` aus `ausliefern.py` sind alle
+  vier daran gestorben, jeder **genau einmal, ohne Wiederholung** - und die
+  ausgelieferte Seite zeigte den ganzen Tag den Vortag, ohne dass irgendwo
+  etwas rot geworden waere. Drei Aenderungen:
+  1. `skripte/netz.py` (neu): die netzabhaengigen Skripte warten bis zu
+     20 Minuten auf Namensaufloesung, statt am ersten Fehlversuch zu
+     sterben. launchd hilft hier nicht - es holt VERPASSTE Laeufe nach,
+     aber ein gestarteter und fehlgeschlagener Lauf gilt als erledigt.
+  2. `ausliefern.py` wiederholt den Push dreimal und **nennt den
+     git-Fehler**. Vorher meldete die Ausnahme nur "exit status 128" und
+     warf genau die Zeile weg, die erklaert warum; die Ursache liess sich
+     nur aus den Logs der drei anderen Agenten rekonstruieren.
+  3. Die Seite sagt ihr eigenes Alter: steht der neueste `lauf` im Zustand
+     nicht auf heute, erscheint ein Streifen unter der Kopfleiste
+     ("Diese Zahlen sind vom 16.08. (gestern)."). Ohne ihn sah eine Seite
+     mit Vortagsdaten genauso aus wie eine frische - **das** war der teure
+     Teil, nicht der ausgefallene Lauf.
+  Ausserdem: `de.greatbelow.streulicht.seite` laeuft jetzt 08:10 **und**
+  12:10, fuer den Fall, dass der Alarm laenger gebraucht hat als bis 08:10.
+  Braucht ein `launchctl`-Nachladen (siehe README).
+
 
 ### 16.08.2026 &mdash; Desktopfassung (T-0037) und T-0036
 - T-0037 **Desktopfassung der Prognoseseite** nach

@@ -43,6 +43,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sonnen.geometrie import sonnenuntergang, zielpunkt  # noqa: E402
 import sonnen.score as sc  # noqa: E402
 from sonnen.score import score  # noqa: E402
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from netz import warte_auf_netz  # noqa: E402
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GITTER = 0.25
@@ -384,6 +386,10 @@ def main():
                     help="rechnen und anzeigen, aber nichts senden")
     ap.add_argument("--konfig", default=os.path.join(BASIS, "konfig.json"))
     a = ap.parse_args()
+
+    # Erst Netz, dann rechnen: der Rechner kann gerade erst
+    # aufgewacht sein (siehe skripte/netz.py).
+    warte_auf_netz()
 
     with open(a.konfig) as f:
         kfg = json.load(f)

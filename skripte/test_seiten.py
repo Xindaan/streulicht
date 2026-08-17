@@ -159,6 +159,22 @@ def main():
         pruefe(html.count("bisher.html") == 2,
                "Bilanzverweis genau zweimal (%d)" % html.count("bisher.html"))
 
+        print("\n=== 5c. Altersangabe")
+        # Der Streifen darf genau dann dastehen, wenn die Zahlen nicht vom
+        # heutigen Alarmlauf stammen.  Am 17.08.2026 hat die Seite den
+        # ganzen Tag den Vortag gezeigt und dabei frisch ausgesehen; das
+        # war der teure Teil, nicht der ausgefallene Lauf selbst.
+        from datetime import date
+        laeufe = sorted({((abende[t].get("verlauf") or [{}])[-1]).get("lauf")
+                         for t in abende
+                         if abende[t].get("median") is not None} - {None})
+        frisch = bool(laeufe) and laeufe[-1] == date.today().isoformat()
+        hat_streifen = 'class="veraltet"' in html
+        pruefe(hat_streifen != frisch,
+               "Altersstreifen passt zum Zustand (Lauf %s, Streifen %s)"
+               % (laeufe[-1] if laeufe else "?",
+                  "ja" if hat_streifen else "nein"))
+
     print("\n=== 6. Erzeugte Bewertungsseite")
     p = os.path.join(BASIS, "web", "bewerten-berlin.html")
     if not os.path.exists(p):

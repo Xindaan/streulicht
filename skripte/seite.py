@@ -228,7 +228,13 @@ def prognose_eintraege(ort_name, perzentil, s_stern):
                     "karte": karte_bild,
                     "band": band.svg(e["median"], s_stern, len(aus)),
                     "grund": satz(begruendung(e)),
-                    "wahrsch": e["p"], "vorlauf_h": e.get("dt_h")})
+                    "wahrsch": e["p"], "vorlauf_h": e.get("dt_h"),
+                    # Aus welchem Alarmlauf stammt diese Zahl?  Der Zustand
+                    # bleibt liegen, wenn ein Lauf ausfaellt - ohne diese
+                    # Angabe sieht eine Seite mit Vortagsdaten genauso aus
+                    # wie eine frische.  Genau das ist am 17.08.2026
+                    # passiert (kein Netz um 07:30).
+                    "lauf": ((e.get("verlauf") or [{}])[-1]).get("lauf")})
     return aus
 
 
@@ -274,7 +280,7 @@ def rueckschau_eintraege(von, tage, klima, perzentil, s_stern):
                         "A": (det or {}).get("A"),
                         "weg": (det or {}).get("weg"),
                         "sicht": (det or {}).get("sicht")})),
-                    "wahrsch": None, "vorlauf_h": None})
+                    "wahrsch": None, "vorlauf_h": None, "lauf": None})
     return aus
 
 
@@ -313,6 +319,13 @@ body{margin:0;background:var(--papier);color:var(--tinte);
 .ortspille{padding:3px 11px;border-radius:var(--radius-pille);
  background:var(--karte);color:var(--tinte2);font-size:12px;font-weight:700}
 .leiste-nav{display:none;align-items:center;gap:26px}
+
+/* Erscheint NUR, wenn die Zahlen nicht von heute sind.  Eine Seite, die
+   still den Vortag zeigt, ist schlimmer als eine, die gar nichts zeigt -
+   sie sieht aus, als waere alles in Ordnung. */
+.veraltet{margin:0;padding:10px 18px;background:var(--akzent-flaeche);
+ border-bottom:1px solid var(--akzent);color:var(--akzent-tinte);
+ font-size:13px;line-height:1.45;text-wrap:pretty}
 
 /* --- Korpuszeile: benennt den Bestand, statt ihn vorauszusetzen ----- */
 .korpus{margin:0;padding:20px 18px 0;color:var(--gedaempft);
@@ -457,6 +470,8 @@ body{margin:0;background:var(--papier);color:var(--tinte);
  .leiste-nav a{color:var(--tinte2);font-size:14px;font-weight:600;
   text-decoration:none}
  .korpus{display:none}
+ .veraltet{padding:10px max(var(--rand-gross),
+  calc((100% - var(--breite-gross)) / 2 + var(--rand-gross)))}
 
  /* Das Himmelsband wird der Kopf der Seite: randlos, 400 px hoch, mit dem
     Hero darauf.  Zwei Schleier, weil das Band seine Helligkeit aendern
@@ -532,6 +547,7 @@ body{margin:0;background:var(--papier);color:var(--tinte);
 <a href="bisher.html">Was bisher gemessen ist</a></nav>
 </div></header>
 
+__VERALTET__
 <p class="korpus">__KORPUS__</p>
 
 <main>
@@ -724,6 +740,23 @@ def main():
                                     (1.0 - e["p"]) * 100.0)
                      for i, e in enumerate(eintraege))
 
+    # Ist der Zustand von heute?  `lauf` ist der Tag des Alarmlaufs, aus dem
+    # die Zahlen stammen.  Faellt ein Lauf aus, bleibt der alte Zustand
+    # liegen und die Seite wird trotzdem neu gebaut - sie saehe dann frisch
+    # aus und waere es nicht.
+    laeufe = sorted({e["lauf"] for e in eintraege if e.get("lauf")})
+    stand = laeufe[-1] if laeufe else None
+    if a.rueckschau or stand == heute_iso or not stand:
+        veraltet = ""
+    else:
+        d = date.fromisoformat(stand)
+        tage = (date.today() - d).days
+        veraltet = ('<p class="veraltet">Diese Zahlen sind vom '
+                    '%s (%s). Der Lauf von heute fr&uuml;h ist nicht '
+                    'durchgekommen.</p>'
+                    % (d.strftime("%d.%m."),
+                       "gestern" if tage == 1 else "vor %d Tagen" % tage))
+
     # Push-Auskunft.  Das ist der Absatz, den die alte Seite nirgends hatte -
     # und "kein Push" ist der haeufigste Zustand.  Ohne ihn sieht Schweigen
     # aus wie ein Defekt.
@@ -771,6 +804,7 @@ def main():
             .replace("__TOKENS__", tokens.quelltext())
             .replace("__ORT__", anzeige)
             .replace("__KORPUS__", korpus)
+            .replace("__VERALTET__", veraltet)
             .replace("__ANZAHL_WORT__", ANZAHL_WORT.get(n, "%d ABENDE" % n))
             .replace("__ACHSE_GROSS__", str(ACHSE_PX_GROSS))
             .replace("__ACHSE__", str(ACHSE_PX))

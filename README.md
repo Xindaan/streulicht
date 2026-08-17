@@ -143,7 +143,7 @@ Cron feuert im Schlaf nicht und holt einen verpassten Lauf auch nicht nach;
 `launchd` mit `StartCalendarInterval` startet ihn beim Aufwachen nach. Genau
 das braucht ein Alarm, dessen Fenster einmal am Tag offen steht.
 
-Vier Agenten in `~/Library/LaunchAgents/`, alle mit
+Fuenf Agenten in `~/Library/LaunchAgents/`, alle mit
 `WorkingDirectory` und absolutem Interpreterpfad (launchd hat kein PATH):
 
 | Label | Skript | Wann |
@@ -152,7 +152,26 @@ Vier Agenten in `~/Library/LaunchAgents/`, alle mit
 | `de.greatbelow.streulicht.erinnerung` | `erinnerung.py` | stuendlich zur 15. Minute |
 | `de.greatbelow.streulicht.bewertung` | `bewertungen_holen.py` | alle 3 h zur 5. Minute |
 | `de.greatbelow.streulicht.archiv` | `archiviere.py` | 08:00 |
-| `de.greatbelow.streulicht.seite` | `ausliefern.py` | 08:10 (nach dem Alarm) |
+| `de.greatbelow.streulicht.seite` | `ausliefern.py` | 08:10 und 12:10 |
+
+**Die ausgelieferte Seite haengt also an zwei Laeufen**, und beide koennen
+einzeln ausfallen: `alarm.py` holt die Zahlen, `ausliefern.py` baut daraus
+die Seiten und schiebt sie nach `gh-pages`. Faellt der Alarm aus, baut
+`ausliefern.py` trotzdem — dann aber aus dem Zustand vom Vortag. Die Seite
+sagt das seit dem 17.08.2026 selbst, mit einem Streifen unter der
+Kopfleiste: *"Diese Zahlen sind vom 16.08. (gestern)."*
+
+**Warum 12:10 dazugekommen ist:** am Morgen des 17.08.2026 hatte der Mac von
+07:30 bis nach 08:15 keine Namensaufloesung. Alarm, Archiv, Bewertungsabruf
+und der Push sind alle vier daran gestorben, jeder genau einmal — und die
+Seite zeigte den ganzen Tag den Vortag. Seitdem:
+
+- `skripte/netz.py` laesst die netzabhaengigen Skripte bis zu 20 Minuten
+  auf Namensaufloesung warten, statt am ersten Fehlversuch zu sterben;
+- `ausliefern.py` wiederholt den Push dreimal und **nennt den git-Fehler**
+  (vorher schluckte `capture_output` genau die Zeile, die erklaert, warum);
+- der zweite Lauf um 12:10 faengt den Fall auf, dass der Alarm laenger
+  gebraucht hat als bis 08:10.
 
 ```bash
 launchctl bootstrap gui/$UID ~/Library/LaunchAgents/de.greatbelow.streulicht.alarm.plist

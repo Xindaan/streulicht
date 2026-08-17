@@ -14,9 +14,13 @@ Bias.
 import argparse
 import json
 import os
+import sys
 import urllib.parse
 import urllib.request
 from datetime import date, timedelta
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from netz import warte_auf_netz  # noqa: E402
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -107,6 +111,10 @@ def main():
     ap.add_argument("--seit", default="12h")
     ap.add_argument("--konfig", default=os.path.join(BASIS, "konfig.json"))
     a = ap.parse_args()
+
+    # Erst Netz, dann rechnen: der Rechner kann gerade erst
+    # aufgewacht sein (siehe skripte/netz.py).
+    warte_auf_netz()
 
     with open(a.konfig) as f:
         kfg = json.load(f)

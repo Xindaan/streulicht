@@ -1,6 +1,6 @@
 # STATE
 
-Stand: 16.08.2026 mittags. **Der Betrieb laeuft, die Oberflaeche ist neu -
+Stand: 17.08.2026 mittags. **Der Betrieb laeuft, die Oberflaeche ist neu -
 auf beiden Schirmgroessen.** Repo oeffentlich, Pages liefert Prognose-,
 Bewertungs- und Bilanzseite, ntfy eingerichtet, fuenf launchd-Agenten
 geladen. Der UX-Overhaul (T-0031 bis T-0034) ist vollstaendig umgesetzt, die
@@ -154,19 +154,26 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
 **Der Betrieb steht, gebaut ist alles Geplante.** Was jetzt fehlt, ist Zeit:
 der Livegang IST die Messung (Quantilbruecke T-0020).
 
-1. **Beobachten, nicht bauen.** Nach ein paar Tagen `daten/*.log` ansehen:
-   feuert die Erinnerung im Fenster, kommen Bewertungen an, laeuft die
-   Archivierung? Erst danach lohnt der naechste Umbau.
-2. **T-0038 ansehen, wenn er wieder auftritt** &mdash; ein Abend knapp
-   unter der 80er-Schwelle zeigt auf der Achse "80." und steht an der Linie
-   "AUFFAELLIG 80.", waehrend der Hero "unauffaellig" sagt. Beides stimmt,
-   zusammen liest es sich falsch. Erst zaehlen, wie oft der Fall vorkommt.
-3. **T-0030 Wolkentyp/-unterkante** — die letzte offene Spur fuer
-   2018-07-09 und 2024-05-03, nachdem T-0029 nicht traegt (Befund 37).
-   n = 2, beide satellitenbestaetigt dicht: nur angehen, wenn das Produkt
-   billig zu pruefen ist.
+1. **Den Seiten-Agenten nachladen**, sonst laeuft er weiter nur um 08:10:
+
+       cp betrieb/de.greatbelow.streulicht.seite.plist ~/Library/LaunchAgents/
+       launchctl kickstart -k gui/$UID/de.greatbelow.streulicht.seite
+
+2. **Beobachten, nicht bauen.** Nach ein paar Tagen `daten/*.log` ansehen -
+   und `launchctl list | grep streulicht`: die dritte Spalte ist der letzte
+   Exitcode, 0 heisst gut. Am 17.08. stand dort dreimal 1, und aufgefallen
+   ist es erst beim Blick auf die Seite (T-0040).
+3. **T-0038** ansehen, wenn er wieder auftritt - ein Abend knapp unter der
+   80er-Schwelle zeigt "80." an der Linie "AUFFAELLIG 80.", waehrend der
+   Hero "unauffaellig" sagt. Erst zaehlen, wie oft der Fall vorkommt.
 
 ## Letzte Done
+
+- **17.08.2026 Stiller Ausfall behoben (T-0039).** Kein Netz am Morgen,
+  vier Agenten tot, Seite zeigte den ganzen Tag den Vortag - und sah dabei
+  frisch aus. Jetzt: `netz.py` wartet auf Namensaufloesung, `ausliefern.py`
+  wiederholt den Push und nennt den git-Fehler, und die Seite schreibt ihr
+  eigenes Alter hin, wenn die Zahlen nicht von heute sind.
 
 - **16.08.2026 Desktopfassung (T-0037).** Prognoseseite und Bilanzseite
   schalten ab 1000 px auf einen breiten Satz um - eine Datei, ein
