@@ -151,15 +151,19 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
 
 ## Next actions
 
-1. **Beide Agenten nachladen**, sonst laeuft der Alarm weiter um 07:30 und
-   die Auslieferung nur um 08:10/12:10:
+1. **Beide Agenten wirklich nachladen** - `cp` allein reicht nicht, und
+   `kickstart` auch nicht: es startet die ALTE, in launchd geladene
+   Definition neu. Am 18.08.2026 lief der Alarm deshalb mittags ohne
+   `--geplant` los.
 
        cp betrieb/de.greatbelow.streulicht.{alarm,seite}.plist ~/Library/LaunchAgents/
-       launchctl kickstart -k gui/$UID/de.greatbelow.streulicht.alarm
-       launchctl kickstart -k gui/$UID/de.greatbelow.streulicht.seite
+       for n in alarm seite; do
+         launchctl bootout gui/$UID/de.greatbelow.streulicht.$n
+         launchctl bootstrap gui/$UID ~/Library/LaunchAgents/de.greatbelow.streulicht.$n.plist
+       done
+       launchctl print gui/$UID/de.greatbelow.streulicht.alarm | grep -A4 arguments
 
-   Der Kickstart des Alarms tut ausserhalb des Fensters nichts - er meldet
-   "ausserhalb des Fensters" und beendet sich. Das ist richtig so.
+   Die letzte Zeile ist die Gegenprobe: dort muss `--geplant` stehen.
 2. **Den ersten sonnenuntergangsrelativen Lauf ansehen** (heute gegen 17:20
    Ortszeit): kommt er durch, verschwindet der Warnstreifen auf der Seite.
 3. **T-0040** Ueberwachung der Exitcodes - zwei von vier Laeufen sind

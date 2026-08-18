@@ -25,13 +25,17 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from datetime import date, datetime, timedelta, timezone
+from datetime import time as dtzeit
+
 import band  # noqa: E402
 from seite import stufe  # noqa: E402
+from sonnen.geometrie import sonnenuntergang  # noqa: E402
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 VORLAGE = os.path.join(BASIS, "web", "bewerten.html")
 PLATZHALTER = ("__NTFY_BEWERTUNG__", "__ORT__", "__ANZEIGE__", "__SEITE__",
-               "__PROGNOSE__", "__PROGNOSESEITE__")
+               "__PROGNOSE__", "__PROGNOSESEITE__", "__SONNE__")
 
 
 def prognosestand(ort_name, s_stern):
@@ -64,6 +68,31 @@ def prognosestand(ort_name, s_stern):
     return aus
 
 
+def sonnentafel(ort, tage=4):
+    """{Tag: Sonnenuntergang als ISO-UTC} fuer die Tage um heute.
+
+    WOZU (18.08.2026).  Die Seite muss wissen, WELCHEN Abend eine Bewertung
+    meint.  Sie hat das bis heute an einer festen Uhrzeit entschieden: "vor
+    04:00 zaehlt der Abend als gestern".  Am 18.08. um 04:26 hat Andre den
+    Sonnenuntergang des 17. bewertet - die Regel hat daraus den 18. gemacht,
+    also einen Abend, der noch gar nicht stattgefunden hatte.
+
+    Mit dieser Tafel entscheidet die Seite richtig: gemeint ist der LETZTE
+    Sonnenuntergang, der schon vorbei ist.  Das gilt im Dezember (SU 15:53)
+    genauso wie im Juni (21:33), wo jede feste Grenze schiefliegt.
+    """
+    aus = {}
+    heute = date.today()
+    for k in range(-tage, tage + 1):
+        t = heute + timedelta(days=k)
+        std, _ = sonnenuntergang(t, ort["breite"], ort["laenge"])
+        if std is None:
+            continue
+        aus[t.isoformat()] = (datetime.combine(t, dtzeit(0), timezone.utc)
+                              + timedelta(hours=std)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return aus
+
+
 def erzeuge(ort, vorlage):
     fehlend = [s for s in PLATZHALTER if s not in vorlage]
     if fehlend:
@@ -76,6 +105,7 @@ def erzeuge(ort, vorlage):
             ("__SEITE__", ort.get("_seite", "")),
             ("__PROGNOSESEITE__", ort.get("_prognoseseite", "")),
             ("__PROGNOSE__", ort.get("_prognose", "{}")),
+            ("__SONNE__", ort.get("_sonne", "{}")),
             # __ORT__ ZULETZT: es ist ein Teilstring von nichts, aber die
             # anderen Schluessel enthalten "__ORT__" nicht - waere einer
             # frueher dran, ersetzte er in bereits eingesetztem Inhalt.
@@ -104,6 +134,7 @@ def main():
         ort["_prognoseseite"] = "%s/index.html" % basis_url if basis_url else ""
         stand = prognosestand(ort["name"], s_stern)
         ort["_prognose"] = json.dumps(stand, ensure_ascii=False)
+        ort["_sonne"] = json.dumps(sonnentafel(ort), ensure_ascii=False)
         fehlt = [k for k in ("name", "ntfy_bewertung") if not ort.get(k)]
         if fehlt:
             print("   %s: uebersprungen, %s fehlt"

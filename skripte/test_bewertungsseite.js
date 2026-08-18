@@ -261,6 +261,36 @@ async function lauf(opt) {
   pruefe(/nicht gesehen/.test(u.el.qdanke.textContent || ""),
          "Quittung sagt \"nicht gesehen\": \"" + u.el.qdanke.textContent + "\"");
 
+  console.log("\n=== 6b. Welcher Abend gemeint ist, entscheidet die Sonne");
+  {
+    const u2 = umgebung({});
+    vm.createContext(u2.ctx);
+    vm.runInContext(js, u2.ctx);
+    await new Promise(r => setTimeout(r, 10));
+    // `const` im VM-Skript landet NICHT auf dem Kontextobjekt (anders als
+    // Funktionsdeklarationen).  Die Tafel wird deshalb aus der Seite
+    // gelesen - und das prueft nebenbei, dass sie ueberhaupt drinsteht.
+    const roh = (js.match(/const SONNE\s*=\s*(\{[^\n]*\});/) || [])[1];
+    const sonne = roh ? JSON.parse(roh) : {};
+    const tage = Object.keys(sonne).sort();
+    pruefe(tage.length >= 3,
+           "Sonnentafel ist eingebettet (" + tage.length + " Tage)");
+    if (tage.length >= 3) {
+      const mitte = tage[Math.floor(tage.length / 2)];
+      const su = new Date(sonne[mitte]);
+      // Der eigentliche Fall vom 18.08.2026: 04:26 Ortszeit am Folgetag.
+      const nachts = new Date(su.getTime() + 8 * 3600e3);
+      pruefe(u2.ctx.abendVonJetzt(nachts) === mitte,
+             "acht Stunden nach Sonnenuntergang gilt noch der Vorabend ("
+             + u2.ctx.abendVonJetzt(nachts) + " statt " + mitte + ")");
+      // Und kurz VOR dem Sonnenuntergang darf es nicht schon der Tag sein.
+      const vorher = new Date(su.getTime() - 3600e3);
+      pruefe(u2.ctx.abendVonJetzt(vorher) !== mitte,
+             "eine Stunde vor Sonnenuntergang gilt der Tag noch nicht ("
+             + u2.ctx.abendVonJetzt(vorher) + ")");
+    }
+  }
+
   console.log("\n=== 7. Abend ohne Prognose wird benannt, nicht geschaetzt");
   {
     const ohne = umgebung({});

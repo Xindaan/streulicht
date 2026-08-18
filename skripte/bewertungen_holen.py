@@ -17,9 +17,11 @@ import os
 import sys
 import urllib.parse
 import urllib.request
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))))
 from netz import warte_auf_netz  # noqa: E402
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -85,6 +87,30 @@ def _nutzlast(text):
 # Vor diesem Tag gab es das Projekt nicht; danach kann kein Abend liegen,
 # der schon bewertet waere.
 ERSTER_ABEND = date(2026, 8, 15)
+
+
+def sonnenuntergang_vorbei(tag, ort, jetzt=None):
+    """Hat der Sonnenuntergang dieses Abends schon stattgefunden?
+
+    Ein Riegel gegen genau den Fall vom 18.08.2026: eine Bewertung traf um
+    04:26 ein und war fuer den 18. datiert - fuer einen Abend, der erst
+    16 Stunden spaeter kommen sollte.  Die Seite datiert seitdem nach dem
+    letzten VERGANGENEN Sonnenuntergang; dieser Riegel faengt ab, was aus
+    alten, im Cache liegenden Seiten noch nachkommt.
+
+    Bewusst hier UND dort: die Seite kann veraltet sein, der Poller nicht.
+    """
+    from sonnen.geometrie import sonnenuntergang
+    try:
+        d = date.fromisoformat(tag)
+    except (TypeError, ValueError):
+        return False
+    std, _ = sonnenuntergang(d, ort["breite"], ort["laenge"])
+    if std is None:
+        return True                       # Polarnacht: nichts zu pruefen
+    su = (datetime.combine(d, time(0), timezone.utc)
+          + timedelta(hours=std))
+    return su <= (jetzt or datetime.now(timezone.utc))
 
 
 def plausibel(tag):
@@ -157,6 +183,10 @@ def main():
                 continue
             tag, note = m.get("tag"), m.get("note")
             if not tag or note is None:
+                continue
+            if not sonnenuntergang_vorbei(tag, ort):
+                print("   %s %s: Sonnenuntergang war noch nicht - verworfen"
+                      % (ort["name"], tag))
                 continue
             abend = eintrag["abende"].setdefault(tag, {})
             # Spaetere Bewertung desselben Abends ueberschreibt - eine

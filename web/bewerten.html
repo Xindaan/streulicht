@@ -174,6 +174,7 @@ const ORT      = "__ORT__";
 const ANZEIGE  = "__ANZEIGE__";
 const SEITE    = "__SEITE__";
 const PROGNOSE = __PROGNOSE__;
+const SONNE    = __SONNE__;
 const PROGNOSESEITE = "__PROGNOSESEITE__";
 const SPEICHER = "su-bewertungen-" + ORT;
 const SENDE_TIMEOUT_MS = 12000;
@@ -202,13 +203,29 @@ const ANLASS = {"1":"aufgefordert", "2":"alarm"}[
 const ANLASS_TEXT = {aufgefordert:"auf Nachfrage bewertet",
                      alarm:"nach Alarm bewertet"}[ANLASS] || "spontan bewertet";
 
-const heute = new Date();
-// Vor 04:00 Ortszeit zaehlt der Abend als "gestern" - wer um 1 Uhr bewertet,
-// meint den Sonnenuntergang von gestern.
-if (heute.getHours() < 4) heute.setDate(heute.getDate() - 1);
-const tag = heute.getFullYear() + "-" +
-            String(heute.getMonth() + 1).padStart(2, "0") + "-" +
-            String(heute.getDate()).padStart(2, "0");
+// WELCHEN Abend meint diese Bewertung?  Den letzten Sonnenuntergang, der
+// schon vorbei ist - nicht "heute, ausser es ist vor 04:00".
+//
+// Die alte Regel hat am 18.08.2026 um 04:26 den Sonnenuntergang des 17.
+// als den des 18. verbucht, also als einen Abend, der noch gar nicht
+// stattgefunden hatte. Jede feste Uhrzeit liegt irgendwann schief: in
+// Berlin geht die Sonne im Juni um 21:33 unter und im Dezember um 15:53.
+//
+// SONNE kommt aus bewertungsseite.py und deckt einige Tage um heute ab.
+// Fehlt sie (alte Seite im Cache), greift die alte Regel als Rueckfall -
+// lieber die schlechtere Antwort als gar keine.
+function abendVonJetzt(jetzt) {
+  const vorbei = Object.keys(SONNE)
+    .filter(t => new Date(SONNE[t]) <= jetzt)
+    .sort();
+  if (vorbei.length) return vorbei[vorbei.length - 1];
+  const d = new Date(jetzt);
+  if (d.getHours() < 4) d.setDate(d.getDate() - 1);
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0")
+       + "-" + String(d.getDate()).padStart(2, "0");
+}
+const tag = abendVonJetzt(new Date());
+const heute = new Date(tag + "T12:00:00");
 const datumLang = WOCHENTAG[heute.getDay()] + ", " + heute.getDate() + ". "
                 + MONAT[heute.getMonth()];
 document.getElementById("datum").textContent = datumLang;

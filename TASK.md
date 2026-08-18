@@ -210,6 +210,31 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   auf 30 min verengt -> 168 Tage ohne Lauf; auf 150 min geweitet -> 365
   Tage mit zwei Laeufen. Beides schlaegt an.
   **Braucht ein `launchctl`-Nachladen beider Agenten** (siehe STATE).
+- T-0044 **`cp` plus `kickstart` laedt eine plist NICHT nach.** Am
+  18.08.2026 stand die neue Definition in `~/Library/LaunchAgents`, launchd
+  kannte aber weiter die alte: `launchctl print` zeigte `Hour 7, Minute 30`
+  und keine Argumente. `kickstart -k` startet den Job mit der GELADENEN
+  Definition neu, nicht mit der Datei - der Alarm lief deshalb mittags ohne
+  `--geplant` los und ignorierte sein Zeitfenster. Richtig ist
+  `bootout` + `bootstrap`, mit `launchctl print` als Gegenprobe. In README
+  und STATE korrigiert; die alte Anleitung stammte von mir.
+  Nebenbei hat der Fehllauf etwas Gutes gezeigt: er ist mit dem billigeren
+  Abruf **durchgelaufen** - 10 Anfragen, 217 Ortsabrufe, nur drei
+  Minutenlimit-Pausen, 13 Abende im Zustand. T-0042 wirkt also im Betrieb.
+- T-0043 **Bewertung datiert nach dem letzten Sonnenuntergang.** Die Seite
+  entschied bis heute nach der Uhr: "vor 04:00 zaehlt der Abend als
+  gestern". Am 18.08.2026 um 04:26 hat Andre den Sonnenuntergang des 17.
+  bewertet - die Regel hat daraus den 18. gemacht, also einen Abend, der
+  noch gar nicht stattgefunden hatte. Jede feste Uhrzeit liegt irgendwann
+  schief: SU 21:33 im Juni, 15:53 im Dezember.
+  Jetzt: `bewertungsseite.py` bettet eine Sonnentafel ein, die Seite waehlt
+  den letzten VERGANGENEN Sonnenuntergang. Dazu ein Riegel in
+  `bewertungen_holen.py` - eine Bewertung fuer einen Abend, dessen
+  Sonnenuntergang noch aussteht, wird verworfen und im Log benannt.
+  Bewusst an beiden Stellen: die Seite kann im Cache veralten, der Poller
+  nicht. Live geprueft, der Poller verwirft die Nachricht jetzt.
+  Der falsche Eintrag ist auf den 17.08. umgebucht, mit `bewertung_korrektur`
+  am Datensatz - warum umgebucht wurde, steht am Datum selbst.
 - T-0042 **Wind nur noch am Ort geholt.** Der Lauf holte die sechs
   Windvariablen fuer alle 68 Faecherzellen, gelesen werden sie
   ausschliesslich am Heimatpunkt - der Advektionsversatz ist ein

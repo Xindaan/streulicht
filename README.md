@@ -220,6 +220,24 @@ launchctl kickstart -k gui/$UID/de.greatbelow.streulicht.erinnerung
 Der zweite Befehl stoesst einen Agenten sofort an — der Funktionstest, ohne
 auf die naechste Kalenderzeit zu warten. Logs liegen unter `daten/*.log`.
 
+> **EINE GEAENDERTE PLIST WIRD NICHT VON SELBST GELESEN**, und `kickstart`
+> hilft dabei nicht. Am 18.08.2026 hat `cp` plus `kickstart -k` einen Lauf
+> gestartet — aber mit der ALTEN, noch in launchd geladenen Definition:
+> ohne `--geplant` und mit dem alten 07:30-Kalender. Der Lauf lief also
+> mittags los und ignorierte sein Zeitfenster. `launchctl print` zeigte
+> weiterhin `Hour 7, Minute 30` und keine Argumente.
+>
+> Zum Nachladen gehoert **bootout, dann bootstrap**:
+>
+> ```bash
+> launchctl bootout gui/$UID/de.greatbelow.streulicht.alarm
+> launchctl bootstrap gui/$UID ~/Library/LaunchAgents/de.greatbelow.streulicht.alarm.plist
+> launchctl print gui/$UID/de.greatbelow.streulicht.alarm | grep -A4 arguments
+> ```
+>
+> Die dritte Zeile ist die Gegenprobe — ohne sie glaubt man, es sei
+> nachgeladen.
+
 **Warum die Erinnerung stuendlich laeuft und nicht zur Sonnenuntergangszeit:**
 die wandert im Jahr um mehr als vier Stunden. Das Skript prueft selbst, ob
 sie gerade im Fenster liegt, und ist je Abend idempotent.
