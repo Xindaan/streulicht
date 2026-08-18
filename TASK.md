@@ -184,6 +184,33 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
 
 ## Done
 
+### 18.08.2026 &mdash; Zweiter Lauf (T-0045), Kontingentgrenzen vollstaendig
+- T-0045 **Zweiter Alarmlauf am Vormittag.** Fenster `morgens` um 09:20 UTC,
+  kurz nachdem der 00z-Lauf verfuegbar wird (08:44 UTC, gemessen); das
+  bisherige sonnenuntergangsrelative Fenster heisst jetzt `abends`.
+  `zustand[ort]["laeufe"][tag]` ist von einer Zeichenkette auf
+  `{fenster: zeit}` umgestellt; der alte Eintrag blockiert nichts (im Test
+  abgedeckt).
+  **Kein zweiter Push:** je Abend hoechstens ein Alarm, das haelt
+  `zustand["alarme"]` fest. Der Vormittagslauf bringt aktuelle Zahlen auf
+  die Seite und meldet einen Abend ueber der Schwelle frueher.
+  Im Winter benutzen beide denselben 00z-Lauf - bewusst hingenommen, eine
+  Sonderregel waere mehr Code als Nutzen.
+  `test_lauffenster.py` prueft jetzt ueber ein Jahr, dass JEDER Tag genau
+  einmal `morgens` und einmal `abends` traegt, und dass die Fenster sich nie
+  naeher kommen als ihre Breite. Negativprobe: `lauf_morgens_utc` auf 12:00
+  kostet 97 Abendlaeufe.
+- **Kontingent vollstaendig vermessen.** Frei: 600/min, 5.000/h, 10.000/Tag
+  und **300.000/Monat**. Zwei Laeufe taeglich sind rund 210.000 im Monat -
+  es passt, ohne viel Luft.
+  Ein Abo waere **Professional**, nicht Standard: die Ensemble-API ist in
+  Standard ausdruecklich nicht enthalten (Preistabelle und FAQ auf
+  open-meteo.com/en/pricing). Preis laut Open-Meteos eigenem Blog vom
+  12.06.2023: Standard 29 USD, Professional 99 USD im Monat. Die aktuelle
+  Tabelle laedt ueber ein Stripe-Widget und war hier nicht auslesbar - die
+  Zahl ist also drei Jahre alt und vor einer Entscheidung nachzusehen.
+
+
 ### 18.08.2026 &mdash; Lauf ans Ereignis geruecht (T-0041), Kontingent gemessen
 - T-0041 **Der Alarmlauf ist sonnenuntergangsrelativ statt fest um 07:30.**
   Zwei Messungen dahinter:

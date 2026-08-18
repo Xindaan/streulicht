@@ -164,8 +164,8 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
        launchctl print gui/$UID/de.greatbelow.streulicht.alarm | grep -A4 arguments
 
    Die letzte Zeile ist die Gegenprobe: dort muss `--geplant` stehen.
-2. **Den ersten sonnenuntergangsrelativen Lauf ansehen** (heute gegen 17:20
-   Ortszeit): kommt er durch, verschwindet der Warnstreifen auf der Seite.
+2. **Die beiden neuen Laeufe ansehen** (09:20 UTC und rund 3 h vor
+   Sonnenuntergang). Kommen sie durch, steht der Warnstreifen nie da.
 3. **T-0040** Ueberwachung der Exitcodes - zwei von vier Laeufen sind
    gescheitert, gemerkt hat es ein Mensch.
 4. **T-0038** Rundung an der 80er-Schwelle, wenn der Fall wieder auftritt.

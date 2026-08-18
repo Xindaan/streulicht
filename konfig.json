@@ -6,6 +6,8 @@
  "vorlauf_tage": 10,
  "lauf_vorlauf_stunden": 3,
  "lauf_fenster_min": 60,
+ "lauf_morgens_utc": "09:20",
+ "_hinweis_lauf_morgens": "Zweiter Lauf am Vormittag, kurz nachdem der 00z-Lauf verfuegbar wird (08:44 UTC, gemessen 18.08.2026). Er schiebt KEINEN zweiten Push nach - je Abend geht hoechstens ein Alarm raus, das haelt zustand['alarme'] fest. Er sorgt dafuer, dass vormittags schon aktuelle Zahlen auf der Seite stehen und ein Abend, der die Schwelle reisst, frueher gemeldet wird. Im Winter benutzen beide Laeufe denselben 00z-Lauf, der zweite ist dann redundant - das ist bewusst in Kauf genommen: zwei Laeufe kosten rund 7.000 der 10.000 Tageseinheiten, und eine Sonderregel dafuer waere mehr Code als Nutzen.",
  "_hinweis_lauf": "Der Alarmlauf ist SONNENUNTERGANGSRELATIV, nicht auf eine feste Uhrzeit gelegt: der Sonnenuntergang wandert in Berlin ueber das Jahr um mehr als fuenfeinhalb Stunden, eine feste Uhrzeit liegt im Dezember hinter dem Ereignis, vor dem sie warnen soll. lauf_vorlauf_stunden=3 heisst: gerechnet wird rund drei Stunden vor Sonnenuntergang. Damit ist der juengste verfuegbare Modelllauf 12 bis 17 Stunden alt statt 21 bis 24 wie beim frueheren 07:30-Termin (Verzug bis zur Verfuegbarkeit: 8,7 h, gemessen 18.08.2026). lauf_fenster_min ist die Breite des Fensters, in dem der stuendliche Agent zuschlaegt.",
  "advektion": true,
  "seiten_basis": "https://xindaan.github.io/streulicht",

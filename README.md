@@ -148,7 +148,7 @@ Fuenf Agenten in `~/Library/LaunchAgents/`, alle mit
 
 | Label | Skript | Wann |
 |---|---|---|
-| `de.greatbelow.streulicht.alarm` | `alarm.py --geplant` | stuendlich zur 20. Minute, **rechnet rund 3 h vor Sonnenuntergang** |
+| `de.greatbelow.streulicht.alarm` | `alarm.py --geplant` | stuendlich zur 20. Minute, **rechnet zweimal: 09:20 UTC und rund 3 h vor Sonnenuntergang** |
 | `de.greatbelow.streulicht.erinnerung` | `erinnerung.py` | stuendlich zur 15. Minute |
 | `de.greatbelow.streulicht.bewertung` | `bewertungen_holen.py` | alle 3 h zur 5. Minute |
 | `de.greatbelow.streulicht.archiv` | `archiviere.py` | 08:00 |
@@ -164,6 +164,12 @@ und die Daten sind erst **8,7 Stunden nach der Initialisierung** abrufbar
 war damit der 18z-Lauf des Vorabends der juengste - **21 bis 24 Stunden**
 Vorlauf auf den Sonnenuntergang. Rechnet man stattdessen rund drei Stunden
 vor Sonnenuntergang, sind es **12 bis 17 Stunden**, das ganze Jahr ueber.
+
+**Was die Grenze kostet.** Die freie Stufe erlaubt 600 Aufrufe/Minute,
+5.000/Stunde, 10.000/Tag und **300.000/Monat**. Zwei Laeufe am Tag sind rund
+210.000 im Monat - es passt, aber ohne viel Luft. Ein Abo waere die
+**Professional**-Stufe, nicht Standard: die Ensemble-API ist in Standard
+ausdruecklich nicht enthalten (Preistabelle und FAQ auf open-meteo.com/en/pricing).
 
 **Zweitens das Kontingent.** Ein vollstaendiger Lauf sind rund zehn
 HTTP-Anfragen ueber 216 Ortsabrufe. **Open-Meteo zaehlt Ensemble-Member wie
@@ -185,9 +191,32 @@ Ereignis, vor dem er warnen soll. Der Agent laeuft deshalb stuendlich und
 Erinnerung. `skripte/test_lauffenster.py` prueft ueber ein ganzes Jahr, dass
 genau ein Termin je Tag ins Fenster faellt, keiner und keine zwei.
 
-Steuergroessen in `konfig.json`: `lauf_vorlauf_stunden` (3) und
-`lauf_fenster_min` (60). Das Fenster darf **nicht** schmaler werden als der
-Abstand der Agenten-Termine, sonst faellt an manchen Tagen kein Tick hinein.
+### Zwei Laeufe am Tag
+
+Seit dem 18.08.2026 gibt es **zwei** Fenster:
+
+| Fenster | Wann | Modelllauf | Wozu |
+|---|---|---|---|
+| `morgens` | 09:20 UTC, fest | 00z (ab 08:44 UTC da) | vormittags aktuelle Zahlen auf der Seite |
+| `abends` | rund 3 h vor Sonnenuntergang | der juengste verfuegbare | der wichtige: kuerzester Vorlauf |
+
+**Der zweite Lauf schiebt keinen zweiten Push nach.** Je Abend geht
+hoechstens ein Alarm raus, das haelt `zustand["alarme"]` fest. Der
+Vormittagslauf sorgt dafuer, dass ein Abend ueber der Schwelle frueher
+gemeldet wird und die Seite vormittags nicht den Vorabend zeigt.
+
+Im Winter benutzen beide Laeufe denselben 00z-Lauf (der 06z kommt erst um
+16:44 Ortszeit, da ist die Sonne schon weg) - der zweite ist dann redundant.
+Bewusst in Kauf genommen: zwei Laeufe kosten rund 7.000 der 10.000
+Tageseinheiten, und eine Sonderregel dafuer waere mehr Code als Nutzen.
+
+Steuergroessen in `konfig.json`: `lauf_vorlauf_stunden` (3),
+`lauf_morgens_utc` (09:20) und `lauf_fenster_min` (60). Das Fenster darf
+**nicht** schmaler werden als der Abstand der Agenten-Termine, sonst faellt
+an manchen Tagen kein Tick hinein - und die beiden Fenster duerfen sich
+nicht naeher kommen als ihre eigene Breite. `test_lauffenster.py` prueft
+beides ueber ein ganzes Jahr; die Gegenprobe mit `lauf_morgens_utc` auf
+12:00 kostet 97 Abendlaeufe.
 
 **Die ausgelieferte Seite haengt also an zwei Laeufen**, und beide koennen
 einzeln ausfallen: `alarm.py` holt die Zahlen, `ausliefern.py` baut daraus

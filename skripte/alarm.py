@@ -437,31 +437,64 @@ def sende(topic, titel, text, prio="default", klick=None):
         return f.status
 
 
-def im_laufenster(jetzt, kfg, ort, zustand):
-    """(ja, Grund) - ist JETZT der Zeitpunkt fuer den geplanten Lauf?
+def laufziele(jetzt, kfg, ort):
+    """[(Name, Zielzeitpunkt UTC)] - die geplanten Laeufe dieses Tages.
 
-    SONNENUNTERGANGSRELATIV, nicht auf eine feste Uhrzeit.  Der
-    Sonnenuntergang wandert in Berlin ueber das Jahr um mehr als
-    fuenfeinhalb Stunden; ein fester Termin liegt im Dezember hinter dem
-    Ereignis, vor dem er warnen soll (SU am 21.12. um 15:53).
+    ZWEI Fenster seit dem 18.08.2026:
+
+    "abends"   SONNENUNTERGANGSRELATIV, drei Stunden vorher.  Der wichtige:
+               er sieht den juengsten Modelllauf und traegt den Push.  Keine
+               feste Uhrzeit, weil der Sonnenuntergang in Berlin ueber das
+               Jahr um mehr als fuenfeinhalb Stunden wandert - ein Termin um
+               17:00 laege im Dezember HINTER dem Ereignis (SU 15:53).
+    "morgens"  feste UTC-Zeit, kurz nachdem der 00z-Lauf verfuegbar wird
+               (08:44 UTC, gemessen).  Damit stehen vormittags schon
+               aktuelle Zahlen auf der Seite.
+    """
+    tag = jetzt.astimezone(ZoneInfo(ort.get("zeitzone", "UTC"))).date()
+    aus = []
+    hh, mm = (kfg.get("lauf_morgens_utc") or "09:20").split(":")
+    aus.append(("morgens",
+                datetime.combine(tag, dtzeit(int(hh), int(mm)), timezone.utc)))
+    std, _ = sonnenuntergang(tag, ort["breite"], ort["laenge"])
+    if std is not None:
+        su = datetime.combine(tag, dtzeit(0), timezone.utc) + timedelta(hours=std)
+        aus.append(("abends",
+                    su - timedelta(hours=kfg.get("lauf_vorlauf_stunden", 3))))
+    return tag, aus
+
+
+def gelaufen(zustand, ort, tag):
+    """Welche Fenster hat dieser Ort heute schon bedient?
+
+    Vertraegt den alten Zustand, in dem `laeufe[tag]` eine Zeichenkette war:
+    ein solcher Eintrag blockiert kein Fenster, er ist nur Historie.
+    """
+    e = (zustand.get(ort["name"], {}).get("laeufe", {}) or {}).get(str(tag))
+    return set(e) if isinstance(e, dict) else set()
+
+
+def im_laufenster(jetzt, kfg, ort, zustand):
+    """(Fenstername oder None, Grund) - ist JETZT ein geplanter Lauf faellig?
 
     Dasselbe Muster wie in erinnerung.py: der Agent laeuft stuendlich, die
     Entscheidung faellt hier.  Das ist der einzige Weg, der Sommer und
     Winter mit EINER Regel bedient.
     """
-    tag = jetzt.astimezone(ZoneInfo(ort.get("zeitzone", "UTC"))).date()
-    if str(tag) in zustand.get(ort["name"], {}).get("laeufe", {}):
-        return False, "heute schon gerechnet"
-    std, _ = sonnenuntergang(tag, ort["breite"], ort["laenge"])
-    if std is None:
-        return False, "kein Sonnenuntergang an diesem Tag"
-    su = datetime.combine(tag, dtzeit(0), timezone.utc) + timedelta(hours=std)
-    ziel = su - timedelta(hours=kfg.get("lauf_vorlauf_stunden", 3))
+    tag, ziele = laufziele(jetzt, kfg, ort)
+    schon = gelaufen(zustand, ort, tag)
     halb = timedelta(minutes=kfg.get("lauf_fenster_min", 60)) / 2
-    if not (ziel - halb <= jetzt <= ziel + halb):
-        return False, ("ausserhalb des Fensters (Ziel %s UTC, jetzt %s UTC)"
-                       % (ziel.strftime("%H:%M"), jetzt.strftime("%H:%M")))
-    return True, "im Fenster"
+    offen = []
+    for name, ziel in ziele:
+        if name in schon:
+            continue
+        if ziel - halb <= jetzt <= ziel + halb:
+            return name, "im Fenster %s" % name
+        offen.append("%s %s" % (name, ziel.strftime("%H:%M")))
+    if not offen:
+        return None, "heute schon gerechnet"
+    return None, ("ausserhalb der Fenster (offen: %s; jetzt %s UTC)"
+                  % (", ".join(offen), jetzt.strftime("%H:%M")))
 
 
 def main():
@@ -506,17 +539,18 @@ def main():
 
     jetzt = (datetime.fromisoformat(a.jetzt).replace(tzinfo=timezone.utc)
              if a.jetzt else datetime.now(timezone.utc))
+    # Welches Fenster bedient dieser Lauf?  Fuer die Buchhaltung am Ende.
+    fenster = {}
     if a.geplant:
         # Der stuendliche Agent fragt hier, ob er dran ist.  Ein Lauf von
         # Hand fragt NICHT - wer ihn startet, meint ihn.
-        offen = [o for o in kfg["orte"]
-                 if im_laufenster(jetzt, kfg, o, zustand)[0]]
-        if not offen:
-            for o in kfg["orte"]:
-                melde("   %s: %s"
-                      % (o["name"], im_laufenster(jetzt, kfg, o, zustand)[1]))
+        for o in kfg["orte"]:
+            name, grund = im_laufenster(jetzt, kfg, o, zustand)
+            melde("   %s: %s" % (o["name"], grund))
+            if name:
+                fenster[o["name"]] = name
+        if not fenster:
             return
-        melde("   im Fenster: %s" % ", ".join(o["name"] for o in offen))
 
     for ort in kfg["orte"]:
         name = ort["name"]
@@ -570,9 +604,13 @@ def main():
     # gestorbener Lauf darf das Fenster fuer heute nicht verbrauchen.
     for ort in kfg["orte"]:
         tag = jetzt.astimezone(ZoneInfo(ort.get("zeitzone", "UTC"))).date()
-        zustand.setdefault(ort["name"], {"abende": {}, "alarme": {}}) \
-               .setdefault("laeufe", {})[str(tag)] = \
+        e = zustand.setdefault(ort["name"], {"abende": {}, "alarme": {}})
+        heute = e.setdefault("laeufe", {}).get(str(tag))
+        if not isinstance(heute, dict):
+            heute = {}
+        heute[fenster.get(ort["name"], "vonhand")] = \
             jetzt.isoformat(timespec="seconds")
+        e["laeufe"][str(tag)] = heute
 
     melde("   Bilanz: %d HTTP-Anfragen, %d Ortsabrufe, bis %d Variablen, "
           "%d Tage, %d Member"
