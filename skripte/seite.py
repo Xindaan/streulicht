@@ -203,6 +203,23 @@ def _bilder(tag, feld, segmente, azimut, schirm):
     return schnitt_bild, karte_bild
 
 
+def datenstand(ort_name):
+    """{geholt, modelllauf, fenster} des letzten Laufs - oder {}.
+
+    Beantwortet die Frage "von wann sind die Wetterdaten". Zwei Zeiten, und
+    sie sind nicht dasselbe: `modelllauf` ist die Initialisierung des
+    ECMWF-Laufs, auf dem die Zahlen beruhen; `geholt` der Zeitpunkt, an dem
+    wir sie abgerufen haben. Dazwischen liegen mehrere Stunden - die Zeit,
+    die das Rechenzentrum braucht.
+    """
+    zp = os.path.join(BASIS, "daten", "zustand.json")
+    if not os.path.exists(zp):
+        return {}
+    with open(zp) as f:
+        zustand = json.load(f)
+    return (zustand.get(ort_name) or {}).get("stand") or {}
+
+
 def prognose_eintraege(ort_name, perzentil, s_stern):
     """Die kommenden Abende aus daten/zustand.json - was der Alarm gerechnet hat.
 
@@ -227,11 +244,18 @@ def prognose_eintraege(ort_name, perzentil, s_stern):
     with open(zp) as f:
         zustand = json.load(f)
     abende = (zustand.get(ort_name) or {}).get("abende", {})
+    heute = date.today().isoformat()
     aus = []
     for t in sorted(abende):
         e = abende[t]
         if e.get("p") is None or e.get("median") is None:
             continue                       # bewertet, aber nie prognostiziert
+        # VERGANGENE Abende gehoeren nicht auf eine Prognoseseite.  Der
+        # Zustand sammelt sie, weil dort auch die Bewertungen haengen - die
+        # Seite zeigte deshalb am 18.08. noch den 16. und 17. und schrieb
+        # "13 ABENDE VORAUSGERECHNET" darueber. Vorausgerechnet waren es 11.
+        if t < heute:
+            continue
         schnitt_bild, karte_bild = ("", "")
         if e.get("feld"):
             schnitt_bild, karte_bild = _bilder(
@@ -352,6 +376,14 @@ body{margin:0;background:var(--papier);color:var(--tinte);
 .korpus{margin:0;padding:20px 18px 0;color:var(--gedaempft);
  font-size:12px;font-weight:700;letter-spacing:var(--sperrung-label);
  text-transform:uppercase}
+
+/* Von wann die Wetterdaten sind.  Bewusst leise und bewusst zwei Zeiten:
+   der Modelllauf ist das, worauf die Zahlen beruhen, das Abrufen nur der
+   Moment, in dem wir sie geholt haben.  Wer nur eine Zeit sieht, haelt die
+   Daten fuer so frisch wie den Abruf. */
+.stand{margin:4px 0 0;padding:0 18px;color:var(--gedaempft);font-size:12px}
+.stand:empty{display:none}
+.leiste-stand{display:none}
 
 /* --- Kopfbild: Hero und Himmelsband ---------------------------------- */
 /* Auf dem Telefon stehen sie UNTEREINANDER (Text, dann Band, dann
@@ -491,6 +523,8 @@ body{margin:0;background:var(--papier);color:var(--tinte);
  .leiste-nav a{color:var(--tinte2);font-size:14px;font-weight:600;
   text-decoration:none}
  .korpus{display:none}
+ .stand{display:none}
+ .leiste-stand{display:inline;color:var(--gedaempft);font-size:12px}
  .veraltet{padding:10px max(var(--rand-gross),
   calc((100% - var(--breite-gross)) / 2 + var(--rand-gross)))}
 
@@ -565,11 +599,13 @@ body{margin:0;background:var(--papier);color:var(--tinte);
 <div class="wortmarke"><p class="marke-wort">Streulicht</p>
 <span class="ortspille">__ORT__</span></div>
 <nav class="leiste-nav"><span class="leiste-korpus">__KORPUS__</span>
+<span class="leiste-stand">__STAND__</span>
 <a href="bisher.html">Was bisher gemessen ist</a></nav>
 </div></header>
 
 __VERALTET__
 <p class="korpus">__KORPUS__</p>
+<p class="stand">__STAND__</p>
 
 <main>
 <section class="kopfbild">
@@ -734,6 +770,32 @@ def main():
     # Entwurf sah "2 BIS 10 TAGE" vor; gerechnet aus dt_h ergab das "0 BIS
     # 0 TAGE", weil der erste Abend am Lauftag selbst liegt (dt_h ~ 12) und
     # das Runden ihn auf null drueckt.  Ein Datum kann nicht falsch runden.
+    # Die Standzeile.  ZWEI Zeiten, weil sie verschiedene Dinge sagen - und
+    # die Reihenfolge ist Absicht: zuerst worauf die Zahlen beruhen, dann
+    # wann wir sie geholt haben.
+    st = datenstand(a.ort)
+    if a.rueckschau or not st:
+        stand_text = ""
+    else:
+        teile = []
+        if st.get("modelllauf"):
+            m = datetime.fromisoformat(st["modelllauf"])
+            if m.tzinfo is None:
+                m = m.replace(tzinfo=timezone.utc)
+            m = m.astimezone(timezone.utc)
+            teile.append("Modelllauf %s, %s&nbsp;UTC"
+                         % (m.strftime("%d.%m."), m.strftime("%H")))
+        if st.get("geholt"):
+            g = datetime.fromisoformat(st["geholt"])
+            # Ohne Zeitzone im Wert waere .astimezone() eine stille Luege:
+            # es nimmt Ortszeit an, gespeichert wird aber UTC.
+            if g.tzinfo is None:
+                g = g.replace(tzinfo=timezone.utc)
+            g = g.astimezone()
+            teile.append("geholt %s, %s&nbsp;Uhr"
+                         % (g.strftime("%d.%m."), g.strftime("%H:%M")))
+        stand_text = " &#183; ".join(teile)
+
     korpus = "%d ABENDE %s &#183; %s BIS %s" % (
         n, "R&Uuml;CKGERECHNET" if a.rueckschau else "VORAUSGERECHNET",
         date.fromisoformat(eintraege[0]["tag"]).strftime("%d.%m."),
@@ -835,6 +897,7 @@ def main():
             .replace("__TOKENS__", tokens.quelltext())
             .replace("__ORT__", anzeige)
             .replace("__KORPUS__", korpus)
+            .replace("__STAND__", stand_text)
             .replace("__VERALTET__", veraltet)
             .replace("__ANZAHL_WORT__", ANZAHL_WORT.get(n, "%d ABENDE" % n))
             .replace("__ACHSE_GROSS__", str(ACHSE_PX_GROSS))

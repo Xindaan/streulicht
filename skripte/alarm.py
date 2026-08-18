@@ -98,6 +98,26 @@ def mitte(z):
 LAST = {"anfragen": 0, "orte": 0, "variablen": 0, "member": 0, "tage": 0}
 
 
+def modelllauf(modell):
+    """Initialisierungszeit des juengsten verfuegbaren Modelllaufs, oder None.
+
+    Kommt aus einer STATISCHEN Datei und zaehlt nicht aufs Kontingent.  Sie
+    ist die einzige ehrliche Antwort auf "von wann sind die Wetterdaten":
+    unser Abrufzeitpunkt sagt nur, wann WIR geholt haben - der Modelllauf
+    sagt, worauf die Zahlen beruhen.  Zwischen beiden liegen 8,7 Stunden
+    (gemessen 18.08.2026).
+    """
+    u = ("https://api.open-meteo.com/data/%s_ensemble/static/meta.json"
+         % modell)
+    try:
+        with urllib.request.urlopen(u, timeout=30) as f:
+            d = json.load(f)
+        return datetime.fromtimestamp(d["last_run_initialisation_time"],
+                                      timezone.utc).isoformat(timespec="minutes")
+    except Exception:                                            # noqa: BLE001
+        return None                     # kein Grund, den Lauf daran zu haengen
+
+
 def uhr():
     return datetime.now().strftime("%H:%M:%S")
 
@@ -228,9 +248,23 @@ def lauf_ort(ort, kfg, zustand, trocken):
 
     abende = {}
     fan_zellen = set()
-    for k in range(1, kfg["vorlauf_tage"] + 1):
+    # AB HEUTE, nicht ab morgen.  Bis zum 18.08.2026 begann die Schleife bei
+    # k = 1 - der heutige Abend wurde also nie gerechnet, sondern trug immer
+    # die Zahlen vom Vortag.  Solange der Lauf morgens um 07:30 lag, fiel das
+    # kaum auf; seit er drei Stunden vor Sonnenuntergang liegt, ist es der
+    # Kern der Sache: der frischeste Modelllauf soll GENAU diesem Abend
+    # gelten.  Am 18.08. stand fuer heute noch der Lauf vom 16.08.
+    #
+    # Ein Abend, dessen Sonnenuntergang schon vorbei ist, faellt raus - sonst
+    # rechnet ein Lauf von Hand um Mitternacht eine Vergangenheit vor.
+    for k in range(0, kfg["vorlauf_tage"] + 1):
         t = heute + timedelta(days=k)
         std, az = sonnenuntergang(t, breite, laenge)
+        if std is not None and k == 0:
+            su = datetime.combine(t, dtzeit(0), timezone.utc) + timedelta(hours=std)
+            if su <= datetime.now(timezone.utc):
+                melde("   heutiger Abend: Sonnenuntergang vorbei, uebersprungen")
+                continue
         if std is None:
             continue
         punkte = {}
@@ -600,6 +634,10 @@ def main():
                     timezone.utc).isoformat(timespec="seconds"), "p": e["p"]}
                 print("     -> Push gesendet")
 
+    # Der Modelllauf wird VOR der Buchung geholt - sie schreibt ihn mit.
+    init = modelllauf(kfg["modell"])
+    melde("   Modelllauf: %s" % (init or "unbekannt"))
+
     # Erst NACH erfolgreichem Durchlauf eintragen: ein am Kontingent
     # gestorbener Lauf darf das Fenster fuer heute nicht verbrauchen.
     for ort in kfg["orte"]:
@@ -611,6 +649,9 @@ def main():
         heute[fenster.get(ort["name"], "vonhand")] = \
             jetzt.isoformat(timespec="seconds")
         e["laeufe"][str(tag)] = heute
+        e["stand"] = {"geholt": jetzt.isoformat(timespec="minutes"),
+                      "modelllauf": init,
+                      "fenster": fenster.get(ort["name"], "vonhand")}
 
     melde("   Bilanz: %d HTTP-Anfragen, %d Ortsabrufe, bis %d Variablen, "
           "%d Tage, %d Member"

@@ -184,6 +184,38 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
 
 ## Done
 
+### 18.08.2026 &mdash; Die Seite zeigte Vergangenheit (T-0046, T-0047)
+- T-0046 **Der heutige Abend wurde nie gerechnet.** Die Schleife in
+  `alarm.py` begann bei `k = 1`, also bei morgen - der heutige Abend trug
+  immer die Zahlen des Vortags. Am 18.08. stand fuer heute noch der Lauf vom
+  **16.08.**, also zwei Tage alt. Solange der Lauf morgens um 07:30 lag,
+  fiel das kaum auf; seit er drei Stunden vor Sonnenuntergang liegt, ist es
+  der Kern der Sache - der frischeste Modelllauf soll GENAU diesem Abend
+  gelten. Jetzt `range(0, ...)`, und ein Abend, dessen Sonnenuntergang schon
+  vorbei ist, faellt raus.
+  **Das relativiert meine eigene Begruendung von heute frueh**: die
+  Umstellung auf sonnenuntergangsrelativ hat den Vorlauf fuer *kuenftige*
+  Abende halbiert, fuer den *heutigen* aber gar nichts gebracht, weil er
+  nicht mitgerechnet wurde.
+- T-0047 **Vergangene Abende gehoeren nicht auf die Prognoseseite.** Der
+  Zustand sammelt sie, weil dort die Bewertungen haengen - die Seite zeigte
+  deshalb am 18.08. den 16. und 17. mit und schrieb "13 ABENDE
+  VORAUSGERECHNET &#183; 16.08. BIS 28.08." darueber. Vorausgerechnet waren
+  es 11. Jetzt filtert `prognose_eintraege` auf heute und spaeter; der Test
+  prueft zusaetzlich, dass die Korpuszeile Anzahl und Spanne der wirklich
+  gezeigten Abende nennt.
+- **Standzeile: von wann die Wetterdaten sind.** Zwei Zeiten, und sie sind
+  nicht dasselbe: `Modelllauf 18.08., 06 UTC &#183; geholt 18.08., 17:26 Uhr`.
+  Der Modelllauf ist die Initialisierung des ECMWF-Laufs, auf dem die Zahlen
+  beruhen; das Abrufen nur der Moment, in dem wir sie geholt haben.
+  `alarm.modelllauf()` liest ihn aus `meta.json` - eine statische Datei, die
+  nicht aufs Kontingent zaehlt. Nebenbefund dabei: der Verzug zwischen
+  Initialisierung und Verfuegbarkeit ist NICHT konstant 8,7 h wie am
+  Vormittag aus einer einzigen Probe geschaetzt - um 13:00 war der 06z-Lauf
+  schon da, also rund 5 h. Die Standzeile macht das kuenftig beobachtbar,
+  statt es schaetzen zu muessen.
+
+
 ### 18.08.2026 &mdash; Zweiter Lauf (T-0045), Kontingentgrenzen vollstaendig
 - T-0045 **Zweiter Alarmlauf am Vormittag.** Fenster `morgens` um 09:20 UTC,
   kurz nachdem der 00z-Lauf verfuegbar wird (08:44 UTC, gemessen); das

@@ -159,6 +159,28 @@ def main():
         pruefe(html.count("bisher.html") == 2,
                "Bilanzverweis genau zweimal (%d)" % html.count("bisher.html"))
 
+        print("\n=== 5b2. Nur kuenftige Abende, und die Korpuszeile stimmt")
+        from datetime import date as _d
+        meta = json.loads(re.search(r"const META=(\[.*?\]), BESTER",
+                                    html, re.S).group(1))
+        tage = [e["tag"] for e in meta]
+        heute = _d.today().isoformat()
+        vergangen = [t for t in tage if t < heute]
+        # Der Zustand sammelt auch vergangene Abende (dort haengen die
+        # Bewertungen). Auf eine PROGNOSEseite gehoeren sie nicht - am
+        # 18.08.2026 stand dort "13 ABENDE VORAUSGERECHNET · 16.08. BIS
+        # 28.08.", vorausgerechnet waren es 11.
+        pruefe(not vergangen,
+               "kein vergangener Abend auf der Seite (%s)"
+               % (vergangen or "-"))
+        korpus = re.search(r'class="korpus">([^<]*)', html).group(1)
+        pruefe(str(len(meta)) in korpus,
+               "Korpuszeile nennt die gezeigte Anzahl (%d): %s"
+               % (len(meta), korpus))
+        for t in (tage[0], tage[-1]):
+            d = _d.fromisoformat(t).strftime("%d.%m.")
+            pruefe(d in korpus, "Korpuszeile nennt %s" % d)
+
         print("\n=== 5c. Altersangabe")
         # Der Streifen darf genau dann dastehen, wenn die Zahlen nicht vom
         # heutigen Alarmlauf stammen.  Am 17.08.2026 hat die Seite den
@@ -170,6 +192,18 @@ def main():
                          if abende[t].get("median") is not None} - {None})
         frisch = bool(laeufe) and laeufe[-1] == date.today().isoformat()
         hat_streifen = 'class="veraltet"' in html
+        # Von wann sind die Wetterdaten?  Die Zeile darf leer sein, solange
+        # kein Lauf mit der neuen Buchhaltung durch ist - aber wenn der
+        # Zustand einen Stand fuehrt, muss sie ihn zeigen.
+        stand = (json.load(open(zp)).get("berlin") or {}).get("stand") or {}
+        zeile = re.search(r'class="stand">([^<]*)', html)
+        if stand.get("geholt"):
+            pruefe(bool(zeile and zeile.group(1).strip()),
+                   "Standzeile gefuellt: %r"
+                   % (zeile.group(1) if zeile else None))
+            if stand.get("modelllauf"):
+                pruefe("Modelllauf" in (zeile.group(1) if zeile else ""),
+                       "und nennt den Modelllauf, nicht nur den Abruf")
         pruefe(hat_streifen != frisch,
                "Altersstreifen passt zum Zustand (Lauf %s, Streifen %s)"
                % (laeufe[-1] if laeufe else "?",

@@ -77,6 +77,20 @@ Auskunft darueber, was noch fehlt. **Nicht zu verwechseln mit
 `rueckschau.html`** — das ist die lokale Diagnose ueber vier Jahre
 Klimatologie (9,5 MB, gitignoriert, nie ausgeliefert).
 
+Unter der Kopfzeile steht, **von wann die Wetterdaten sind** &mdash; zwei
+Zeiten, weil sie Verschiedenes sagen:
+
+> Modelllauf 18.08., 06 UTC &middot; geholt 18.08., 17:26 Uhr
+
+Der **Modelllauf** ist die Initialisierung des ECMWF-Laufs, auf dem die
+Zahlen beruhen; **geholt** der Moment, in dem wir sie abgerufen haben.
+Dazwischen liegen mehrere Stunden Rechenzeit im Rechenzentrum. Wer nur eine
+Zeit sieht, haelt die Daten fuer so frisch wie den Abruf.
+
+Gezeigt werden nur Abende **ab heute**. Der Zustand fuehrt auch vergangene
+&mdash; dort haengen die Bewertungen &mdash; aber auf einer Prognoseseite
+haben sie nichts zu suchen.
+
 Die Prognoseseite zeigt je Abend **zwei Zahlen, die nicht dasselbe sind**:
 
 - **Wahrscheinlichkeit** — Anteil der Ensemble-Member ueber s\*. "Wie sicher?"
