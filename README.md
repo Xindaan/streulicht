@@ -166,9 +166,15 @@ Vorlauf auf den Sonnenuntergang. Rechnet man stattdessen rund drei Stunden
 vor Sonnenuntergang, sind es **12 bis 17 Stunden**, das ganze Jahr ueber.
 
 **Zweitens das Kontingent.** Ein vollstaendiger Lauf sind rund zehn
-HTTP-Anfragen ueber 216 Ortsabrufe, und danach ist das Stundenbudget von
-Open-Meteo (5.000) leer. Das Tagesbudget (10.000) traegt **genau zwei
-Laeufe**. Es gibt also keinen zweiten Lauf "zur Sicherheit" - es gibt einen,
+HTTP-Anfragen ueber 216 Ortsabrufe. **Open-Meteo zaehlt Ensemble-Member wie
+zusaetzliche Variablen** - neun Variablen mal 51 Member wiegen dreimal so
+viel wie drei mal 51. Bis zum 18.08.2026 holte der Lauf die sechs
+Windvariablen fuer alle 68 Faecherzellen, obwohl sie **nur am Heimatpunkt
+gelesen** werden (der Advektionsversatz ist ein Ensemble-Mittelwind je
+Schicht, kein Feld). Das kostete rund 5.500 Einheiten und riss das
+Stundenlimit von 5.000 bei der vorletzten Anfrage. Mit Wind nur am Ort sind
+es rund 3.500. Das Tagesbudget (10.000) traegt damit knapp **drei
+Laeufe** statt zwei. Es gibt also keinen zweiten Lauf "zur Sicherheit" - es gibt einen,
 und der muss sitzen. Deshalb liegt er so spaet wie moeglich.
 
 **Warum keine feste Uhrzeit.** Der Sonnenuntergang wandert in Berlin ueber
@@ -365,6 +371,7 @@ python3 skripte/test_advektion.py   # semi-Lagrangesche Verschiebung
 python3 skripte/test_grib2.py       # GRIB2-Leser, Vorzeichen-Betrag, Sektionen
 python3 skripte/test_seiten.py      # erzeugte Seiten und die neuen Grafiken
 python3 skripte/test_lauffenster.py # ein Lauf je Tag, ueber ein ganzes Jahr
+python3 skripte/test_abruf.py       # Wind nur am Ort, Advektion trotzdem aktiv
 node   skripte/test_bewertungsseite.js   # Warteschlange und Freilegung
 ```
 

@@ -210,6 +210,20 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   auf 30 min verengt -> 168 Tage ohne Lauf; auf 150 min geweitet -> 365
   Tage mit zwei Laeufen. Beides schlaegt an.
   **Braucht ein `launchctl`-Nachladen beider Agenten** (siehe STATE).
+- T-0042 **Wind nur noch am Ort geholt.** Der Lauf holte die sechs
+  Windvariablen fuer alle 68 Faecherzellen, gelesen werden sie
+  ausschliesslich am Heimatpunkt - der Advektionsversatz ist ein
+  Ensemble-Mittelwind je Schicht, kein Feld. Und Open-Meteo zaehlt
+  Ensemble-Member wie zusaetzliche Variablen, 9 x 51 wiegt dreimal so viel
+  wie 3 x 51. Kosten vorher rund 5.500 Einheiten (Stundenlimit 5.000, riss
+  bei der vorletzten Anfrage), jetzt rund 3.500.
+  `skripte/test_abruf.py` (neu) fuehrt den echten Ablauf mit erfundenen
+  Daten aus und prueft BEIDES: dass gespart wird UND dass die Advektion
+  weiter greift - ein Lauf, der billiger ist und dabei still die Advektion
+  abschaltet, saehe sonst erfolgreich aus. Negativprobe: Wind wieder fuer
+  alle Zellen -> drei Pruefungen schlagen an; Wind gar nicht geholt -> die
+  eingebaute Gegenprobe nennt die fehlenden Variablen (ohne sie gaebe es
+  einen nackten IndexError tief in der Advektion).
 - **Buchhaltung in `alarm.py`**: jede Zeile im Log traegt jetzt eine
   Uhrzeit, und der Lauf meldet Anfragen, Ortsabrufe, Variablen, Tage und
   Member. Ohne das war jede Erklaerung der Kontingentfehler eine Vermutung

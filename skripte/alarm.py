@@ -242,19 +242,41 @@ def lauf_ort(ort, kfg, zustand, trocken):
                 fan_zellen.add(zelle(*p))
         abende[t] = {"stunde": std, "azimut": az, "punkte": punkte}
 
-    varn = ["cloud_cover_%s" % s for s in SCHICHTEN]
+    # WIND NUR AM ORT.  Die sechs Windvariablen werden ausschliesslich am
+    # Heimatpunkt gelesen (`zentrum` weiter unten) - der Advektionsversatz
+    # ist ein Ensemble-Mittelwind je Schicht, kein Feld.  Sie fuer alle 68
+    # Faecherzellen zu holen war also reine Verschwendung, und keine
+    # billige: Open-Meteo zaehlt Ensemble-Member wie zusaetzliche
+    # Variablen, 9 Variablen x 51 Member wiegen dreimal so viel wie 3 x 51.
+    #
+    # Gemessen am 18.08.2026: der Lauf kostete rund 5.500 Einheiten und riss
+    # damit das Stundenlimit von 5.000 bei der vorletzten Anfrage. Ohne den
+    # Windballast sind es rund 3.500 - der Lauf passt wieder, und es bleibt
+    # Luft fuer einen Nachholversuch.
+    wolken = ["cloud_cover_%s" % s for s in SCHICHTEN]
+    winde = []
     for s in SCHICHTEN:
-        varn += ["wind_speed_%dhPa" % WINDNIVEAU[s],
-                 "wind_direction_%dhPa" % WINDNIVEAU[s]]
-    melde("   Pass 1: %d Zellen, %d Variablen" % (len(fan_zellen), len(varn)))
-    feld = abfrage(fan_zellen, varn, kfg["modell"], kfg["vorlauf_tage"] + 1)
+        winde += ["wind_speed_%dhPa" % WINDNIVEAU[s],
+                  "wind_direction_%dhPa" % WINDNIVEAU[s]]
+    tage = kfg["vorlauf_tage"] + 1
+    melde("   Pass 1: %d Zellen Wolken (%d Variablen)"
+          % (len(fan_zellen), len(wolken)))
+    feld = abfrage(fan_zellen, wolken, kfg["modell"], tage)
+    heim = zelle(breite, laenge)
+    melde("   Wind: 1 Zelle (%d Variablen)" % len(winde))
+    feld[heim].update(abfrage({heim}, winde, kfg["modell"], tage)[heim])
     zeiten = feld[next(iter(feld))]["time"]
     mem = member_liste(feld[next(iter(feld))])
+    # Gegenprobe: ohne Wind am Ort waere der Advektionsversatz still null,
+    # und der Lauf saehe trotzdem erfolgreich aus.
+    fehlend = [v for v in winde if not any(k.startswith(v) for k in feld[heim])]
+    if fehlend:
+        raise SystemExit("Wind am Ort fehlt: %s" % ", ".join(fehlend))
     LAST["member"] = len(mem)
     melde("   %d Member, %d native Schritte" % (len(mem), len(zeiten)))
 
     # Advektionsversatz je (Abend, Schicht) aus dem Ensemble-Mittelwind am Ort
-    zentrum = feld[zelle(breite, laenge)]
+    zentrum = feld[heim]
     versatz = {}
     for t, info in abende.items():
         ziel_dt = datetime(t.year, t.month, t.day, tzinfo=timezone.utc) \
@@ -292,8 +314,7 @@ def lauf_ort(ort, kfg, zustand, trocken):
     neu = versetzt_zellen - fan_zellen
     if kfg.get("advektion", True) and neu:
         print("   Pass 2: %d zusaetzliche Zellen" % len(neu), flush=True)
-        feld.update(abfrage(neu, ["cloud_cover_%s" % s for s in SCHICHTEN],
-                            kfg["modell"], kfg["vorlauf_tage"] + 1))
+        feld.update(abfrage(neu, wolken, kfg["modell"], tage))
 
     ergebnisse = {}
     for t, info in abende.items():
