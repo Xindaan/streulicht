@@ -148,11 +148,40 @@ Fuenf Agenten in `~/Library/LaunchAgents/`, alle mit
 
 | Label | Skript | Wann |
 |---|---|---|
-| `de.greatbelow.streulicht.alarm` | `alarm.py` | 07:30 |
+| `de.greatbelow.streulicht.alarm` | `alarm.py --geplant` | stuendlich zur 20. Minute, **rechnet rund 3 h vor Sonnenuntergang** |
 | `de.greatbelow.streulicht.erinnerung` | `erinnerung.py` | stuendlich zur 15. Minute |
 | `de.greatbelow.streulicht.bewertung` | `bewertungen_holen.py` | alle 3 h zur 5. Minute |
 | `de.greatbelow.streulicht.archiv` | `archiviere.py` | 08:00 |
-| `de.greatbelow.streulicht.seite` | `ausliefern.py` | 08:10 und 12:10 |
+| `de.greatbelow.streulicht.seite` | `ausliefern.py` | stuendlich zur 50. Minute, **pusht nur bei Aenderung** |
+
+### Warum der Alarm sonnenuntergangsrelativ laeuft
+
+Bis zum 18.08.2026 lief er fest um 07:30. Zwei Messungen haben das gekippt:
+
+**Erstens die Frische.** ECMWF ENS rechnet viermal am Tag (00z/06z/12z/18z),
+und die Daten sind erst **8,7 Stunden nach der Initialisierung** abrufbar
+(gemessen an `ecmwf_ifs025_ensemble/static/meta.json`, 18.08.2026). Um 07:30
+war damit der 18z-Lauf des Vorabends der juengste - **21 bis 24 Stunden**
+Vorlauf auf den Sonnenuntergang. Rechnet man stattdessen rund drei Stunden
+vor Sonnenuntergang, sind es **12 bis 17 Stunden**, das ganze Jahr ueber.
+
+**Zweitens das Kontingent.** Ein vollstaendiger Lauf sind rund zehn
+HTTP-Anfragen ueber 216 Ortsabrufe, und danach ist das Stundenbudget von
+Open-Meteo (5.000) leer. Das Tagesbudget (10.000) traegt **genau zwei
+Laeufe**. Es gibt also keinen zweiten Lauf "zur Sicherheit" - es gibt einen,
+und der muss sitzen. Deshalb liegt er so spaet wie moeglich.
+
+**Warum keine feste Uhrzeit.** Der Sonnenuntergang wandert in Berlin ueber
+das Jahr um mehr als fuenfeinhalb Stunden: 21:33 am 21. Juni, 15:53 am
+21. Dezember. Ein fester Termin um 17:00 laege im Dezember **hinter** dem
+Ereignis, vor dem er warnen soll. Der Agent laeuft deshalb stuendlich und
+`alarm.im_laufenster()` entscheidet - dasselbe Muster wie bei der
+Erinnerung. `skripte/test_lauffenster.py` prueft ueber ein ganzes Jahr, dass
+genau ein Termin je Tag ins Fenster faellt, keiner und keine zwei.
+
+Steuergroessen in `konfig.json`: `lauf_vorlauf_stunden` (3) und
+`lauf_fenster_min` (60). Das Fenster darf **nicht** schmaler werden als der
+Abstand der Agenten-Termine, sonst faellt an manchen Tagen kein Tick hinein.
 
 **Die ausgelieferte Seite haengt also an zwei Laeufen**, und beide koennen
 einzeln ausfallen: `alarm.py` holt die Zahlen, `ausliefern.py` baut daraus
@@ -161,7 +190,7 @@ die Seiten und schiebt sie nach `gh-pages`. Faellt der Alarm aus, baut
 sagt das seit dem 17.08.2026 selbst, mit einem Streifen unter der
 Kopfleiste: *"Diese Zahlen sind vom 16.08. (gestern)."*
 
-**Warum 12:10 dazugekommen ist:** am Morgen des 17.08.2026 hatte der Mac von
+**Wie es dazu kam:** am Morgen des 17.08.2026 hatte der Mac von
 07:30 bis nach 08:15 keine Namensaufloesung. Alarm, Archiv, Bewertungsabruf
 und der Push sind alle vier daran gestorben, jeder genau einmal — und die
 Seite zeigte den ganzen Tag den Vortag. Seitdem:
@@ -170,8 +199,9 @@ Seite zeigte den ganzen Tag den Vortag. Seitdem:
   auf Namensaufloesung warten, statt am ersten Fehlversuch zu sterben;
 - `ausliefern.py` wiederholt den Push dreimal und **nennt den git-Fehler**
   (vorher schluckte `capture_output` genau die Zeile, die erklaert, warum);
-- der zweite Lauf um 12:10 faengt den Fall auf, dass der Alarm laenger
-  gebraucht hat als bis 08:10.
+- die Auslieferung laeuft stuendlich und pusht nur, wenn sich der gebaute
+  Stand geaendert hat - sie kann den Alarm also nicht mehr verpassen, egal
+  wie lange er braucht.
 
 ```bash
 launchctl bootstrap gui/$UID ~/Library/LaunchAgents/de.greatbelow.streulicht.alarm.plist
@@ -334,6 +364,7 @@ python3 skripte/test_member.py      # Member-Verdichtung, Faecher, Deckung
 python3 skripte/test_advektion.py   # semi-Lagrangesche Verschiebung
 python3 skripte/test_grib2.py       # GRIB2-Leser, Vorzeichen-Betrag, Sektionen
 python3 skripte/test_seiten.py      # erzeugte Seiten und die neuen Grafiken
+python3 skripte/test_lauffenster.py # ein Lauf je Tag, ueber ein ganzes Jahr
 node   skripte/test_bewertungsseite.js   # Warteschlange und Freilegung
 ```
 

@@ -51,7 +51,7 @@ import argparse
 import json
 import os
 import sys
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -153,6 +153,27 @@ def kurzmarke(d, erster):
     if erster or d.day == 1:
         return "%d.%d." % (d.day, d.month)
     return "%d." % d.day
+
+
+def letztes_laufziel(jetzt, kfg, breite=52.52, laenge=13.405):
+    """Der Tag des letzten planmaessigen Laufs, dessen Fenster schon zu ist.
+
+    Gibt None zurueck, wenn heute noch keines geschlossen hat und gestern
+    keines existierte - dann kann die Seite nichts ueber Verspaetung sagen.
+    """
+    from datetime import time as dtzeit
+    vorlauf = kfg.get("lauf_vorlauf_stunden", 3)
+    fenster = timedelta(minutes=kfg.get("lauf_fenster_min", 60))
+    for zurueck in (0, 1, 2):
+        tag = jetzt.date() - timedelta(days=zurueck)
+        std, _ = sonnenuntergang(tag, breite, laenge)
+        if std is None:
+            continue
+        ziel = (datetime.combine(tag, dtzeit(0), timezone.utc)
+                + timedelta(hours=std - vorlauf))
+        if ziel + fenster / 2 <= jetzt:
+            return tag
+    return None
 
 
 def satz(text):
@@ -740,22 +761,32 @@ def main():
                                     (1.0 - e["p"]) * 100.0)
                      for i, e in enumerate(eintraege))
 
-    # Ist der Zustand von heute?  `lauf` ist der Tag des Alarmlaufs, aus dem
+    # Ist der Zustand aktuell?  `lauf` ist der Tag des Alarmlaufs, aus dem
     # die Zahlen stammen.  Faellt ein Lauf aus, bleibt der alte Zustand
     # liegen und die Seite wird trotzdem neu gebaut - sie saehe dann frisch
     # aus und waere es nicht.
+    #
+    # Die Regel ist NICHT "vom heutigen Tag".  Der Lauf ist seit dem
+    # 18.08.2026 sonnenuntergangsrelativ, also nachmittags; vormittags sind
+    # die Zahlen vom Vorabend und damit voellig in Ordnung.  Verglichen wird
+    # gegen das letzte GESCHLOSSENE Laufenster - sonst stuende der Streifen
+    # jeden Tag bis 17 Uhr da, und ein Warnhinweis, der immer da ist, wird
+    # nicht mehr gelesen.
     laeufe = sorted({e["lauf"] for e in eintraege if e.get("lauf")})
     stand = laeufe[-1] if laeufe else None
-    if a.rueckschau or stand == heute_iso or not stand:
+    faellig = letztes_laufziel(datetime.now(timezone.utc), kfg)
+    if a.rueckschau or not stand or not faellig or stand >= faellig.isoformat():
         veraltet = ""
     else:
         d = date.fromisoformat(stand)
         tage = (date.today() - d).days
-        veraltet = ('<p class="veraltet">Diese Zahlen sind vom '
-                    '%s (%s). Der Lauf von heute fr&uuml;h ist nicht '
+        wann = {0: "von heute", 1: "von gestern",
+                2: "von vorgestern"}.get(tage, "von vor %d Tagen" % tage)
+        veraltet = ('<p class="veraltet">Diese Zahlen sind vom %s (%s). '
+                    'Der planm&auml;&szlig;ige Lauf vom %s ist nicht '
                     'durchgekommen.</p>'
-                    % (d.strftime("%d.%m."),
-                       "gestern" if tage == 1 else "vor %d Tagen" % tage))
+                    % (d.strftime("%d.%m."), wann,
+                       faellig.strftime("%d.%m.")))
 
     # Push-Auskunft.  Das ist der Absatz, den die alte Seite nirgends hatte -
     # und "kein Push" ist der haeufigste Zustand.  Ohne ihn sieht Schweigen

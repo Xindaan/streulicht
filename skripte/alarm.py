@@ -38,6 +38,8 @@ import time
 import urllib.error
 import urllib.request
 from datetime import date, datetime, timedelta, timezone
+from datetime import time as dtzeit
+from zoneinfo import ZoneInfo
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sonnen.geometrie import sonnenuntergang, zielpunkt  # noqa: E402
@@ -80,7 +82,32 @@ def mitte(z):
     return (z[0] * GITTER, z[1] * GITTER)
 
 
+# --- Buchhaltung ueber die API-Last ------------------------------------
+#
+# WARUM (18.08.2026).  Zwei von vier planmaessigen Laeufen sind am
+# Kontingent gescheitert, und der Log konnte nicht sagen warum: er hatte
+# keine Uhrzeit und keine Zahl darueber, wie viel ein Lauf ueberhaupt
+# anfordert.  Damit war jede Erklaerung eine Vermutung.  Ab jetzt schreibt
+# jeder Lauf mit, wann er was geholt hat - die naechsten Laeufe sind dann
+# Messungen statt Anekdoten.
+#
+# Open-Meteo zaehlt nach eigener Doku nach VARIABLEN und ZEITRAUM, nicht
+# nach Orten - die Rechnung unten ist deshalb ausdruecklich eine SCHAETZUNG
+# und keine Nachbildung ihrer Formel.  Sie taugt zum Vergleichen von
+# Laeufen untereinander, nicht zum Vorhersagen des Limits.
+LAST = {"anfragen": 0, "orte": 0, "variablen": 0, "member": 0, "tage": 0}
+
+
+def uhr():
+    return datetime.now().strftime("%H:%M:%S")
+
+
+def melde(text):
+    print("%s %s" % (uhr(), text), flush=True)
+
+
 def _hole(u, versuche=4):
+    LAST["anfragen"] += 1
     for n in range(versuche):
         try:
             with urllib.request.urlopen(u, timeout=600) as f:
@@ -90,18 +117,27 @@ def _hole(u, versuche=4):
                 raise
             grund = json.loads(e.read()).get("reason", "429")
             if "inutely" in grund and n < versuche - 1:
-                print("   Minutenlimit, warte 65 s ...", flush=True)
+                melde("   Minutenlimit, warte 65 s ... (Anfrage %d)"
+                      % LAST["anfragen"])
                 time.sleep(65)
                 continue
-            raise SystemExit("Kontingent: %s" % grund)
+            raise SystemExit("%s Kontingent nach %d Anfragen "
+                             "(%d Ortsabrufe, %d Variablen, %d Tage): %s"
+                             % (uhr(), LAST["anfragen"], LAST["orte"],
+                                LAST["variablen"], LAST["tage"], grund))
     raise SystemExit("unerreichbar")
 
 
 def abfrage(zellen, variablen, modell, tage, block=25):
     aus = {}
     liste = sorted(zellen)
+    LAST["variablen"] = max(LAST["variablen"], len(variablen))
+    LAST["tage"] = max(LAST["tage"], tage)
+    melde("   Abruf: %d Zellen, %d Variablen, %d Tage, Bloecke zu %d"
+          % (len(liste), len(variablen), tage, block))
     for i in range(0, len(liste), block):
         teil = liste[i:i + block]
+        LAST["orte"] += len(teil)
         u = ("https://ensemble-api.open-meteo.com/v1/ensemble?latitude=%s&longitude=%s"
              "&models=%s&hourly=%s&forecast_days=%d&temporal_resolution=native"
              % (",".join("%.4f" % mitte(z)[0] for z in teil),
@@ -210,12 +246,12 @@ def lauf_ort(ort, kfg, zustand, trocken):
     for s in SCHICHTEN:
         varn += ["wind_speed_%dhPa" % WINDNIVEAU[s],
                  "wind_direction_%dhPa" % WINDNIVEAU[s]]
-    print("   Pass 1: %d Zellen, %d Variablen" % (len(fan_zellen), len(varn)),
-          flush=True)
+    melde("   Pass 1: %d Zellen, %d Variablen" % (len(fan_zellen), len(varn)))
     feld = abfrage(fan_zellen, varn, kfg["modell"], kfg["vorlauf_tage"] + 1)
     zeiten = feld[next(iter(feld))]["time"]
     mem = member_liste(feld[next(iter(feld))])
-    print("   %d Member, %d native Schritte" % (len(mem), len(zeiten)), flush=True)
+    LAST["member"] = len(mem)
+    melde("   %d Member, %d native Schritte" % (len(mem), len(zeiten)))
 
     # Advektionsversatz je (Abend, Schicht) aus dem Ensemble-Mittelwind am Ort
     zentrum = feld[zelle(breite, laenge)]
@@ -380,16 +416,47 @@ def sende(topic, titel, text, prio="default", klick=None):
         return f.status
 
 
+def im_laufenster(jetzt, kfg, ort, zustand):
+    """(ja, Grund) - ist JETZT der Zeitpunkt fuer den geplanten Lauf?
+
+    SONNENUNTERGANGSRELATIV, nicht auf eine feste Uhrzeit.  Der
+    Sonnenuntergang wandert in Berlin ueber das Jahr um mehr als
+    fuenfeinhalb Stunden; ein fester Termin liegt im Dezember hinter dem
+    Ereignis, vor dem er warnen soll (SU am 21.12. um 15:53).
+
+    Dasselbe Muster wie in erinnerung.py: der Agent laeuft stuendlich, die
+    Entscheidung faellt hier.  Das ist der einzige Weg, der Sommer und
+    Winter mit EINER Regel bedient.
+    """
+    tag = jetzt.astimezone(ZoneInfo(ort.get("zeitzone", "UTC"))).date()
+    if str(tag) in zustand.get(ort["name"], {}).get("laeufe", {}):
+        return False, "heute schon gerechnet"
+    std, _ = sonnenuntergang(tag, ort["breite"], ort["laenge"])
+    if std is None:
+        return False, "kein Sonnenuntergang an diesem Tag"
+    su = datetime.combine(tag, dtzeit(0), timezone.utc) + timedelta(hours=std)
+    ziel = su - timedelta(hours=kfg.get("lauf_vorlauf_stunden", 3))
+    halb = timedelta(minutes=kfg.get("lauf_fenster_min", 60)) / 2
+    if not (ziel - halb <= jetzt <= ziel + halb):
+        return False, ("ausserhalb des Fensters (Ziel %s UTC, jetzt %s UTC)"
+                       % (ziel.strftime("%H:%M"), jetzt.strftime("%H:%M")))
+    return True, "im Fenster"
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--trocken", action="store_true",
                     help="rechnen und anzeigen, aber nichts senden")
+    ap.add_argument("--geplant", action="store_true",
+                    help="der stuendliche Agent: nur im Laufenster arbeiten")
+    ap.add_argument("--jetzt", help="ISO-Zeit UTC statt jetzt (fuer Tests)")
     ap.add_argument("--konfig", default=os.path.join(BASIS, "konfig.json"))
     a = ap.parse_args()
 
     # Erst Netz, dann rechnen: der Rechner kann gerade erst
     # aufgewacht sein (siehe skripte/netz.py).
-    warte_auf_netz()
+    melde("Lauf beginnt.")
+    warte_auf_netz(melde=melde)
 
     with open(a.konfig) as f:
         kfg = json.load(f)
@@ -415,6 +482,20 @@ def main():
     if os.path.exists(zpfad):
         with open(zpfad) as f:
             zustand = json.load(f)
+
+    jetzt = (datetime.fromisoformat(a.jetzt).replace(tzinfo=timezone.utc)
+             if a.jetzt else datetime.now(timezone.utc))
+    if a.geplant:
+        # Der stuendliche Agent fragt hier, ob er dran ist.  Ein Lauf von
+        # Hand fragt NICHT - wer ihn startet, meint ihn.
+        offen = [o for o in kfg["orte"]
+                 if im_laufenster(jetzt, kfg, o, zustand)[0]]
+        if not offen:
+            for o in kfg["orte"]:
+                melde("   %s: %s"
+                      % (o["name"], im_laufenster(jetzt, kfg, o, zustand)[1]))
+            return
+        melde("   im Fenster: %s" % ", ".join(o["name"] for o in offen))
 
     for ort in kfg["orte"]:
         name = ort["name"]
@@ -464,6 +545,18 @@ def main():
                     timezone.utc).isoformat(timespec="seconds"), "p": e["p"]}
                 print("     -> Push gesendet")
 
+    # Erst NACH erfolgreichem Durchlauf eintragen: ein am Kontingent
+    # gestorbener Lauf darf das Fenster fuer heute nicht verbrauchen.
+    for ort in kfg["orte"]:
+        tag = jetzt.astimezone(ZoneInfo(ort.get("zeitzone", "UTC"))).date()
+        zustand.setdefault(ort["name"], {"abende": {}, "alarme": {}}) \
+               .setdefault("laeufe", {})[str(tag)] = \
+            jetzt.isoformat(timespec="seconds")
+
+    melde("   Bilanz: %d HTTP-Anfragen, %d Ortsabrufe, bis %d Variablen, "
+          "%d Tage, %d Member"
+          % (LAST["anfragen"], LAST["orte"], LAST["variablen"],
+             LAST["tage"], LAST["member"]))
     if not a.trocken:
         os.makedirs(os.path.dirname(zpfad), exist_ok=True)
         with open(zpfad, "w") as f:

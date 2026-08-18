@@ -1,6 +1,6 @@
 # STATE
 
-Stand: 17.08.2026 mittags. **Der Betrieb laeuft, die Oberflaeche ist neu -
+Stand: 18.08.2026 vormittags. **Der Betrieb laeuft, die Oberflaeche ist neu -
 auf beiden Schirmgroessen.** Repo oeffentlich, Pages liefert Prognose-,
 Bewertungs- und Bilanzseite, ntfy eingerichtet, fuenf launchd-Agenten
 geladen. Der UX-Overhaul (T-0031 bis T-0034) ist vollstaendig umgesetzt, die
@@ -151,23 +151,28 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
 
 ## Next actions
 
-**Der Betrieb steht, gebaut ist alles Geplante.** Was jetzt fehlt, ist Zeit:
-der Livegang IST die Messung (Quantilbruecke T-0020).
+1. **Beide Agenten nachladen**, sonst laeuft der Alarm weiter um 07:30 und
+   die Auslieferung nur um 08:10/12:10:
 
-1. **Den Seiten-Agenten nachladen**, sonst laeuft er weiter nur um 08:10:
-
-       cp betrieb/de.greatbelow.streulicht.seite.plist ~/Library/LaunchAgents/
+       cp betrieb/de.greatbelow.streulicht.{alarm,seite}.plist ~/Library/LaunchAgents/
+       launchctl kickstart -k gui/$UID/de.greatbelow.streulicht.alarm
        launchctl kickstart -k gui/$UID/de.greatbelow.streulicht.seite
 
-2. **Beobachten, nicht bauen.** Nach ein paar Tagen `daten/*.log` ansehen -
-   und `launchctl list | grep streulicht`: die dritte Spalte ist der letzte
-   Exitcode, 0 heisst gut. Am 17.08. stand dort dreimal 1, und aufgefallen
-   ist es erst beim Blick auf die Seite (T-0040).
-3. **T-0038** ansehen, wenn er wieder auftritt - ein Abend knapp unter der
-   80er-Schwelle zeigt "80." an der Linie "AUFFAELLIG 80.", waehrend der
-   Hero "unauffaellig" sagt. Erst zaehlen, wie oft der Fall vorkommt.
+   Der Kickstart des Alarms tut ausserhalb des Fensters nichts - er meldet
+   "ausserhalb des Fensters" und beendet sich. Das ist richtig so.
+2. **Den ersten sonnenuntergangsrelativen Lauf ansehen** (heute gegen 17:20
+   Ortszeit): kommt er durch, verschwindet der Warnstreifen auf der Seite.
+3. **T-0040** Ueberwachung der Exitcodes - zwei von vier Laeufen sind
+   gescheitert, gemerkt hat es ein Mensch.
+4. **T-0038** Rundung an der 80er-Schwelle, wenn der Fall wieder auftritt.
 
 ## Letzte Done
+
+- **18.08.2026 Lauf ans Ereignis geruecht (T-0041).** Statt fest 07:30 jetzt
+  rund drei Stunden vor Sonnenuntergang - halbiert den Modellvorlauf von
+  21-24 h auf 12-17 h. Dahinter zwei Messungen: die Verfuegbarkeit der
+  ECMWF-Laeufe (8,7 h nach Initialisierung) und das Kontingent (ein Lauf
+  leert das Stundenbudget, das Tagesbudget traegt genau zwei).
 
 - **17.08.2026 Stiller Ausfall behoben (T-0039).** Kein Netz am Morgen,
   vier Agenten tot, Seite zeigte den ganzen Tag den Vortag - und sah dabei

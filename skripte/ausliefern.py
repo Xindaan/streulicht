@@ -25,6 +25,7 @@ Lauf:  python3 skripte/ausliefern.py [--trocken]
 """
 import argparse
 import os
+import hashlib
 import shutil
 import subprocess
 import sys
@@ -80,7 +81,7 @@ def baue(trocken):
     return prognose
 
 
-def veroeffentliche(trocken):
+def veroeffentliche(trocken, immer=False):
     # AUSDRUECKLICHE Liste, kein "alles ausser ...".  Der erste Anlauf nahm
     # jede .html im Ordner - und haette damit `diagnose.html` (Andres
     # Albumabende neben meinen Bewertungen) und `rueckschau.html` (9.5 MB)
@@ -105,6 +106,25 @@ def veroeffentliche(trocken):
     print("   %d Seiten, %.1f kB" % (len(seiten), gesamt / 1000.0))
     for n in seiten:
         print("      %s" % n)
+    # Nur pushen, wenn sich wirklich etwas geaendert hat.  Seit der Agent
+    # stuendlich laeuft (der Alarm ist sonnenuntergangsrelativ, also ist
+    # sein Zeitpunkt nicht mehr fest), waeren das sonst 24 Force-Pushs am
+    # Tag mit identischem Inhalt.  Verglichen wird der GEBAUTE Stand, nicht
+    # das Alter von zustand.json: nach einer Codeaenderung aendert sich die
+    # Seite auch ohne neue Zahlen.
+    h = hashlib.sha256()
+    for n in seiten:
+        with open(os.path.join(web, n), "rb") as f:
+            h.update(f.read())
+    fingerabdruck = h.hexdigest()
+    stempel = os.path.join(BASIS, "daten", ".ausgeliefert")
+    vorher = ""
+    if os.path.exists(stempel):
+        with open(stempel) as f:
+            vorher = f.read().strip()
+    if fingerabdruck == vorher and not immer:
+        print("   unveraendert seit dem letzten Push - nichts zu tun")
+        return
     if trocken:
         print("   [trocken] kein Push")
         return
@@ -141,6 +161,8 @@ def veroeffentliche(trocken):
             if versuch == 3:
                 raise SystemExit("Push endgueltig fehlgeschlagen:\n" + grund)
             time.sleep(120)
+        with open(stempel, "w") as f:
+            f.write(fingerabdruck + "\n")
         print("   nach %s gepusht (Wegwerfzweig, ein Commit)" % ZWEIG)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -149,11 +171,13 @@ def veroeffentliche(trocken):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--trocken", action="store_true")
+    ap.add_argument("--immer", action="store_true",
+                    help="auch pushen, wenn sich nichts geaendert hat")
     a = ap.parse_args()
     print("Bauen ...")
     baue(a.trocken)
     print("Veroeffentlichen ...")
-    veroeffentliche(a.trocken)
+    veroeffentliche(a.trocken, a.immer)
 
 
 if __name__ == "__main__":

@@ -184,6 +184,38 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
 
 ## Done
 
+### 18.08.2026 &mdash; Lauf ans Ereignis geruecht (T-0041), Kontingent gemessen
+- T-0041 **Der Alarmlauf ist sonnenuntergangsrelativ statt fest um 07:30.**
+  Zwei Messungen dahinter:
+  1. **Frische.** ECMWF ENS rechnet viermal taeglich, die Daten sind erst
+     8,7 h nach Initialisierung abrufbar (`meta.json`, gemessen). Um 07:30
+     war der 18z des Vorabends der juengste Lauf: 21-24 h Vorlauf. Drei
+     Stunden vor Sonnenuntergang sind es 12-17 h, ganzjaehrig.
+  2. **Kontingent.** Ein vollstaendiger Lauf = ~10 Anfragen ueber 216
+     Ortsabrufe, danach ist das Stundenbudget (5.000) leer; das Tagesbudget
+     (10.000) traegt GENAU ZWEI Laeufe. Es gibt also keinen Zweitlauf zur
+     Sicherheit - der eine muss sitzen, also liegt er so spaet wie moeglich.
+  Keine feste Uhrzeit, weil der Sonnenuntergang in Berlin um mehr als
+  fuenfeinhalb Stunden wandert (21:33 im Juni, 15:53 im Dezember) - 17:00
+  laege im Dezember hinter dem Ereignis. Stuendlicher Agent mit
+  `--geplant`, Entscheidung in `alarm.im_laufenster()`; dasselbe Muster wie
+  bei der Erinnerung.
+  Mitgezogen: `ausliefern.py` laeuft stuendlich und pusht nur bei
+  Aenderung (Fingerabdruck der gebauten Seiten); die Altersregel der Seite
+  vergleicht nicht mehr gegen "heute", sondern gegen das letzte
+  GESCHLOSSENE Laufenster - sonst stuende der Warnstreifen jeden Tag bis
+  nachmittags da und wuerde nicht mehr gelesen.
+  `skripte/test_lauffenster.py` (neu) prueft ueber ein ganzes Jahr, dass je
+  Tag genau ein Termin ins Fenster faellt. Negativprobe gemacht: Fenster
+  auf 30 min verengt -> 168 Tage ohne Lauf; auf 150 min geweitet -> 365
+  Tage mit zwei Laeufen. Beides schlaegt an.
+  **Braucht ein `launchctl`-Nachladen beider Agenten** (siehe STATE).
+- **Buchhaltung in `alarm.py`**: jede Zeile im Log traegt jetzt eine
+  Uhrzeit, und der Lauf meldet Anfragen, Ortsabrufe, Variablen, Tage und
+  Member. Ohne das war jede Erklaerung der Kontingentfehler eine Vermutung
+  - der Log hatte nicht einmal eine Uhr.
+
+
 ### 17.08.2026 &mdash; Der Morgen ohne Netz (T-0039)
 - T-0039 **Stiller Ausfall der Auslieferung behoben.** Der Mac hatte von
   07:30 bis nach 08:15 keine Namensaufloesung. `alarm.py`, `archiviere.py`,

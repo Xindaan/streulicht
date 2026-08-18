@@ -1,23 +1,26 @@
 {
-  "_hinweis": "ntfy-Topics sind durch Namens-Obskuritaet geschuetzt, nicht durch Auth. Das ALARM-Topic steht deshalb in konfig_geheim.json (gitignoriert) - wer es hat, kann beliebige Pushs schicken. Das BEWERTUNGS-Topic bleibt hier: es steht ohnehin im Klartext in der ausgelieferten Bewertungsseite und laesst sich nicht verbergen.",
-  "modell": "ecmwf_ifs025",
-  "schwelle_score": 0.7065,
-  "schwelle_wahrscheinlichkeit": 0.5,
-  "vorlauf_tage": 10,
-  "advektion": true,
-  "seiten_basis": "https://xindaan.github.io/streulicht",
-  "_hinweis_seiten_basis": "Basis-URL der ausgelieferten Seiten. Sie liegen in der WURZEL des gh-pages-Zweigs (siehe skripte/ausliefern.py), nicht unter /web/.",
-  "bewertung_tage_pro_woche": 7,
-  "_hinweis_bewertung": "7 = jeden Abend fragen. Weniger ergibt eine deterministische Wochenstichprobe (gleiche Woche -> gleiche Tage). Unter 7 sinkt die Zahl auswertbarer Abende proportional.",
-  "orte": [
-    {
-      "name": "berlin",
-      "anzeige": "Berlin",
-      "breite": 52.52,
-      "laenge": 13.405,
-      "zeitzone": "Europe/Berlin",
-      "ntfy_bewertung": "sl-bew-2m65326hwe64"
-    }
-  ],
-  "_hinweis_schwelle": "s* gilt fuer GEWICHTUNG='raumwinkel', Faecher 5x8, Gitter 0.5 Grad, 3-Schicht-Variante. Aendert sich eines davon, ist s* ungueltig."
+ "_hinweis": "ntfy-Topics sind durch Namens-Obskuritaet geschuetzt, nicht durch Auth. Das ALARM-Topic steht deshalb in konfig_geheim.json (gitignoriert) - wer es hat, kann beliebige Pushs schicken. Das BEWERTUNGS-Topic bleibt hier: es steht ohnehin im Klartext in der ausgelieferten Bewertungsseite und laesst sich nicht verbergen.",
+ "modell": "ecmwf_ifs025",
+ "schwelle_score": 0.7065,
+ "schwelle_wahrscheinlichkeit": 0.5,
+ "vorlauf_tage": 10,
+ "lauf_vorlauf_stunden": 3,
+ "lauf_fenster_min": 60,
+ "_hinweis_lauf": "Der Alarmlauf ist SONNENUNTERGANGSRELATIV, nicht auf eine feste Uhrzeit gelegt: der Sonnenuntergang wandert in Berlin ueber das Jahr um mehr als fuenfeinhalb Stunden, eine feste Uhrzeit liegt im Dezember hinter dem Ereignis, vor dem sie warnen soll. lauf_vorlauf_stunden=3 heisst: gerechnet wird rund drei Stunden vor Sonnenuntergang. Damit ist der juengste verfuegbare Modelllauf 12 bis 17 Stunden alt statt 21 bis 24 wie beim frueheren 07:30-Termin (Verzug bis zur Verfuegbarkeit: 8,7 h, gemessen 18.08.2026). lauf_fenster_min ist die Breite des Fensters, in dem der stuendliche Agent zuschlaegt.",
+ "advektion": true,
+ "seiten_basis": "https://xindaan.github.io/streulicht",
+ "_hinweis_seiten_basis": "Basis-URL der ausgelieferten Seiten. Sie liegen in der WURZEL des gh-pages-Zweigs (siehe skripte/ausliefern.py), nicht unter /web/.",
+ "bewertung_tage_pro_woche": 7,
+ "_hinweis_bewertung": "7 = jeden Abend fragen. Weniger ergibt eine deterministische Wochenstichprobe (gleiche Woche -> gleiche Tage). Unter 7 sinkt die Zahl auswertbarer Abende proportional.",
+ "orte": [
+  {
+   "name": "berlin",
+   "anzeige": "Berlin",
+   "breite": 52.52,
+   "laenge": 13.405,
+   "zeitzone": "Europe/Berlin",
+   "ntfy_bewertung": "sl-bew-2m65326hwe64"
+  }
+ ],
+ "_hinweis_schwelle": "s* gilt fuer GEWICHTUNG='raumwinkel', Faecher 5x8, Gitter 0.5 Grad, 3-Schicht-Variante. Aendert sich eines davon, ist s* ungueltig."
 }
