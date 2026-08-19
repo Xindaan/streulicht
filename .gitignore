@@ -7,6 +7,13 @@ Album/
 web/rueckschau.html
 web/diagnose.html
 web/index.html
+# Wie index.html reine Bauartefakte: sie werden vom stuendlichen
+# Auslieferungsagenten neu geschrieben, und die Sonnentafel in der
+# Bewertungsseite wandert dabei jeden Tag um einen Eintrag. Getrackt
+# erzeugen sie taeglich einen Diff, der nichts bedeutet. Quelle sind
+# web/bewerten.html (Vorlage) und die Generatoren in skripte/.
+web/bewerten-*.html
+web/bisher.html
 
 # Zugangsdaten. NIE committen.
 # Am 15.08.2026 hatte ich behauptet, dieser Eintrag stehe hier - er stand

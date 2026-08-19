@@ -114,6 +114,14 @@ taeglich nach `main` waeren das ueber 100 MB im Jahr fuer Staende, die
 niemanden interessieren. Auf dem Wegwerfzweig gibt es keine Historie, die
 wachsen koennte.
 
+**Die erzeugten Seiten sind nicht im Repo.** `web/index.html`,
+`web/bewerten-*.html` und `web/bisher.html` sind Bauartefakte und
+gitignoriert &mdash; der stuendliche Agent schreibt sie neu, und schon die
+Sonnentafel in der Bewertungsseite wandert dabei taeglich um einen Eintrag.
+Getrackt erzeugten sie jeden Tag einen Diff, der nichts bedeutet. Quelle
+sind die Vorlage `web/bewerten.html` und die Generatoren in `skripte/`;
+`python3 skripte/ausliefern.py --trocken` baut alle drei aus dem Nichts neu.
+
 Was veroeffentlicht wird, steht dort als **ausdrueckliche Liste**. Der erste
 Anlauf nahm "jede .html ausser der Vorlage" und haette `diagnose.html`
 (Albumabende neben Bewertungen) und `rueckschau.html` (9.5 MB) mit ins Netz
