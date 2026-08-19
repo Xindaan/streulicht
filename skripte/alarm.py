@@ -525,6 +525,34 @@ def im_laufenster(jetzt, kfg, ort, zustand):
         if ziel - halb <= jetzt <= ziel + halb:
             return name, "im Fenster %s" % name
         offen.append("%s %s" % (name, ziel.strftime("%H:%M")))
+
+    # NACHHOLEN, aber nur den Abendlauf und nur bis zum Sonnenuntergang.
+    #
+    # Am 18.08.2026 hat der stuendliche Agent den einen Tick verschlafen,
+    # der ins Abendfenster fiel: die Ticks stehen um 16:20 und 18:20
+    # Ortszeit im Log, der um 17:20 fehlt (Rechner im Ruhezustand; launchd
+    # holt einen verpassten Kalendertermin beim Aufwachen nach, aber da war
+    # das Fenster laengst zu). Ergebnis: kein Abendlauf, und weil derselbe
+    # Tag vormittags schon gerechnet worden war, hat es auch der
+    # Altersstreifen nicht gemeldet.
+    #
+    # Ein Lauf zwei Stunden vor Sonnenuntergang ist schlechter als einer
+    # drei Stunden vorher - aber unvergleichlich besser als keiner. Der
+    # Vormittagslauf wird NICHT nachgeholt: er ist Beiwerk, und ein
+    # Nachholen kurz vor dem Abendfenster brauchte zwei Laeufe in einer
+    # Stunde, was das Stundenkontingent nicht traegt.
+    if "abends" not in schon:
+        for name, ziel in ziele:
+            if name != "abends" or jetzt <= ziel + halb:
+                continue
+            std, _ = sonnenuntergang(tag, ort["breite"], ort["laenge"])
+            su = (datetime.combine(tag, dtzeit(0), timezone.utc)
+                  + timedelta(hours=std)) if std is not None else None
+            if su and jetzt < su:
+                return "abends", ("nachgeholt (Fenster verpasst, noch %.1f h "
+                                  "bis Sonnenuntergang)"
+                                  % ((su - jetzt).total_seconds() / 3600))
+
     if not offen:
         return None, "heute schon gerechnet"
     return None, ("ausserhalb der Fenster (offen: %s; jetzt %s UTC)"

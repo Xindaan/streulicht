@@ -184,6 +184,39 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
 
 ## Done
 
+### 19.08.2026 &mdash; Ein verschlafener Tick kostete den ganzen Abendlauf (T-0048)
+- T-0048 **Der Abendlauf wird nachgeholt, wenn sein Tick ausfaellt.** Am
+  18.08.2026 hat der stuendliche Agent genau den einen Tick verschlafen,
+  der ins Abendfenster fiel: im Log stehen 16:20 und 18:20 Ortszeit, der um
+  17:20 fehlt (Rechner im Ruhezustand; launchd holt einen verpassten
+  Kalendertermin beim Aufwachen nach, aber da war das Fenster laengst zu).
+  Ergebnis: kein Abendlauf am ganzen Tag.
+  Jetzt: ist das Abendfenster verstrichen und noch nicht bedient, laeuft der
+  naechste Tick nach - **bis zum Sonnenuntergang, nicht darueber hinaus**.
+  Ein Lauf zwei Stunden vorher ist schlechter als einer drei Stunden vorher,
+  aber unvergleichlich besser als keiner. Der Vormittagslauf wird bewusst
+  NICHT nachgeholt: er ist Beiwerk, und ein Nachholen kurz vor dem
+  Abendfenster brauchte zwei Laeufe in einer Stunde - das traegt das
+  Stundenkontingent nicht.
+- **Der Altersstreifen hat den Ausfall nicht gemeldet**, und das war der
+  zweite Fehler. Er verglich TAG mit TAG; weil am 18.08. vormittags
+  gerechnet worden war, stimmte das Datum noch. Die Zahlen waren trotzdem
+  einen halben Tag alt. Jetzt wird ZEITPUNKT mit ZEITPUNKT verglichen
+  (`stand["geholt"]` gegen das letzte geschlossene Abendfenster), und der
+  Streifen nennt beide Uhrzeiten:
+  *"Diese Zahlen sind von gestern (18.08., 11:59 Uhr). Der Lauf vom 18.08.,
+  17:26 ist nicht durchgekommen."*
+  Negativprobe: zurueck auf Tagesvergleich, und der Streifen verschwindet
+  wieder - der verschlafene Lauf bliebe unbemerkt.
+- **Erzeugte Seiten aus dem Repo genommen.** `web/bewerten-*.html` und
+  `web/bisher.html` sind Bauartefakte wie `index.html`. Seit die
+  Auslieferung stuendlich laeuft, schreibt der Agent sie staendig neu; die
+  Sonnentafel in der Bewertungsseite wandert taeglich um einen Eintrag.
+  Gegenprobe vor dem Entfernen: alle drei geloescht, `ausliefern.py
+  --trocken` gestartet - sie entstehen vollstaendig neu, Fingerabdruck
+  identisch mit dem zuletzt veroeffentlichten.
+
+
 ### 18.08.2026 &mdash; Die Seite zeigte Vergangenheit (T-0046, T-0047)
 - T-0046 **Der heutige Abend wurde nie gerechnet.** Die Schleife in
   `alarm.py` begann bei `k = 1`, also bei morgen - der heutige Abend trug

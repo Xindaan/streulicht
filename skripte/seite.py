@@ -156,10 +156,14 @@ def kurzmarke(d, erster):
 
 
 def letztes_laufziel(jetzt, kfg, breite=52.52, laenge=13.405):
-    """Der Tag des letzten planmaessigen Laufs, dessen Fenster schon zu ist.
+    """Zeitpunkt des letzten ABENDlaufs, dessen Fenster schon zu ist.
 
-    Gibt None zurueck, wenn heute noch keines geschlossen hat und gestern
-    keines existierte - dann kann die Seite nichts ueber Verspaetung sagen.
+    Gibt None zurueck, wenn keines gefunden wird - dann kann die Seite
+    nichts ueber Verspaetung sagen.
+
+    Nur das Abendfenster, nicht das des Vormittags: der Vormittagslauf ist
+    Beiwerk.  Erst wenn der Abendlauf ausgeblieben ist, fehlt wirklich
+    etwas.
     """
     from datetime import time as dtzeit
     vorlauf = kfg.get("lauf_vorlauf_stunden", 3)
@@ -172,7 +176,7 @@ def letztes_laufziel(jetzt, kfg, breite=52.52, laenge=13.405):
         ziel = (datetime.combine(tag, dtzeit(0), timezone.utc)
                 + timedelta(hours=std - vorlauf))
         if ziel + fenster / 2 <= jetzt:
-            return tag
+            return ziel
     return None
 
 
@@ -834,21 +838,33 @@ def main():
     # gegen das letzte GESCHLOSSENE Laufenster - sonst stuende der Streifen
     # jeden Tag bis 17 Uhr da, und ein Warnhinweis, der immer da ist, wird
     # nicht mehr gelesen.
-    laeufe = sorted({e["lauf"] for e in eintraege if e.get("lauf")})
-    stand = laeufe[-1] if laeufe else None
+    # Verglichen wird ein ZEITPUNKT mit einem Zeitpunkt, nicht Tag mit Tag.
+    # Am 18.08.2026 hat der Agent den Tick ins Abendfenster verschlafen; weil
+    # vormittags desselben Tages gerechnet worden war, stimmte der DATUMS-
+    # vergleich noch und der Streifen blieb aus. Die Zahlen waren trotzdem
+    # ein halber Tag alt.
+    geholt = (st.get("geholt")
+              or (sorted({e["lauf"] for e in eintraege if e.get("lauf")}) or
+                  [None])[-1])
     faellig = letztes_laufziel(datetime.now(timezone.utc), kfg)
-    if a.rueckschau or not stand or not faellig or stand >= faellig.isoformat():
+    g = None
+    if geholt:
+        g = datetime.fromisoformat(geholt if len(geholt) > 10
+                                   else geholt + "T23:59+00:00")
+        if g.tzinfo is None:
+            g = g.replace(tzinfo=timezone.utc)
+    if a.rueckschau or not g or not faellig or g >= faellig:
         veraltet = ""
     else:
-        d = date.fromisoformat(stand)
-        tage = (date.today() - d).days
-        wann = {0: "von heute", 1: "von gestern",
+        tage = (date.today() - g.date()).days
+        wann = {0: "von heute frueh", 1: "von gestern",
                 2: "von vorgestern"}.get(tage, "von vor %d Tagen" % tage)
-        veraltet = ('<p class="veraltet">Diese Zahlen sind vom %s (%s). '
-                    'Der planm&auml;&szlig;ige Lauf vom %s ist nicht '
+        veraltet = ('<p class="veraltet">Diese Zahlen sind %s '
+                    '(%s, %s&nbsp;Uhr). Der Lauf vom %s ist nicht '
                     'durchgekommen.</p>'
-                    % (d.strftime("%d.%m."), wann,
-                       faellig.strftime("%d.%m.")))
+                    % (wann, g.astimezone().strftime("%d.%m."),
+                       g.astimezone().strftime("%H:%M"),
+                       faellig.astimezone().strftime("%d.%m., %H:%M")))
 
     # Push-Auskunft.  Das ist der Absatz, den die alte Seite nirgends hatte -
     # und "kein Push" ist der haeufigste Zustand.  Ohne ihn sieht Schweigen

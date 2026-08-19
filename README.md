@@ -232,6 +232,13 @@ Im Winter benutzen beide Laeufe denselben 00z-Lauf (der 06z kommt erst um
 Bewusst in Kauf genommen: zwei Laeufe kosten rund 7.000 der 10.000
 Tageseinheiten, und eine Sonderregel dafuer waere mehr Code als Nutzen.
 
+**Verschlaeft der Agent den Tick, wird nachgeholt.** Am 18.08.2026 fehlte
+genau der eine stuendliche Tick, der ins Abendfenster fiel (Rechner im
+Ruhezustand) &mdash; damit fiel der ganze Abendlauf aus. Ist das
+Abendfenster verstrichen und noch nicht bedient, laeuft deshalb der naechste
+Tick nach, **bis zum Sonnenuntergang**. Der Vormittagslauf wird nicht
+nachgeholt: zwei Laeufe in einer Stunde traegt das Stundenkontingent nicht.
+
 Steuergroessen in `konfig.json`: `lauf_vorlauf_stunden` (3),
 `lauf_morgens_utc` (09:20) und `lauf_fenster_min` (60). Das Fenster darf
 **nicht** schmaler werden als der Abstand der Agenten-Termine, sonst faellt

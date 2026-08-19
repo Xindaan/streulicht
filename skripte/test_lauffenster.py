@@ -136,10 +136,36 @@ def main():
     for tag, j, _n in [x for x in treffer if x[2] == "abends"][:3]:
         kurz_davor = j - dt.timedelta(minutes=5)
         kurz_danach = j + dt.timedelta(minutes=40)
-        pruefe(seite.letztes_laufziel(kurz_davor, kfg) != tag,
+        # letztes_laufziel() gibt seit dem 19.08.2026 einen ZEITPUNKT
+        # zurueck, keinen Tag: der Altersstreifen vergleicht Zeitpunkte.
+        vor = seite.letztes_laufziel(kurz_davor, kfg)
+        nach = seite.letztes_laufziel(kurz_danach, kfg)
+        pruefe(vor is None or vor.date() != tag,
                "%s: vor dem Fenster gilt der Vortag" % tag)
-        pruefe(seite.letztes_laufziel(kurz_danach, kfg) == tag,
+        pruefe(nach is not None and nach.date() == tag,
                "%s: nach dem Fenster gilt der Tag selbst" % tag)
+
+    print("\n=== 7. Verschlafenes Abendfenster wird nachgeholt")
+    # Am 18.08.2026 fehlte genau der eine Tick, der ins Abendfenster fiel
+    # (Rechner im Ruhezustand). Ohne Nachholen faellt damit der ganze Tag
+    # aus - und zwar leise.
+    tag = dt.date(2026, 8, 18)
+    std, _ = alarm.sonnenuntergang(tag, ort["breite"], ort["laenge"])
+    su = (dt.datetime.combine(tag, dt.time(0), dt.timezone.utc)
+          + dt.timedelta(hours=std))
+    ziel = su - dt.timedelta(hours=kfg["lauf_vorlauf_stunden"])
+    for versatz, erwartet in ((0, "abends"), (60, "abends"), (150, "abends")):
+        j = ziel + dt.timedelta(minutes=versatz)
+        name, grund = alarm.im_laufenster(j, kfg, ort, {})
+        pruefe(name == erwartet,
+               "%+4d min ums Fenster: %s (%s)" % (versatz, name, grund))
+    nach_su = su + dt.timedelta(minutes=5)
+    name, _ = alarm.im_laufenster(nach_su, kfg, ort, {})
+    pruefe(name is None, "nach Sonnenuntergang wird NICHT mehr nachgeholt")
+    # Und ein schon bedientes Abendfenster wird auch nicht nachgeholt.
+    z = {ort["name"]: {"laeufe": {str(tag): {"abends": "x"}}}}
+    name, _ = alarm.im_laufenster(ziel + dt.timedelta(minutes=90), kfg, ort, z)
+    pruefe(name is None, "bereits gelaufen: kein Nachholen")
 
     print("")
     if fehler:
