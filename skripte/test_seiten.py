@@ -186,11 +186,6 @@ def main():
         # heutigen Alarmlauf stammen.  Am 17.08.2026 hat die Seite den
         # ganzen Tag den Vortag gezeigt und dabei frisch ausgesehen; das
         # war der teure Teil, nicht der ausgefallene Lauf selbst.
-        from datetime import date
-        laeufe = sorted({((abende[t].get("verlauf") or [{}])[-1]).get("lauf")
-                         for t in abende
-                         if abende[t].get("median") is not None} - {None})
-        frisch = bool(laeufe) and laeufe[-1] == date.today().isoformat()
         hat_streifen = 'class="veraltet"' in html
         # Von wann sind die Wetterdaten?  Die Zeile darf leer sein, solange
         # kein Lauf mit der neuen Buchhaltung durch ist - aber wenn der
@@ -204,6 +199,22 @@ def main():
             if stand.get("modelllauf"):
                 pruefe("Modelllauf" in (zeile.group(1) if zeile else ""),
                        "und nennt den Modelllauf, nicht nur den Abruf")
+        # DIESELBE Regel wie in seite.py, nicht eine zweite daneben. Der Test
+        # verglich Tag mit Tag, waehrend der Code laengst Zeitpunkte
+        # verglich - und hat damit am 20.08.2026 einen Ein-Minuten-Fehler im
+        # Code als Testfehler getarnt (der Agent tickt zur :20, das
+        # Fensterziel lag bei :21:58, die Seite erklaerte ihre eigenen
+        # frischen Zahlen fuer veraltet).
+        import datetime as _dt
+        kfg_ = json.load(open(os.path.join(BASIS, "konfig.json")))
+        faellig = seite.letztes_laufziel(_dt.datetime.now(_dt.timezone.utc), kfg_)
+        breite = _dt.timedelta(minutes=kfg_.get("lauf_fenster_min", 60))
+        g_ = stand.get("geholt")
+        g_ = _dt.datetime.fromisoformat(g_) if g_ else None
+        if g_ is not None and g_.tzinfo is None:
+            g_ = g_.replace(tzinfo=_dt.timezone.utc)
+        frisch = bool(g_) and bool(faellig) and g_ >= faellig - breite / 2
+        laeufe = [stand.get("geholt") or "?"]
         pruefe(hat_streifen != frisch,
                "Altersstreifen passt zum Zustand (Lauf %s, Streifen %s)"
                % (laeufe[-1] if laeufe else "?",

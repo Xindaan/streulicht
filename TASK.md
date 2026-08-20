@@ -184,6 +184,41 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
 
 ## Done
 
+### 20.08.2026 &mdash; Archiv als Nebenprodukt (T-0003 erledigt), zwei Fehler dabei
+- T-0003 **Taegliche Ensemble-Archivierung &mdash; erledigt, aber anders als
+  entworfen.** `skripte/archiviere.py` hat NIE funktioniert: es holte die
+  Felder ein zweites Mal (76 Zellen x 43 Variablen x 51 Member x 11 Tage),
+  Open-Meteo antwortete durchgehend mit `HTTP 400: "Your API call requests
+  too much data."`, und nachgerechnet waren es **16.720 Einheiten am Tag bei
+  einem Budget von 10.000**. Der Ordner `daten/archiv/` war seit dem 15.08.
+  leer, und aufgefallen ist es nur ueber `launchctl list`.
+  Der Fehler war der zweite Abruf: **der Alarmlauf hat die Daten schon.**
+  Er schreibt jetzt nach jedem erfolgreichen Durchlauf
+  `daten/archiv/<ort>/<tag>_<fenster>.json` - je Abend eine Zeile pro Member
+  (Score, Schirm, A, B, Sicht, Weg) und das Medianfeld. 60 kB je Lauf, rund
+  44 MB im Jahr, **null zusaetzliche Abrufe**. Umfang nach Andres
+  Entscheidung (Variante 1+2); Rohfelder je Member bleiben draussen, das
+  waere ueber ein Gigabyte im Jahr fuer den Fall, dass die Score-Formel
+  rueckwirkend geaendert wird.
+  `skripte/archiviere.py` und der Agent `de.greatbelow.streulicht.archiv`
+  sind entfallen. **Der Agent muss ausgeladen werden**, siehe STATE.
+- T-0050 **Ein-Minuten-Fehler im Altersstreifen, gefunden von der
+  Negativprobe.** Der Streifen verglich `stand["geholt"]` mit dem
+  FENSTERZIEL. Der Agent tickt aber zur vollen 20. Minute, waehrend das Ziel
+  bei Sonnenuntergang minus drei Stunden liegt - am 20.08. also 15:21:58 UTC
+  gegen einen Lauf um 15:20:00. Zwei Minuten, und die Seite erklaerte ihre
+  eigenen frischen Zahlen fuer veraltet. Verglichen wird jetzt gegen den
+  ANFANG des Fensters.
+  **Der Test hat den Fehler getarnt statt ihn zu zeigen**: er verglich noch
+  Tag mit Tag, waehrend der Code laengst Zeitpunkte verglich. Er benutzt
+  jetzt dieselbe Funktion wie `seite.py` - eine Regel, nicht zwei.
+- **Und die Leck-Kontrolle im Archivtest war blind.** Sie las die
+  Zustandsdatei NACH dem Zuruecksetzen, also die Sicherung statt des
+  Geschriebenen. Die Negativprobe schlug deshalb nicht an. Behoben: der
+  Zustand wird vor dem Zuruecksetzen festgehalten. Beide Negativproben
+  greifen jetzt.
+
+
 ### 20.08.2026 &mdash; Fertig gerechnet, aber nicht gezeigt (T-0050)
 - T-0050 **Die Auslieferung laeuft jetzt alle zehn Minuten.** Der Abendlauf
   am 20.08. war um 17:23 fertig und hatte den 00z-Lauf desselben Tages -

@@ -1,6 +1,6 @@
 # STATE
 
-Stand: 18.08.2026 vormittags. **Der Betrieb laeuft, die Oberflaeche ist neu -
+Stand: 20.08.2026 abends. **Der Betrieb laeuft, die Oberflaeche ist neu -
 auf beiden Schirmgroessen.** Repo oeffentlich, Pages liefert Prognose-,
 Bewertungs- und Bilanzseite, ntfy eingerichtet, fuenf launchd-Agenten
 geladen. Der UX-Overhaul (T-0031 bis T-0034) ist vollstaendig umgesetzt, die
@@ -151,23 +151,27 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
 
 ## Next actions
 
-1. **Den Seiten-Agenten nachladen** (er soll alle 10 min laufen statt
-   stuendlich). `cp` allein reicht nicht, `kickstart` auch nicht - es
-   startet die ALTE, in launchd geladene Definition neu:
+1. **Den Archiv-Agenten ausladen** - Skript und plist sind entfallen, der
+   Agent laeuft sonst weiter ins Leere und haelt seinen roten Exitcode:
 
-       cp betrieb/de.greatbelow.streulicht.seite.plist ~/Library/LaunchAgents/
-       launchctl bootout gui/$UID/de.greatbelow.streulicht.seite
-       launchctl bootstrap gui/$UID ~/Library/LaunchAgents/de.greatbelow.streulicht.seite.plist
-       launchctl print gui/$UID/de.greatbelow.streulicht.seite | grep -c '"Minute"'
+       launchctl bootout gui/$UID/de.greatbelow.streulicht.archiv
+       rm ~/Library/LaunchAgents/de.greatbelow.streulicht.archiv.plist
+       launchctl list | grep streulicht
 
-   Die letzte Zeile muss 144 ausgeben, nicht 24.
-2. **Die beiden neuen Laeufe ansehen** (09:20 UTC und rund 3 h vor
-   Sonnenuntergang). Kommen sie durch, steht der Warnstreifen nie da.
-3. **T-0040** Ueberwachung der Exitcodes - zwei von vier Laeufen sind
-   gescheitert, gemerkt hat es ein Mensch.
+   Danach stehen alle verbleibenden vier Agenten auf 0.
+2. **T-0040 Ueberwachung der Exitcodes.** Inzwischen dreimal aufgefallen,
+   dass ein Agent still scheitert - und jedes Mal hat es ein Mensch bemerkt,
+   nicht das System. Das Archiv war seit dem 15.08. kaputt.
+3. **Beobachten.** Die Kette laeuft: zwei Alarmlaeufe am Tag, Auslieferung
+   alle zehn Minuten, Archiv als Nebenprodukt.
 4. **T-0038** Rundung an der 80er-Schwelle, wenn der Fall wieder auftritt.
 
 ## Letzte Done
+
+- **20.08.2026 T-0003 erledigt.** Das Tagesarchiv faellt jetzt als
+  Nebenprodukt des Alarmlaufs an - 60 kB je Lauf, null zusaetzliche Abrufe.
+  Die alte Fassung holte die Felder ein zweites Mal und hat deshalb nie
+  funktioniert (HTTP 400, 16.720 von 10.000 Einheiten).
 
 - **18.08.2026 Lauf ans Ereignis geruecht (T-0041).** Statt fest 07:30 jetzt
   rund drei Stunden vor Sonnenuntergang - halbiert den Modellvorlauf von

@@ -853,7 +853,14 @@ def main():
                                    else geholt + "T23:59+00:00")
         if g.tzinfo is None:
             g = g.replace(tzinfo=timezone.utc)
-    if a.rueckschau or not g or not faellig or g >= faellig:
+    # Verglichen wird gegen den ANFANG des Fensters, nicht gegen seine Mitte.
+    # Der Agent tickt zur vollen 20. Minute, das Ziel liegt aber bei
+    # Sonnenuntergang minus drei Stunden - heute also 15:21:58 UTC, waehrend
+    # der Lauf um 15:20:00 begann. Zwei Minuten zu frueh, und die Seite
+    # erklaerte ihre eigenen frischen Zahlen fuer veraltet.
+    fensterbreite = timedelta(minutes=kfg.get("lauf_fenster_min", 60))
+    if (a.rueckschau or not g or not faellig
+            or g >= faellig - fensterbreite / 2):
         veraltet = ""
     else:
         tage = (date.today() - g.date()).days

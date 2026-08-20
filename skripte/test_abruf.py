@@ -20,6 +20,7 @@ Quelltext zu lesen.  Er prueft genau zwei Dinge:
 Lauf:  python3 skripte/test_abruf.py
 """
 import datetime as dt
+import glob
 import json
 import os
 import sys
@@ -39,6 +40,8 @@ def pruefe(bed, text):
         fehler.append(text)
 
 
+ARCHIV_NEU = []
+ZUSTAND_NACH_LAUF = "{}"
 MEMBER = [""] + ["%02d" % n for n in range(1, 51)]      # 51 wie ECMWF ENS
 ABRUFE = []                                             # Protokoll der Aufrufe
 
@@ -71,11 +74,32 @@ def main():
     ort = kfg["orte"][0]
 
     alarm.abfrage = falscher_abruf
-    sicher, sys.argv = sys.argv, ["alarm.py", "--trocken"]
+    alarm.modelllauf = lambda m: "2026-01-01T00:00+00:00"   # kein Netz noetig
+
+    # OHNE --trocken, damit auch der Schreibweg laeuft (das Archiv entsteht
+    # sonst nicht und waere ungeprueft).  Zustand und die erzeugte Datei
+    # werden danach zurueckgesetzt - der Pruefstand darf keine Messdaten
+    # anfassen.
+    global ARCHIV_NEU
+    zp = os.path.join(BASIS, "daten", "zustand.json")
+    sicherung = open(zp).read() if os.path.exists(zp) else None
+    vorher = set(glob.glob(os.path.join(BASIS, "daten", "archiv", "*", "*.json")))
+    sicher, sys.argv = sys.argv, ["alarm.py"]
     try:
         alarm.main()
     finally:
         sys.argv = sicher
+        # Den geschriebenen Zustand FESTHALTEN, bevor er zurueckgesetzt wird -
+        # sonst prueft die Leck-Kontrolle unten die Sicherung statt das, was
+        # der Lauf geschrieben hat.  Genau so ist die Kontrolle beim ersten
+        # Anlauf durch die Negativprobe gefallen, ohne anzuschlagen.
+        global ZUSTAND_NACH_LAUF
+        ZUSTAND_NACH_LAUF = open(zp).read() if os.path.exists(zp) else "{}"
+        if sicherung is not None:
+            open(zp, "w").write(sicherung)
+    ARCHIV_NEU = sorted(
+        set(glob.glob(os.path.join(BASIS, "daten", "archiv", "*", "*.json")))
+        - vorher)
 
     print("\n=== 1. Wind wird nur an einer Zelle geholt")
     wind = [a for a in ABRUFE if any(v.startswith("wind_") for v in a["variablen"])]
@@ -117,6 +141,39 @@ def main():
     if len(wolke) >= 2:
         pruefe(not (wolke[-1]["zellen"] & wolke[0]["zellen"]),
                "Pass 2 holt nur Zellen, die Pass 1 nicht hatte")
+
+    print("\n=== 4. Das Archiv faellt als Nebenprodukt an (T-0003)")
+    # Die erste Fassung holte die Felder ein zweites Mal - 16.720
+    # Kontingenteinheiten am Tag bei einem Budget von 10.000, und die API
+    # antwortete durchgehend mit HTTP 400 "requests too much data".
+    # Der Alarmlauf HAT die Daten; archiviert wird, was er ohnehin rechnet.
+    import json as _json
+    dateien = ARCHIV_NEU
+    pruefe(len(dateien) == 1,
+           "genau eine Archivdatei ist entstanden (%d)" % len(dateien))
+    if dateien:
+        d = _json.load(open(dateien[-1]))
+        pruefe(d.get("modelllauf") and d.get("geholt"),
+               "Kopf nennt Modelllauf und Abrufzeit")
+        t0 = sorted(d["abende"])[0]
+        e0 = d["abende"][t0]
+        pruefe(len(e0.get("member") or []) == len(MEMBER),
+               "je Abend eine Zeile pro Member (%d von %d)"
+               % (len(e0.get("member") or []), len(MEMBER)))
+        pruefe(all(set(m) >= {"s", "schirm", "A", "B"} for m in e0["member"]),
+               "die Memberzeile traegt Score und Terme")
+        pruefe(bool(e0.get("feld")), "das Medianfeld liegt dabei")
+        pruefe(not any("segmente" in m for m in e0["member"]),
+               "aber KEINE Segmentliste je Member (waere ein Vielfaches)")
+    # Und der Zustand darf davon nichts abbekommen.
+    z = _json.loads(ZUSTAND_NACH_LAUF)
+    ab = (z.get(ort["name"]) or {}).get("abende", {})
+    leck = [t for t, e in ab.items()
+            if "member" in e or any("member" in v for v in (e.get("verlauf") or []))]
+    pruefe(not leck, "kein Memberblock im Zustand (%s)" % (leck or "-"))
+
+    for f in ARCHIV_NEU:                       # der Pruefstand raeumt auf
+        os.remove(f)
 
     print("")
     if fehler:

@@ -98,6 +98,39 @@ def mitte(z):
 LAST = {"anfragen": 0, "orte": 0, "variablen": 0, "member": 0, "tage": 0}
 
 
+def schreibe_archiv(name, tag, fenster, init, jetzt, kfg, abende):
+    """Den Tagesabzug wegschreiben - ohne einen einzigen zusaetzlichen Abruf.
+
+    T-0003, NEUFASSUNG 20.08.2026.  Die erste Fassung (`skripte/archiviere.py`)
+    hat die Felder ein ZWEITES Mal geholt: 76 Zellen x 43 Variablen x 51
+    Member x 11 Tage.  Sie hat nie funktioniert - Open-Meteo antwortete
+    durchgehend mit
+
+        HTTP 400: "Your API call requests too much data."
+
+    und nachgerechnet waren es 16.720 Kontingenteinheiten am Tag, bei einem
+    Tagesbudget von 10.000.  Der Fehler war nicht die Blockgroesse, sondern
+    der zweite Abruf: der Alarmlauf HAT die Daten schon.
+
+    Archiviert wird deshalb, was er ohnehin gerechnet hat - je Abend die
+    Scorezeile jedes Members (fuer Rangdiagramm und Skill, T-0008) und das
+    Medianfeld (fuer Bilder im Nachhinein).  Nicht archiviert werden die
+    Rohfelder je Member: das waeren ueber ein Gigabyte im Jahr, und
+    gebraucht wuerden sie nur, um die Score-Formel rueckwirkend zu aendern.
+    Entscheidung Andres am 20.08.2026.
+    """
+    ordner = os.path.join(BASIS, "daten", "archiv", name)
+    os.makedirs(ordner, exist_ok=True)
+    ziel = os.path.join(ordner, "%s_%s.json" % (tag, fenster))
+    d = {"ort": name, "lauf": str(tag), "fenster": fenster,
+         "modelllauf": init, "geholt": jetzt.isoformat(timespec="minutes"),
+         "modell": kfg["modell"], "schwelle_score": kfg["schwelle_score"],
+         "abende": abende}
+    with open(ziel, "w") as f:
+        json.dump(d, f, separators=(",", ":"))
+    return ziel, os.path.getsize(ziel)
+
+
 def modelllauf(modell):
     """Initialisierungszeit des juengsten verfuegbaren Modelllaufs, oder None.
 
@@ -201,6 +234,10 @@ def member_liste(h):
     if basen & set(h):
         mem.add(KONTROLLLAUF)
     return sorted(mem)
+
+
+def _rund(x, n=5):
+    return None if x is None else round(x, n)
 
 
 def verdichte(werte, schwelle):
@@ -421,7 +458,21 @@ def lauf_ort(ort, kfg, zustand, trocken):
                          for a, b, sch, c in (besterdet["segmente"]
                                               if besterdet else [])],
             "n_member": v["n_member"], "n_member_gesamt": v["n_member_gesamt"],
-            "feld": feld_seite}
+            "feld": feld_seite,
+            # Fuers Archiv (T-0003, Neufassung 20.08.2026): eine Zeile je
+            # Member.  Die Wahrscheinlichkeit ist ein Anteil ueber diese 51
+            # Zahlen - ohne sie laesst sich spaeter weder ein Rangdiagramm
+            # noch ein Brier-Skill rechnen, nur die Trefferquote.
+            # `segmente` bleibt draussen: das waere je Member eine eigene
+            # Ringliste und blaeht das Archiv um ein Vielfaches.
+            "member": [
+                {"s": round(sc_, 6),
+                 "schirm": (dt_ or {}).get("schirm"),
+                 "A": _rund((dt_ or {}).get("A")),
+                 "B": _rund((dt_ or {}).get("B")),
+                 "sicht": _rund((dt_ or {}).get("sicht")),
+                 "weg": _rund((dt_ or {}).get("weg"))}
+                for sc_, dt_ in werte]}
     return ergebnisse
 
 
@@ -601,6 +652,7 @@ def main():
 
     jetzt = (datetime.fromisoformat(a.jetzt).replace(tzinfo=timezone.utc)
              if a.jetzt else datetime.now(timezone.utc))
+    archive = {}                      # je Ort die Abende fuers Tagesarchiv
     # Welches Fenster bedient dieser Lauf?  Fuer die Buchhaltung am Ende.
     fenster = {}
     if a.geplant:
@@ -619,6 +671,7 @@ def main():
         print("=== %s" % ort["anzeige"], flush=True)
         erg = lauf_ort(ort, kfg, zustand, a.trocken)
         eintrag = zustand.setdefault(name, {"abende": {}, "alarme": {}})
+        archiv_abende = archive.setdefault(name, {})
 
         for tag in sorted(erg):
             e = erg[tag]
@@ -635,8 +688,15 @@ def main():
                       # `feld` bleibt draussen: 120 Zahlen je Lauf und Abend
                       # blaehen die Zustandsdatei, und fuer die Rueckschau
                       # zaehlen die Terme, nicht das Rohfeld.
-                      if k not in ("verlauf", "bewertung", "feld")},
+                      if k not in ("verlauf", "bewertung", "feld",
+                                   "member")},
                      lauf=str(date.today()))]
+            archiv_abende[tag] = {
+                k: e[k] for k in ("p", "median", "stunde_utc", "azimut",
+                                  "dt_h", "schirm", "A", "sicht", "weg",
+                                  "n_member", "n_member_gesamt", "member",
+                                  "feld")}
+            e.pop("member", None)
             eintrag["abende"][tag] = e
             lz = lokalzeit(tag, e["stunde_utc"], ort.get("zeitzone", "UTC"))
             marke = "*" if e["p"] >= kfg["schwelle_wahrscheinlichkeit"] else " "
@@ -680,6 +740,12 @@ def main():
         e["stand"] = {"geholt": jetzt.isoformat(timespec="minutes"),
                       "modelllauf": init,
                       "fenster": fenster.get(ort["name"], "vonhand")}
+        abende = archive.get(ort["name"])
+        if abende and not a.trocken:
+            ziel, gr = schreibe_archiv(
+                ort["name"], tag, fenster.get(ort["name"], "vonhand"),
+                init, jetzt, kfg, abende)
+            melde("   Archiv: %s (%.0f kB)" % (os.path.basename(ziel), gr / 1000))
 
     melde("   Bilanz: %d HTTP-Anfragen, %d Ortsabrufe, bis %d Variablen, "
           "%d Tage, %d Member"

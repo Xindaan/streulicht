@@ -114,6 +114,28 @@ taeglich nach `main` waeren das ueber 100 MB im Jahr fuer Staende, die
 niemanden interessieren. Auf dem Wegwerfzweig gibt es keine Historie, die
 wachsen koennte.
 
+### Das Tagesarchiv (T-0003)
+
+Der Alarmlauf schreibt nach jedem erfolgreichen Durchlauf
+`daten/archiv/<ort>/<tag>_<fenster>.json` &mdash; **ohne einen einzigen
+zusaetzlichen Abruf**. Drin steht je Abend eine Zeile pro Ensemble-Member
+(Score, Schirm, A, B, Sicht, Weg) und das Medianfeld. Rund 60 kB je Lauf,
+also etwa 44 MB im Jahr.
+
+Die Memberzeilen sind der Punkt: die Wahrscheinlichkeit ist ein Anteil ueber
+51 Zahlen, und ohne sie liesse sich spaeter weder ein Rangdiagramm noch ein
+Brier-Skill rechnen, nur die Trefferquote. Nicht archiviert werden die
+Rohfelder je Member &mdash; das waere ueber ein Gigabyte im Jahr und wuerde
+nur gebraucht, um die Score-Formel rueckwirkend zu aendern.
+
+> **Die erste Fassung hat nie funktioniert.** `skripte/archiviere.py` holte
+> die Felder ein ZWEITES Mal: 76 Zellen x 43 Variablen x 51 Member x 11 Tage.
+> Open-Meteo antwortete durchgehend mit
+> `HTTP 400: "Your API call requests too much data."`, und nachgerechnet
+> waren es **16.720 Kontingenteinheiten am Tag bei einem Budget von 10.000**.
+> Der Fehler war nicht die Blockgroesse, sondern der zweite Abruf. Skript und
+> Agent sind am 20.08.2026 entfallen.
+
 **Die erzeugten Seiten sind nicht im Repo.** `web/index.html`,
 `web/bewerten-*.html` und `web/bisher.html` sind Bauartefakte und
 gitignoriert &mdash; der stuendliche Agent schreibt sie neu, und schon die
@@ -173,7 +195,6 @@ Fuenf Agenten in `~/Library/LaunchAgents/`, alle mit
 | `de.greatbelow.streulicht.alarm` | `alarm.py --geplant` | stuendlich zur 20. Minute, **rechnet zweimal: 09:20 UTC und rund 3 h vor Sonnenuntergang** |
 | `de.greatbelow.streulicht.erinnerung` | `erinnerung.py` | stuendlich zur 15. Minute |
 | `de.greatbelow.streulicht.bewertung` | `bewertungen_holen.py` | alle 3 h zur 5. Minute |
-| `de.greatbelow.streulicht.archiv` | `archiviere.py` | 08:00 |
 | `de.greatbelow.streulicht.seite` | `ausliefern.py` | **alle 10 Minuten**, pusht nur bei Aenderung |
 
 ### Warum der Alarm sonnenuntergangsrelativ laeuft
@@ -462,6 +483,7 @@ richtige Zustand, kein Defekt.
 | `skripte/faecher.py` | Faecherkarte von oben als SVG |
 | `skripte/band.py` | Himmelsband: Lichteindruck als Farbverlauf |
 | `skripte/satellit.py` | MSG-Wolkenmaske als Beobachtungswahrheit |
+| `skripte/netz.py` | wartet auf Namensaufloesung, bevor ein Lauf beginnt |
 | `skripte/ausliefern.py` | baut die Seiten und pusht nach `gh-pages` |
 | `skripte/fensterterm.py` | Fensterterm gegen die Maske: Phantom oder bestaetigt (T-0027) |
 | `skripte/wegterm.py` | Wegterm anders aggregiert, fuenf Varianten gegen Album/Referenz (T-0029) |
