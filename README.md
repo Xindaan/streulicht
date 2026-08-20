@@ -181,11 +181,26 @@ Fuenf Agenten in `~/Library/LaunchAgents/`, alle mit
 Bis zum 18.08.2026 lief er fest um 07:30. Zwei Messungen haben das gekippt:
 
 **Erstens die Frische.** ECMWF ENS rechnet viermal am Tag (00z/06z/12z/18z),
-und die Daten sind erst **8,7 Stunden nach der Initialisierung** abrufbar
-(gemessen an `ecmwf_ifs025_ensemble/static/meta.json`, 18.08.2026). Um 07:30
-war damit der 18z-Lauf des Vorabends der juengste - **21 bis 24 Stunden**
-Vorlauf auf den Sonnenuntergang. Rechnet man stattdessen rund drei Stunden
-vor Sonnenuntergang, sind es **12 bis 17 Stunden**, das ganze Jahr ueber.
+aber die Daten stehen erst **rund 13 Stunden nach der Initialisierung** zur
+Verfuegung. Der Verzug ist nicht konstant: gemessen an
+`ecmwf_ifs025_ensemble/static/meta.json` waren es 8,7 h fuer einen
+18z-Lauf (18.08.2026) und 12,9 h fuer einen 00z-Lauf (20.08.2026). Das
+ENSEMBLE ist dabei deutlich langsamer als der deterministische Lauf
+desselben Modells (7,2 h in derselben Messung).
+
+**Korrektur zur ersten Fassung dieses Abschnitts:** hier stand 8,7 h als
+feste Groesse, aus einer einzigen Probe. Damit war auch die Folgerechnung
+zu guenstig. Mit dem realistischeren Wert:
+
+| Abruf | benutzter Lauf | Vorlauf auf den Sonnenuntergang |
+|---|---|---|
+| alt, 07:30 (August) | 12z des Vortags | 30,4 h |
+| **neu, 3 h vor SU (August)** | **00z desselben Tages** | **18,4 h** |
+| alt, 07:30 (Dezember) | 12z des Vortags | 26,9 h |
+| **neu, 3 h vor SU (Dezember)** | 18z des Vortags | 20,9 h |
+
+Die Umstellung bleibt richtig - sie spart im August zwoelf Stunden Vorlauf.
+Aber sie halbiert ihn nicht, wie hier zuerst stand.
 
 **Was die Grenze kostet.** Die freie Stufe erlaubt 600 Aufrufe/Minute,
 5.000/Stunde, 10.000/Tag und **300.000/Monat**. Zwei Laeufe am Tag sind rund
@@ -219,18 +234,24 @@ Seit dem 18.08.2026 gibt es **zwei** Fenster:
 
 | Fenster | Wann | Modelllauf | Wozu |
 |---|---|---|---|
-| `morgens` | 09:20 UTC, fest | 00z (ab 08:44 UTC da) | vormittags aktuelle Zahlen auf der Seite |
-| `abends` | rund 3 h vor Sonnenuntergang | der juengste verfuegbare | der wichtige: kuerzester Vorlauf |
+| `morgens` | 09:20 UTC, fest | 18z des Vortags | vormittags aktuelle Zahlen auf der Seite |
+| `abends` | rund 3 h vor Sonnenuntergang | 00z desselben Tages (im Sommer) | der wichtige: kuerzester Vorlauf |
+
+Bei rund 13 h Verzug wird der 00z-Lauf gegen **14:51 Ortszeit** verfuegbar.
+Im Sommer liegt das Abendfenster danach, im Winter davor &mdash; dort
+benutzen beide Laeufe denselben 18z und der zweite bringt nichts Neues.
+Frueher geht es nicht: bei Sonnenuntergang um 15:53 gibt es schlicht nichts
+Frischeres.
 
 **Der zweite Lauf schiebt keinen zweiten Push nach.** Je Abend geht
 hoechstens ein Alarm raus, das haelt `zustand["alarme"]` fest. Der
 Vormittagslauf sorgt dafuer, dass ein Abend ueber der Schwelle frueher
 gemeldet wird und die Seite vormittags nicht den Vorabend zeigt.
 
-Im Winter benutzen beide Laeufe denselben 00z-Lauf (der 06z kommt erst um
-16:44 Ortszeit, da ist die Sonne schon weg) - der zweite ist dann redundant.
-Bewusst in Kauf genommen: zwei Laeufe kosten rund 7.000 der 10.000
-Tageseinheiten, und eine Sonderregel dafuer waere mehr Code als Nutzen.
+Im Winter benutzen beide Laeufe denselben 18z-Lauf des Vortags - der zweite
+ist dann redundant. Bewusst in Kauf genommen: zwei Laeufe kosten rund 7.000
+der 10.000 Tageseinheiten, und eine Sonderregel dafuer waere mehr Code als
+Nutzen.
 
 **Verschlaeft der Agent den Tick, wird nachgeholt.** Am 18.08.2026 fehlte
 genau der eine stuendliche Tick, der ins Abendfenster fiel (Rechner im

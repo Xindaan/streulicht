@@ -184,6 +184,44 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
 
 ## Done
 
+### 20.08.2026 &mdash; Der Verzug des Ensembles war zu guenstig gerechnet (T-0049)
+- T-0049 **8,7 h waren eine Einzelprobe, nicht der Verzug.** Andre ist ueber
+  die Standzeile gestolpert: "Modelllauf 19.08., 18 UTC &#183; geholt 20.08.,
+  11:20 Uhr" - 15,3 Stunden. Nachgemessen am 20.08. um 15:15 UTC:
+
+  | | Initialisierung | verfuegbar | Verzug |
+  |---|---|---|---|
+  | `ecmwf_ifs025_ensemble` | 20.08. 00z | 20.08. 12:51 | **12,9 h** |
+  | `ecmwf_ifs025` (determ.) | 20.08. 06z | 20.08. 13:13 | 7,2 h |
+
+  Das Ensemble ist also deutlich langsamer als der deterministische Lauf
+  desselben Modells, und der Verzug schwankt: am 18.08. waren es 8,7 h
+  (18z-Lauf), am 20.08. 12,9 h (00z-Lauf). Die Standzeile war damit richtig
+  - die Zahlen WAREN 15,3 h alt.
+  **Folge fuer die Begruendung von T-0041:** die dort genannten "12 bis 17 h
+  Vorlauf" waren mit 8,7 h gerechnet und zu guenstig. Real:
+
+  | Abruf | Lauf | Vorlauf auf SU |
+  |---|---|---|
+  | alt 07:30, August | 12z des Vortags | 30,4 h |
+  | neu 3 h vor SU, August | 00z desselben Tages | 18,4 h |
+  | alt 07:30, Dezember | 12z des Vortags | 26,9 h |
+  | neu 3 h vor SU, Dezember | 18z des Vortags | 20,9 h |
+
+  Die Umstellung bleibt richtig, sie spart im August zwoelf Stunden - aber
+  sie halbiert den Vorlauf nicht, wie ich geschrieben hatte. README
+  korrigiert.
+  **Und das ist genau der Zweck der Standzeile**: sie hat eine falsche
+  Annahme binnen zweier Tage sichtbar gemacht. Waere sie nicht da, stuende
+  die 8,7-h-Rechnung weiter unbemerkt in der README.
+- **Nebenbefund fuer den Winter.** Bei 13 h Verzug wird der 00z-Lauf gegen
+  14:51 Ortszeit verfuegbar. Im Sommer liegt das Abendfenster danach, im
+  Winter (12:53) davor - dort benutzen beide Tageslaeufe denselben 18z des
+  Vortags. Frueher geht es nicht: bei Sonnenuntergang um 15:53 gibt es
+  nichts Frischeres. Kein Handlungsbedarf, aber es erklaert, warum der
+  zweite Lauf im Winter nichts beitraegt.
+
+
 ### 19.08.2026 &mdash; Ein verschlafener Tick kostete den ganzen Abendlauf (T-0048)
 - T-0048 **Der Abendlauf wird nachgeholt, wenn sein Tick ausfaellt.** Am
   18.08.2026 hat der stuendliche Agent genau den einen Tick verschlafen,
