@@ -151,19 +151,16 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
 
 ## Next actions
 
-1. **Beide Agenten wirklich nachladen** - `cp` allein reicht nicht, und
-   `kickstart` auch nicht: es startet die ALTE, in launchd geladene
-   Definition neu. Am 18.08.2026 lief der Alarm deshalb mittags ohne
-   `--geplant` los.
+1. **Den Seiten-Agenten nachladen** (er soll alle 10 min laufen statt
+   stuendlich). `cp` allein reicht nicht, `kickstart` auch nicht - es
+   startet die ALTE, in launchd geladene Definition neu:
 
-       cp betrieb/de.greatbelow.streulicht.{alarm,seite}.plist ~/Library/LaunchAgents/
-       for n in alarm seite; do
-         launchctl bootout gui/$UID/de.greatbelow.streulicht.$n
-         launchctl bootstrap gui/$UID ~/Library/LaunchAgents/de.greatbelow.streulicht.$n.plist
-       done
-       launchctl print gui/$UID/de.greatbelow.streulicht.alarm | grep -A4 arguments
+       cp betrieb/de.greatbelow.streulicht.seite.plist ~/Library/LaunchAgents/
+       launchctl bootout gui/$UID/de.greatbelow.streulicht.seite
+       launchctl bootstrap gui/$UID ~/Library/LaunchAgents/de.greatbelow.streulicht.seite.plist
+       launchctl print gui/$UID/de.greatbelow.streulicht.seite | grep -c '"Minute"'
 
-   Die letzte Zeile ist die Gegenprobe: dort muss `--geplant` stehen.
+   Die letzte Zeile muss 144 ausgeben, nicht 24.
 2. **Die beiden neuen Laeufe ansehen** (09:20 UTC und rund 3 h vor
    Sonnenuntergang). Kommen sie durch, steht der Warnstreifen nie da.
 3. **T-0040** Ueberwachung der Exitcodes - zwei von vier Laeufen sind

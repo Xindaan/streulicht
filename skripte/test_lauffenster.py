@@ -66,6 +66,15 @@ def main():
     pruefe(kfg["lauf_fenster_min"] >= 60,
            "Fenster mindestens so breit wie der Agentenabstand (%d min)"
            % kfg["lauf_fenster_min"])
+    # Die Auslieferung muss oft genug laufen, sonst steht ein fertiger Lauf
+    # lange ungezeigt herum.  Am 20.08.2026 war der Alarm um 17:23 fertig
+    # und die Seite zeigte bis 17:50 den Vormittagsstand - 27 Minuten, in
+    # denen alles richtig gerechnet und nichts davon sichtbar war.
+    smin, sanzahl, _ = agenten_minute("de.greatbelow.streulicht.seite.plist")
+    abstand = 1440 // sanzahl
+    pruefe(abstand <= 15,
+           "Auslieferung laeuft mindestens alle 15 min (alle %d min, %d Termine)"
+           % (abstand, sanzahl))
 
     print("\n=== 2. Ueber ein Jahr genau zwei Treffer pro Tag, je Fenster einer")
     minute = sorted(minuten)[0]

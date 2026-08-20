@@ -174,7 +174,7 @@ Fuenf Agenten in `~/Library/LaunchAgents/`, alle mit
 | `de.greatbelow.streulicht.erinnerung` | `erinnerung.py` | stuendlich zur 15. Minute |
 | `de.greatbelow.streulicht.bewertung` | `bewertungen_holen.py` | alle 3 h zur 5. Minute |
 | `de.greatbelow.streulicht.archiv` | `archiviere.py` | 08:00 |
-| `de.greatbelow.streulicht.seite` | `ausliefern.py` | stuendlich zur 50. Minute, **pusht nur bei Aenderung** |
+| `de.greatbelow.streulicht.seite` | `ausliefern.py` | **alle 10 Minuten**, pusht nur bei Aenderung |
 
 ### Warum der Alarm sonnenuntergangsrelativ laeuft
 
@@ -284,9 +284,16 @@ Seite zeigte den ganzen Tag den Vortag. Seitdem:
   auf Namensaufloesung warten, statt am ersten Fehlversuch zu sterben;
 - `ausliefern.py` wiederholt den Push dreimal und **nennt den git-Fehler**
   (vorher schluckte `capture_output` genau die Zeile, die erklaert, warum);
-- die Auslieferung laeuft stuendlich und pusht nur, wenn sich der gebaute
-  Stand geaendert hat - sie kann den Alarm also nicht mehr verpassen, egal
-  wie lange er braucht.
+- die Auslieferung laeuft alle zehn Minuten und pusht nur, wenn sich der
+  gebaute Stand geaendert hat - sie kann den Alarm also nicht mehr
+  verpassen, egal wie lange er braucht.
+
+**Warum alle zehn Minuten und nicht stuendlich:** am 20.08.2026 war der
+Abendlauf um 17:23 fertig, die Auslieferung lief erst um 17:50 - 27 Minuten
+lang war alles richtig gerechnet und nichts davon sichtbar. Ein Bauen ohne
+Push kostet **0,27 s** (gemessen), gepusht wird nur bei geaendertem
+Fingerabdruck. Der Preis ist also praktisch null, die Obergrenze fuer
+veraltete Seiten sinkt von 59 auf 10 Minuten.
 
 ```bash
 launchctl bootstrap gui/$UID ~/Library/LaunchAgents/de.greatbelow.streulicht.alarm.plist

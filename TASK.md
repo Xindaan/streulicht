@@ -184,6 +184,20 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
 
 ## Done
 
+### 20.08.2026 &mdash; Fertig gerechnet, aber nicht gezeigt (T-0050)
+- T-0050 **Die Auslieferung laeuft jetzt alle zehn Minuten.** Der Abendlauf
+  am 20.08. war um 17:23 fertig und hatte den 00z-Lauf desselben Tages -
+  genau wie vorhergesagt. Die Seite zeigte trotzdem bis 17:50 den
+  Vormittagsstand, weil der Auslieferungsagent stuendlich zur 50. Minute
+  lief. 27 Minuten lang war alles richtig gerechnet und nichts davon
+  sichtbar; Andre hat es um 17:30 gemeldet.
+  Ein Bauen ohne Push kostet **0,27 s** (gemessen), und gepusht wird nur bei
+  geaendertem Fingerabdruck - alle zehn Minuten kostet also praktisch
+  nichts und senkt die Obergrenze fuer veraltete Seiten von 59 auf 10 min.
+  `test_lauffenster.py` prueft das Intervall mit; Negativprobe (zurueck auf
+  stuendlich) schlaegt an.
+  **Braucht ein `launchctl bootout`/`bootstrap` des Seiten-Agenten.**
+
 ### 20.08.2026 &mdash; Der Verzug des Ensembles war zu guenstig gerechnet (T-0049)
 - T-0049 **8,7 h waren eine Einzelprobe, nicht der Verzug.** Andre ist ueber
   die Standzeile gestolpert: "Modelllauf 19.08., 18 UTC &#183; geholt 20.08.,
