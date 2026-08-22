@@ -1,0 +1,232 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Streulicht &mdash; bisher</title><style>
+/* ==========================================================================
+   Design-Tokens -- einzige Quelle fuer Farbe, Typo, Abstand, Radius, Schatten.
+
+   Herkunft: Andres Hausstandard aus rezept-grid/css/stil.css (Dunkelsatz,
+   aus Apple-Systemfarben abgeleitet) und poisson-dor/assets/tokens.css
+   (Leiter fuer Abstand, Radius, Schatten, Bewegung).  Ausgelesen und
+   begruendet in docs/ui-referenz.md.
+
+   Diese Datei wird von skripte/tokens.py gelesen und von seite.py in den
+   Style-Block der erzeugten Seite inlined -- die Seite bleibt dadurch
+   self-contained: kein Stylesheet-Verweis, kein Netzzugriff.  schnitt.py
+   liest dieselben Werte, damit im SVG keine feste Farbe mehr steht.
+
+   NUR DUNKEL.  Entscheidung 14.08.2026 (T-0010): die Seite wird abends auf
+   dem Telefon angeschaut, und die Bildlogik des Vertikalschnitts lebt davon
+   -- ein Lichtstrahl liest sich als Licht nur gegen Dunkelheit.  Ein
+   Hellsatz waere kein Token-Tausch, sondern ein eigener Entwurf fuer die
+   Wolkenbaender und den Strahl.  Deshalb bewusst kein
+   prefers-color-scheme-Block: er wuerde eine Zweimodigkeit vortaeuschen,
+   die es nicht gibt.
+
+   Namen deutsch nach ~/src/CLAUDE.md Section 7.  Zuordnung zu poisson-dor:
+     --papier = --bg     --karte = --card    --flaeche2 = --bg2
+     --tinte  = --ink    --tinte2 = --ink2   --gedaempft = --muted
+     --linie  = --line2  --achse  = --line    --akzent = --acc
+   ========================================================================== */
+
+:root {
+  /* --- Flaechen ------------------------------------------------------- */
+  --papier: #000000;              /* rezept-grid stil.css:41 (Dunkelsatz) */
+  --karte: #1c1c1e;               /* rezept-grid stil.css:42 */
+  --flaeche2: #2c2c2e;            /* rezept-grid stil.css:43 -- Rille, Chip */
+
+  /* --- Tinte, drei Stufen derselben Familie --------------------------- */
+  --tinte: #f2f2f7;               /* 18.82:1 auf Papier */
+  --tinte2: #d1d1d6;              /* 11.18:1 auf Karte */
+  --gedaempft: #98989d;           /*  7.31:1 auf Papier, 4.85:1 auf Flaeche2 */
+
+  /* --- Linien --------------------------------------------------------- */
+  /* WICHTIG: --linie und --achse sind DEKORATIV (Kartenkanten, Trenner).
+     --achse liegt bei 1.79:1 auf Papier und darf deshalb NIE etwas
+     tragen, das Information fuehrt.  Alles Informationstragende --
+     Schwellenlinien, Diagrammachsen, Achsstriche -- nimmt --gitter.
+
+     KORREKTUR 14.08.2026: hier stand "--gitter (3.51:1, erfuellt WCAG
+     1.4.11)".  Die 3.51:1 gelten gegen --papier.  Auf --karte faellt
+     derselbe Wert auf 2.84:1 und verfehlt die 3.0 - und genau dort lagen
+     die Schwellenlinien der Produktseite (.achse-karte hat
+     background:var(--karte)).  Ein Kontrastwert ohne die Flaeche, gegen
+     die er gemessen wurde, ist keine Angabe.
+
+     --gitter ist deshalb auf #8e8e93 angehoben: 6.44:1 auf Papier,
+     5.22:1 auf Karte, erfuellt WCAG 1.4.11 auf BEIDEN Flaechen.  Der
+     alte Wert bleibt als --gitter-schwach fuer rein dekorative
+     Feinlinien, die nichts tragen. */
+  --linie: #2c2c2e;
+  --achse: #38383a;
+  --gitter: #8e8e93;
+  --gitter-schwach: #636366;
+
+  /* --- Akzent: genau EINER, und der ist warm -------------------------- */
+  /* Der Gegenstand ist ein Sonnenuntergang; die Ampel aus Orange/Gold/Grau
+     ist ersetzt durch eine Familie mit drei Zustaenden (T-0010, b):
+       selten       gefuellte Flaeche + helle Tinte
+       auffaellig   nur Tinte, keine Flaeche
+       unauffaellig --gedaempft, gar keine Farbe                        */
+  --akzent: #ff9f0a;              /* rezept-grid --block-ruhe-rand, 10.22:1 */
+  --akzent-tinte: #ffb340;        /* rezept-grid --ruhe-tinte,      11.77:1 */
+  --akzent-flaeche: #332412;      /* rezept-grid --block-ruhe               */
+
+  /* --- Himmel: Farben, die nur der Vertikalschnitt braucht ------------ */
+  /* Wolken sind nicht blau.  Das fruehere #58a6ff war GitHub-Blau und
+     neben einer amberfuehrenden Palette ein Fremdkoerper; ein neutrales
+     Hellgrau mit variabler Deckkraft liegt naeher an der Sache und am
+     Grundsatz "genau ein Akzent". */
+  --wolke: #c7c7cc;
+  --strahl-hell: #ffb340;         /* volle Transmission: Licht kommt durch */
+  --strahl-dunkel: #3a2a12;       /* blockiert -- warm, nicht rot          */
+  --boden: #2c2c2e;
+
+  /* --- Himmel und Baender: nur die Grafik braucht sie ------------------ */
+  /* Der Himmel ist ein VERLAUF, keine Flaeche - eine gleichmaessige Platte
+     liest sich wie ein Diagrammhintergrund, ein Verlauf wie Abendhimmel. */
+  --himmel-oben: #101014;
+  --himmel-unten: #1d1d20;
+
+  /* Bandrampen fuer die Wolkenpolygone (Entwurf 16.08.2026, Abschnitt 1.6).
+     DUMPF ist die Grundfarbe der Wolke, GLUT der beleuchtete Rand; die
+     Deckkraft traegt die Bedeckung, nicht die Farbe. */
+  --band-dumpf: #c7c7cc;
+  --band-glut: #ffb340;
+
+  /* --- Typografie ----------------------------------------------------- */
+  --schrift: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+             "SF Pro Display", "Segoe UI", system-ui, Roboto, sans-serif;
+  --grad-basis: 15px;
+  --zeilen-basis: 1.5;
+  --sperrung-eng: -.022em;        /* Basis */
+  --sperrung-enger: -.03em;       /* ab grossen Graden */
+  --sperrung-label: .06em;        /* Eyebrow, versal */
+
+  /* --- Abstandsleiter (poisson-dor F4) -------------------------------- */
+  --s1: 4px;   --s2: 8px;   --s3: 12px;  --s4: 16px;
+  --s5: 20px;  --s6: 26px;  --s7: 34px;  --s8: 56px;
+
+  /* --- Radien --------------------------------------------------------- */
+  --radius-mikro: 8px;
+  --radius-kachel: 13px;
+  --radius-karte: 18px;
+  --radius-tafel: 22px;
+  --radius-pille: 999px;
+
+  /* --- Schatten. Regel: Ruhe = ruhig, gross nur bei Hover/Overlay ----- */
+  --schatten-ruhe: 0 .5px 1.5px rgba(0, 0, 0, .5), 0 1px 2px rgba(0, 0, 0, .4);
+  --schatten-hover: 0 1px 2px rgba(0, 0, 0, .5), 0 8px 22px rgba(0, 0, 0, .5);
+  --schatten-leiste: 0 2px 8px rgba(0, 0, 0, .5), 0 22px 50px rgba(0, 0, 0, .6);
+
+  /* --- Bewegung ------------------------------------------------------- */
+  --zeit-schnell: .12s;
+  --zeit: .15s;
+  --kurve: cubic-bezier(.2, .7, .2, 1);
+
+  /* --- Layout --------------------------------------------------------- */
+  --breite: 1120px;               /* Hausmass fuer dichte Mehrspalter */
+  --breite-schmal: 720px;         /* Die Produktseite ist einspaltig und hat
+                                     wenig Inhalt; auf 1120 px zerfaellt sie
+                                     in Insel-und-Leere.                  */
+  --breite-bild: 480px;           /* Deckel fuer den Vertikalschnitt, damit
+                                     seine Schriftgrade nicht mitwachsen  */
+  /* Desktopfassung (16.08.2026).  Breiter als --breite (1120), weil die
+     Zeitachse elf Spalten traegt: bei 1240 minus 2x40 Rand sind das 115 px
+     je Abend - genug fuer die Rangzahl unter der Marke, die auf dem Telefon
+     nicht hinpasste.  --rand-gross steht daneben, weil die Kopfleiste
+     randlos ist und ihr INHALT trotzdem mit der Inhaltsspalte fluchten
+     muss; beide Stellen brauchen denselben Wert. */
+  --breite-gross: 1240px;
+  --rand-gross: 40px;
+  --tastflaeche: 44px;            /* ueber dem Hausstandard (34-40px):
+                                     einhaendige Abendbedienung           */
+}
+
+*{box-sizing:border-box}
+html{color-scheme:dark}
+body{margin:0;background:var(--papier);color:var(--tinte);
+ font-family:var(--schrift);font-size:var(--grad-basis);
+ line-height:var(--zeilen-basis);letter-spacing:var(--sperrung-eng);
+ font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+.rahmen{max-width:390px;margin:0 auto;min-height:100vh;padding-bottom:var(--s8)}
+.topbar{position:sticky;top:0;z-index:5;
+ padding:calc(14px + env(safe-area-inset-top)) 18px 12px;
+ background:rgba(0,0,0,.72);
+ -webkit-backdrop-filter:blur(18px) saturate(1.4);
+ backdrop-filter:blur(18px) saturate(1.4);
+ border-bottom:1px solid var(--karte)}
+.topbar-inhalt{display:flex;align-items:center;justify-content:space-between}
+.marke-wort{margin:0;font-size:17px;font-weight:800;
+ letter-spacing:var(--sperrung-enger)}
+.ortspille{padding:3px 11px;border-radius:var(--radius-pille);
+ background:var(--karte);color:var(--tinte2);font-size:12px;font-weight:700}
+.inhalt{padding:20px 18px 0}
+.etikett{margin:0;color:var(--gedaempft);font-size:12px;font-weight:700;
+ letter-spacing:var(--sperrung-label);text-transform:uppercase}
+.bkarte{margin-top:14px;padding:16px;background:var(--karte);
+ border:1px solid var(--achse);border-radius:var(--radius-karte)}
+.bkopf{display:flex;justify-content:space-between;align-items:baseline;
+ font-size:15px;font-weight:700}
+.bkopf b{font-size:26px;font-weight:800;letter-spacing:var(--sperrung-enger);
+ color:var(--akzent-tinte)}
+.von{font-size:13px;font-weight:400;color:var(--gedaempft)}
+.note-null{font-size:13px;font-weight:400;color:var(--gedaempft)}
+.balken{display:flex;gap:3px;margin-top:12px}
+.balken i{flex:1;height:6px;border-radius:var(--radius-pille);
+ background:var(--flaeche2)}
+.balken i.voll{background:var(--akzent-tinte)}
+.bzeile{margin:12px 0 0;color:var(--gedaempft);font-size:13px}
+.leer{margin:14px 0 0;padding:16px;background:var(--karte);
+ border-radius:var(--radius-karte);color:var(--tinte2);font-size:14px;
+ line-height:1.55}
+.abschnitt{margin-top:22px}
+.abschnitt p{margin:6px 0 0;color:var(--tinte2);font-size:14px;
+ line-height:1.55;text-wrap:pretty}
+.kasten{margin-top:14px;padding:14px 16px;background:var(--karte);
+ border-radius:var(--radius-kachel);color:var(--gedaempft);font-size:13px;
+ line-height:1.55;text-wrap:pretty}
+.schluss{margin-top:22px;color:var(--gedaempft);font-size:13px;
+ line-height:1.55}
+.zurueck{display:flex;align-items:center;justify-content:center;
+ margin-top:26px;min-height:var(--tastflaeche);padding:0 18px;
+ border-radius:var(--radius-pille);background:var(--akzent-flaeche);
+ color:var(--akzent-tinte);font-size:14px;font-weight:700;
+ text-decoration:none}
+
+/* Desktopfassung.  Kein eigener Entwurf - die Bilanzseite hat einen
+   Bruchteil des Inhalts der Prognoseseite und braucht kein Raster.  Sie
+   bekommt nur, was sie sonst neben der neuen Prognoseseite wie ein
+   Telefon-Bildschirmfoto aussehen liesse: dieselbe Kopfleiste im
+   1240er-Container und eine lesbare Spaltenbreite statt 390 px.
+   Derselbe Breakpoint wie dort, damit beide Seiten gleichzeitig
+   umschalten. */
+@media (min-width:1000px){
+ .rahmen{max-width:none;padding-bottom:72px}
+ .topbar{padding:0}
+ .topbar-inhalt{display:flex;align-items:center;justify-content:space-between;
+  height:56px;max-width:var(--breite-gross);margin:0 auto;
+  padding:0 var(--rand-gross)}
+ .inhalt{max-width:720px;margin:0 auto;padding:34px var(--rand-gross) 0}
+ .bkarte{padding:20px}
+ .zurueck{max-width:340px}
+}
+</style></head><body>
+<div class="rahmen">
+<header class="topbar"><div class="topbar-inhalt">
+<p class="marke-wort">Bisher</p>
+<span class="ortspille">Berlin</span></div></header>
+<main class="inhalt">
+<p class="etikett">4 BEWERTUNGEN SEIT DEM 15. AUGUST 2026</p>
+<article class="bkarte"><div class="bkopf"><span>Fr 21.08.</span><span><b>1</b><span class="von">/5</span></span></div><div class="balken"><i class="voll"></i><i></i><i></i><i></i><i></i></div><p class="bzeile">Auf Nachfrage bewertet &#183; vorhergesagt: auffällig, 86. Perzentil</p></article><article class="bkarte"><div class="bkopf"><span>Do 20.08.</span><span><b>2</b><span class="von">/5</span></span></div><div class="balken"><i class="voll"></i><i class="voll"></i><i></i><i></i><i></i></div><p class="bzeile">Auf Nachfrage bewertet &#183; vorhergesagt: unauffällig, 40. Perzentil</p></article><article class="bkarte"><div class="bkopf"><span>Di 18.08.</span><span><b>1</b><span class="von">/5</span></span></div><div class="balken"><i class="voll"></i><i></i><i></i><i></i><i></i></div><p class="bzeile">Auf Nachfrage bewertet &#183; vorhergesagt: unauffällig, 59. Perzentil</p></article><article class="bkarte"><div class="bkopf"><span>Sa 15.08.</span><span><b>1</b><span class="von">/5</span></span></div><div class="balken"><i class="voll"></i><i></i><i></i><i></i><i></i></div><p class="bzeile">Auf Nachfrage bewertet &#183; keine Prognose f&uuml;r diesen Abend gerechnet</p></article>
+<section class="abschnitt"><p class="etikett">Was hier sp&auml;ter steht</p>
+<p>Trefferquote, Alarmrate und die Schwelle, gegen die beide gemessen werden.
+Alle drei brauchen Abende, die es noch nicht gibt.</p>
+<div class="kasten">Die Schwelle stammt aus Analysefeldern, der Alarm rechnet
+auf Ensemble-Membern. Ob dieselbe Schwelle dieselbe Rate ergibt, ist nie
+gemessen worden &mdash; der Livegang ist die Messung. Nach sechs bis acht
+Wochen wird sie nachgezogen.</div>
+<p class="schluss">Bis dahin gilt die Alarmrate als unbekannt, nicht als 18,5
+pro Jahr.</p></section>
+<a class="zurueck" href="index.html">Prognose der n&auml;chsten Abende</a>
+</main></div></body></html>
