@@ -38,7 +38,9 @@ from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sonnen.geometrie import sonnenuntergang  # noqa: E402
+from zustandsdatei import aktualisiere, lade  # noqa: E402
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NTFY = "https://ntfy.sh"
@@ -98,15 +100,16 @@ def main():
     with open(a.konfig) as f:
         kfg = json.load(f)
     zpfad = os.path.join(BASIS, "daten", "zustand.json")
-    zustand = {}
-    if os.path.exists(zpfad):
-        with open(zpfad) as f:
-            zustand = json.load(f)
+    # T-0058: Nur LESEN, um zu entscheiden, wer dran ist.  Gebucht wird ganz
+    # am Ende unter Sperre gegen den frischen Stand - der Versand liegt
+    # dazwischen und darf die Datei nicht blockieren.
+    zustand = lade(zpfad)
 
     jetzt = (datetime.fromisoformat(a.jetzt).replace(tzinfo=timezone.utc)
              if a.jetzt else datetime.now(timezone.utc))
     basis_url = (kfg.get("seiten_basis") or "").rstrip("/")
     gesendet = 0
+    gebucht = []                  # [(ort, tag)] - was wirklich rausging
 
     for ort in kfg["orte"]:
         topic = ort.get("ntfy_bewertung")
@@ -137,8 +140,10 @@ def main():
         # ?a=2 statt ?a=1, wenn fuer DIESEN Abend ein Alarm rausging.
         #
         # Ohne das konnte der Anlass "alarm" nie entstehen: gesetzt wird er
-        # allein ueber diesen Parameter, und der Alarm selbst geht morgens um
-        # 7:30 raus - da bewertet niemand einen Sonnenuntergang.  Die
+        # allein ueber diesen Parameter, und der Alarm selbst geht Stunden
+        # VOR dem Sonnenuntergang raus (seit T-0041 sonnenuntergangsrelativ,
+        # davor fest um 7:30) - zu beiden Zeitpunkten bewertet niemand einen
+        # Sonnenuntergang, der noch nicht stattgefunden hat.  Die
         # Unterscheidung ist aber der Kern der Auswertung: bewertet Andre
         # nach einem Alarm systematisch anders als an einem gewoehnlichen
         # Abend, ist die Bewertungsreihe verzerrt und muss getrennt
@@ -154,15 +159,32 @@ def main():
             print("   [trocken] %s %s (+%.0f min): %s | %s"
                   % (ort["name"], tag, d, text, klick or "kein Link"))
             continue
-        sende(topic, titel, text, klick)
+        # T-0055, gleiche Klasse wie in alarm.py: ein Versandfehler darf die
+        # Schleife nicht abbrechen.  Bei EINEM Ort war das folgenlos (nichts
+        # gesendet, nichts gebucht, naechster Tick versucht es erneut) - ab
+        # dem zweiten geht die Buchung des ERSTEN verloren, und der bekommt
+        # seine Aufforderung ein zweites Mal.  Gebucht wird weiterhin nur,
+        # was wirklich rausging.
+        try:
+            sende(topic, titel, text, klick)
+        except Exception as ex:
+            print("   %s %s: Versand fehlgeschlagen (%s: %s) - nicht gebucht"
+                  % (ort["name"], tag, type(ex).__name__, ex))
+            continue
         erinnert[str(tag)] = jetzt.isoformat(timespec="seconds")
+        gebucht.append((ort["name"], str(tag)))
         gesendet += 1
         print("   %s %s: aufgefordert" % (ort["name"], tag))
 
-    if not a.trocken and gesendet:
-        os.makedirs(os.path.dirname(zpfad), exist_ok=True)
-        with open(zpfad, "w") as f:
-            json.dump(zustand, f, indent=1)
+    if not a.trocken and gebucht:
+        def buchen(z):
+            # Nur HINZUFUEGEN, nie ueberschreiben: was ein anderer Agent
+            # inzwischen geschrieben hat, bleibt unangetastet.
+            zeit = jetzt.isoformat(timespec="seconds")
+            for name, tag in gebucht:
+                e = z.setdefault(name, {"abende": {}, "alarme": {}})
+                e.setdefault("erinnerungen", {})[tag] = zeit
+        aktualisiere(zpfad, buchen)   # T-0051 atomar, T-0058 unter Sperre
     print("Aufforderungen gesendet: %d" % gesendet)
 
 

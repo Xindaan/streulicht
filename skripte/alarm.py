@@ -47,6 +47,7 @@ import sonnen.score as sc  # noqa: E402
 from sonnen.score import score  # noqa: E402
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from netz import warte_auf_netz  # noqa: E402
+from zustandsdatei import aktualisiere, schreibe  # noqa: E402
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GITTER = 0.25
@@ -58,20 +59,42 @@ WOCHENTAG = ("Mo", "Di", "Mi", "Do", "Fr", "Sa", "So")
 
 
 def fan_setzen(kfg):
-    """Optionaler Sparfaecher aus der Konfiguration.
+    """Der Sparfaecher ist abgeschafft - hier bleibt nur der Riegel.
 
-    ACHTUNG: s* = 0.7065 gilt fuer den Faecher der Klimatologie (5 Azimute,
-    8 Distanzen).  Ein anderer Faecher liefert eine andere Score-Verteilung
-    und damit einen anderen Schwellwert - wer hier reduziert, MUSS die
-    Klimatologie mit demselben Faecher neu rechnen.  Deshalb steht der
-    Hinweis hier und nicht in der README.
+    ENTFERNT 23.08.2026 (T-0057).  Die Funktion hat frueher `sc.FAECHER_AZIMUTE`
+    und `sc.DISTANZEN_KM` im Modul `sonnen.score` UEBERSCHRIEBEN.  Zwoelf
+    Module importieren diese Konstanten aber by value (`from sonnen.score
+    import DISTANZEN_KM, ...`), sehen die Aenderung also nie.  Vorgefuehrt:
+    nach einem `fan_setzen` rechnete `sonnen.score` auf dem Sparfaecher,
+    waehrend `sonnen.score_niveaus`, `skripte.schnitt` und `skripte.fensterterm`
+    weiter die Originalgeometrie hielten - Analyse und Bild in einem Prozess
+    auf verschiedenen Faechern, ohne dass irgendetwas auffaellt.
+
+    WARUM STREICHEN STATT REPARIEREN.  Der saubere Weg waere, die Geometrie
+    als Parameter durch `score()` zu reichen.  `score()` liest die beiden
+    Konstanten an dreizehn Stellen; das ist ein Umbau der Kernfunktion des
+    Betriebsscores - fuer einen Hebel, der in `konfig.json` auf `null` steht,
+    nie benutzt wurde, und der ausserdem s* = 0.7065 ungueltig macht: dieser
+    Schwellwert gilt fuer den Faecher der Klimatologie (5 Azimute, 8
+    Distanzen).  Eine Konfiguration, die den Schwellwert ungueltig macht und
+    davor nur warnt, ist keine Konfiguration.
+
+    Wer den Sparfaecher wirklich braucht, rechnet zuerst die Klimatologie mit
+    demselben Faecher neu und leitet s* daraus her - dann ist die Geometrie
+    ohnehin die neue Normalgeometrie und gehoert in `sonnen/score.py`, nicht
+    in eine Laufzeitmutation.
     """
-    f = kfg.get("faecher")
-    if not f:
-        return False
-    sc.FAECHER_AZIMUTE = tuple(float(x) for x in f["azimute"])
-    sc.DISTANZEN_KM = tuple(float(x) for x in f["distanzen_km"])
-    return True
+    if kfg.get("faecher"):
+        raise SystemExit(
+            "konfig.json enthaelt `faecher` - der Sparfaecher ist seit dem\n"
+            "23.08.2026 abgeschafft (T-0057).  Er hat nur `sonnen.score`\n"
+            "veraendert, nicht die zwoelf Module, die dieselben Konstanten\n"
+            "by value importieren - Analyse und Bild liefen danach auf\n"
+            "verschiedenen Faechern.  Ausserdem macht ein anderer Faecher\n"
+            "s* = 0.7065 ungueltig.\n"
+            "Wer wirklich einen anderen Faecher will: `sonnen/score.py`\n"
+            "aendern UND die Klimatologie damit neu rechnen.")
+    return False
 
 
 def zelle(lat, lon):
@@ -126,8 +149,11 @@ def schreibe_archiv(name, tag, fenster, init, jetzt, kfg, abende):
          "modelllauf": init, "geholt": jetzt.isoformat(timespec="minutes"),
          "modell": kfg["modell"], "schwelle_score": kfg["schwelle_score"],
          "abende": abende}
-    with open(ziel, "w") as f:
-        json.dump(d, f, separators=(",", ":"))
+    # T-0051: atomar wie die Zustandsdatei.  Ein truncierter Archivtag legt
+    # zwar keinen Agenten lahm, ist aber stiller Datenverlust im Bestand,
+    # aus dem T-0008 (Skill ueber Vorlauf) spaeter rechnen soll - und faellt
+    # erst auf, wenn Monate spaeter jemand darueber laeuft.
+    schreibe(ziel, d, indent=None, separators=(",", ":"))
     return ziel, os.path.getsize(ziel)
 
 
@@ -610,6 +636,49 @@ def im_laufenster(jetzt, kfg, ort, zustand):
                   % (", ".join(offen), jetzt.strftime("%H:%M")))
 
 
+# T-0058: Grenzen fuer die Zustandsdatei.
+#
+# GEMESSEN 23.08.2026: 156 kB nach neun Betriebstagen, 18 Abende, keine
+# Raeumung - hochgerechnet rund 6 MB im Jahr.  Und `bisher.py` und
+# `bewertungsseite.py` iterieren bei JEDEM Seitenbau ueber alles, also alle
+# zehn Minuten.  Das waechst nicht nur, es wird auch jedes Mal gelesen.
+#
+# Was weg darf: unbewertete Abende, die lange vorbei sind.  Ihre
+# Prognosedaten liegen vollstaendig im Tagesarchiv (T-0003) - je Abend die
+# Scorezeile jedes Members und das Medianfeld.  Die Zustandsdatei ist
+# Betriebszustand, kein Archiv.
+#
+# Was BLEIBT: alles Bewertete, unbefristet.  Eine Note ist die einzige
+# Messgroesse, die nicht nachproduzierbar ist - dafuer gibt es keinen
+# zweiten Abruf und keine zweite Quelle.
+BEHALTEN_TAGE = 30
+VERLAUF_MAX = 10
+
+
+def raeume(eintrag, heute):
+    """Alte, unbewertete Abende entfernen.  Rueckgabe: wie viele.
+
+    Bewusst NUR die Abende - `alarme` und `laeufe` sind je Eintrag ein paar
+    Bytes und tragen die Idempotenz bzw. die Fensterbuchhaltung.  Wer sie
+    raeumt, riskiert einen doppelten Push oder einen doppelten Lauf, und
+    spart dafuer nichts Messbares.
+    """
+    grenze = heute - timedelta(days=BEHALTEN_TAGE)
+    weg = []
+    for t, e in (eintrag.get("abende") or {}).items():
+        if e.get("bewertung") is not None:
+            continue                       # bewertet: bleibt, immer
+        try:
+            d = date.fromisoformat(t)
+        except (TypeError, ValueError):
+            continue                       # unlesbarer Schluessel: nicht anfassen
+        if d < grenze:
+            weg.append(t)
+    for t in weg:
+        del eintrag["abende"][t]
+    return len(weg)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--trocken", action="store_true",
@@ -640,10 +709,7 @@ def main():
         _t = (geheim.get("ntfy_alarm") or {}).get(_o["name"])
         if _t:
             _o["ntfy_alarm"] = _t
-    if fan_setzen(kfg):
-        print("Sparfaecher aktiv: %d Azimute x %d Distanzen - s* ist damit "
-              "NICHT mehr gueltig, Klimatologie neu rechnen!"
-              % (len(sc.FAECHER_AZIMUTE), len(sc.DISTANZEN_KM)))
+    fan_setzen(kfg)          # T-0057: bricht ab, wenn `faecher` gesetzt ist
     zpfad = os.path.join(BASIS, "daten", "zustand.json")
     zustand = {}
     if os.path.exists(zpfad):
@@ -666,38 +732,55 @@ def main():
         if not fenster:
             return
 
+    # T-0058: Die Rechnung dauert Minuten - der Zustand wird deshalb NICHT
+    # waehrenddessen veraendert.  Alles Neue sammelt sich hier und wird ganz
+    # am Ende unter Sperre gegen den FRISCHEN Stand eingemergt.  Sonst
+    # ueberschreibt dieser Lauf eine Bewertung, die der Poller in der
+    # Zwischenzeit eingesammelt hat - nachgestellt und belegt.
+    neue_abende = {}          # {ort: {tag: (eintrag, verlaufszeile)}}
+    neue_alarme = {}          # {ort: {tag: buchung}}
     for ort in kfg["orte"]:
         name = ort["name"]
+        # T-0056: Beim geplanten Lauf nur die Orte rechnen, deren Fenster
+        # wirklich offen ist.  Ohne diesen Filter loeste EIN faelliger Ort
+        # den vollen Abruf fuer ALLE aus - rund 3.500 Kontingenteinheiten je
+        # Ort fuer Zahlen, die niemand angefordert hat, und ihre `laeufe`
+        # wurden dabei als "vonhand" gebucht, was ihr eigenes Fenster fuer
+        # den Tag verbraucht haette.  Bei drei Orten waere das Tagesbudget
+        # nach einem Abendlauf weitgehend weg.
+        # Ein Lauf VON HAND rechnet weiter alle Orte: wer ihn startet,
+        # meint ihn (dieselbe Begruendung wie beim Fenster-Check oben).
+        if a.geplant and name not in fenster:
+            continue
         print("=== %s" % ort["anzeige"], flush=True)
         erg = lauf_ort(ort, kfg, zustand, a.trocken)
         eintrag = zustand.setdefault(name, {"abende": {}, "alarme": {}})
         archiv_abende = archive.setdefault(name, {})
+        meine = neue_abende.setdefault(name, {})
 
         for tag in sorted(erg):
             e = erg[tag]
             alt = eintrag["abende"].get(tag, {})
-            e["bewertung"] = alt.get("bewertung")
             # T-0022: den GANZEN Prognosestand je Lauf festhalten, nicht nur p.
             # Vorher stand hier {"lauf", "p"}; Median, Schirm, A, sicht, weg und
             # die Memberzahl wurden beim naechsten Lauf ueberschrieben.  Nach
             # einer Saison waere damit nur die Trefferquote je Vorlauf
             # auswertbar gewesen, nicht WARUM ein Alarm danebenlag - und genau
             # das ist die Frage, fuer die der Livegang ueberhaupt stattfindet.
-            e["verlauf"] = (alt.get("verlauf") or []) + [
-                dict({k: v for k, v in e.items()
-                      # `feld` bleibt draussen: 120 Zahlen je Lauf und Abend
-                      # blaehen die Zustandsdatei, und fuer die Rueckschau
-                      # zaehlen die Terme, nicht das Rohfeld.
-                      if k not in ("verlauf", "bewertung", "feld",
-                                   "member")},
-                     lauf=str(date.today()))]
+            verlaufszeile = dict(
+                {k: v for k, v in e.items()
+                 # `feld` bleibt draussen: 120 Zahlen je Lauf und Abend
+                 # blaehen die Zustandsdatei, und fuer die Rueckschau
+                 # zaehlen die Terme, nicht das Rohfeld.
+                 if k not in ("verlauf", "bewertung", "feld", "member")},
+                lauf=str(date.today()))
             archiv_abende[tag] = {
                 k: e[k] for k in ("p", "median", "stunde_utc", "azimut",
                                   "dt_h", "schirm", "A", "sicht", "weg",
                                   "n_member", "n_member_gesamt", "member",
                                   "feld")}
             e.pop("member", None)
-            eintrag["abende"][tag] = e
+            meine[tag] = (e, verlaufszeile)
             lz = lokalzeit(tag, e["stunde_utc"], ort.get("zeitzone", "UTC"))
             marke = "*" if e["p"] >= kfg["schwelle_wahrscheinlichkeit"] else " "
             print("   %s %s %s %2.0f %%  Median %.2f  (%s, dt %.1f h)"
@@ -716,11 +799,31 @@ def main():
                 print("     [trocken] wuerde senden: %s" % text)
             else:
                 basis_url = (kfg.get("seiten_basis") or "").rstrip("/")
-                sende(ort["ntfy_alarm"], titel, text, "high",
-                      "%s/index.html" % basis_url if basis_url else None)
-                eintrag["alarme"][tag] = {"gesendet": datetime.now(
-                    timezone.utc).isoformat(timespec="seconds"), "p": e["p"]}
-                print("     -> Push gesendet")
+                # T-0055: der Versand darf den Lauf nicht mitreissen.  Vorher
+                # stand hier kein try/except, und persistiert wird erst ganz
+                # am Ende - ein ntfy-Timeout nach vollstaendiger Rechnung
+                # verwarf also Buchung, Stand UND Tagesarchiv.  Weil dann
+                # auch `laeufe` fehlt, haelt im_laufenster() das Fenster fuer
+                # offen und der naechste stuendliche Tick rechnet alles neu:
+                # rund 3.500 Kontingenteinheiten fuer Zahlen, die schon da
+                # waren.  Ein toter Push ist kein toter Lauf.
+                try:
+                    sende(ort["ntfy_alarm"], titel, text, "high",
+                          "%s/index.html" % basis_url if basis_url else None)
+                except Exception as ex:
+                    # NICHT buchen.  Ein Abend, der als gemeldet gilt, ohne
+                    # dass eine Meldung ankam, wird durch die Idempotenz-
+                    # sperre nie nachgeholt - das waere schlimmer als der
+                    # Fehler, den dieser Block behebt.  Der naechste Lauf
+                    # findet den Abend unbedient und versucht es erneut.
+                    melde("     -> Push FEHLGESCHLAGEN (%s: %s) - nicht "
+                          "gebucht, naechster Lauf versucht es erneut"
+                          % (type(ex).__name__, ex))
+                else:
+                    neue_alarme.setdefault(name, {})[tag] = {
+                        "gesendet": datetime.now(timezone.utc).isoformat(
+                            timespec="seconds"), "p": e["p"]}
+                    print("     -> Push gesendet")
 
     # Der Modelllauf wird VOR der Buchung geholt - sie schreibt ihn mit.
     init = modelllauf(kfg["modell"])
@@ -729,17 +832,9 @@ def main():
     # Erst NACH erfolgreichem Durchlauf eintragen: ein am Kontingent
     # gestorbener Lauf darf das Fenster fuer heute nicht verbrauchen.
     for ort in kfg["orte"]:
+        if a.geplant and ort["name"] not in fenster:
+            continue                       # T-0056: nicht gerechnet, nichts zu buchen
         tag = jetzt.astimezone(ZoneInfo(ort.get("zeitzone", "UTC"))).date()
-        e = zustand.setdefault(ort["name"], {"abende": {}, "alarme": {}})
-        heute = e.setdefault("laeufe", {}).get(str(tag))
-        if not isinstance(heute, dict):
-            heute = {}
-        heute[fenster.get(ort["name"], "vonhand")] = \
-            jetzt.isoformat(timespec="seconds")
-        e["laeufe"][str(tag)] = heute
-        e["stand"] = {"geholt": jetzt.isoformat(timespec="minutes"),
-                      "modelllauf": init,
-                      "fenster": fenster.get(ort["name"], "vonhand")}
         abende = archive.get(ort["name"])
         if abende and not a.trocken:
             ziel, gr = schreibe_archiv(
@@ -747,14 +842,63 @@ def main():
                 init, jetzt, kfg, abende)
             melde("   Archiv: %s (%.0f kB)" % (os.path.basename(ziel), gr / 1000))
 
+    def einmerge(z):
+        """Das Ergebnis dieses Laufs in den FRISCHEN Zustand eintragen.
+
+        Laeuft unter Sperre (siehe zustandsdatei.aktualisiere) und bekommt den
+        Stand von JETZT, nicht den vom Laufbeginn.  Alles, was ein anderer
+        Agent inzwischen geschrieben hat, ist hier sichtbar und wird bewahrt.
+        """
+        geraeumt = gekuerzt = 0
+        for ort in kfg["orte"]:
+            name = ort["name"]
+            if a.geplant and name not in fenster:
+                continue                   # T-0056: nicht gerechnet, nichts zu mergen
+            tag = jetzt.astimezone(ZoneInfo(ort.get("zeitzone", "UTC"))).date()
+            eintrag = z.setdefault(name, {"abende": {}, "alarme": {}})
+
+            for t, (e, verlaufszeile) in neue_abende.get(name, {}).items():
+                alt_e = eintrag["abende"].get(t, {})
+                # Die Bewertungsfelder gehoeren dem Bewertungsagenten.  Sie
+                # kommen IMMER aus dem frischen Stand - genau hier ging vorher
+                # eine gerade eingesammelte Note verloren.
+                for k in ("bewertung", "bewertung_anlass", "bewertung_zeit",
+                          "bewertung_erfasst"):
+                    if k in alt_e:
+                        e[k] = alt_e[k]
+                e.setdefault("bewertung", None)
+                verlauf = (alt_e.get("verlauf") or []) + [verlaufszeile]
+                if len(verlauf) > VERLAUF_MAX:
+                    gekuerzt += len(verlauf) - VERLAUF_MAX
+                    verlauf = verlauf[-VERLAUF_MAX:]
+                e["verlauf"] = verlauf
+                eintrag["abende"][t] = e
+
+            for t, buchung in neue_alarme.get(name, {}).items():
+                eintrag["alarme"][t] = buchung
+
+            heute = eintrag.setdefault("laeufe", {}).get(str(tag))
+            if not isinstance(heute, dict):
+                heute = {}
+            heute[fenster.get(name, "vonhand")] = \
+                jetzt.isoformat(timespec="seconds")
+            eintrag["laeufe"][str(tag)] = heute
+            eintrag["stand"] = {"geholt": jetzt.isoformat(timespec="minutes"),
+                                "modelllauf": init,
+                                "fenster": fenster.get(name, "vonhand")}
+            geraeumt += raeume(eintrag, tag)
+        if geraeumt or gekuerzt:
+            melde("   Geraeumt: %d alte Abende, %d Verlaufszeilen gekuerzt"
+                  % (geraeumt, gekuerzt))
+
     melde("   Bilanz: %d HTTP-Anfragen, %d Ortsabrufe, bis %d Variablen, "
           "%d Tage, %d Member"
           % (LAST["anfragen"], LAST["orte"], LAST["variablen"],
              LAST["tage"], LAST["member"]))
     if not a.trocken:
-        os.makedirs(os.path.dirname(zpfad), exist_ok=True)
-        with open(zpfad, "w") as f:
-            json.dump(zustand, f, indent=1)
+        # T-0051 atomar UND T-0058 unter Sperre: `aktualisiere` laedt frisch,
+        # wendet den Merge an und tauscht die Datei per os.replace ein.
+        aktualisiere(zpfad, einmerge)
         print("\nZustand: %s" % zpfad)
 
 

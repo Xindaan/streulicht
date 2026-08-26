@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))))
 from netz import warte_auf_netz  # noqa: E402
+from zustandsdatei import aktualisiere  # noqa: E402
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -132,6 +133,38 @@ def plausibel(tag):
     return ERSTER_ABEND <= d <= date.today() + timedelta(days=1)
 
 
+# Was die Bewertungsseite ueberhaupt senden kann: fuenf Notenknoepfe und
+# "Nicht gesehen" (0).  `anlass` entsteht allein aus dem URL-Parameter ?a=1/2
+# der Erinnerung.  Alles andere ist nicht von der Seite gekommen.
+NOTEN = frozenset(range(0, 6))
+ANLAESSE = frozenset(("aufgefordert", "alarm"))
+
+
+def gueltige_note(note):
+    """Ist `note` eine Note, die die Bewertungsseite senden koennte?
+
+    T-0052.  Bis zum 22.08.2026 wurde hier nur gegen `None` geprueft - das
+    Topic steht aber im Klartext in jeder ausgelieferten Seite, und wer sie
+    liest, kann per ntfy-POST beliebige Werte schicken.  Eine Note 99 lief
+    unbesehen in die Zustandsdatei, `bisher.py` rendert daraus "99 von 5" mit
+    vollem Balken, und jede Auswertung (Trefferquote, Brier) rechnet danach
+    auf vergifteten Labels.  Stille Datenkorruption im Kern der Messung.
+
+    `isinstance(note, bool)` MUSS zuerst stehen: in Python ist `True` ein
+    `int` mit dem Wert 1 und `False` einer mit 0 - ohne diese Zeile saehe ein
+    gesendetes `false` aus wie die gueltige Antwort "nicht gesehen".
+
+    EHRLICH ZUM RESTRISIKO: das haelt Unfug und Versehen ab, keinen Willens-
+    angreifer.  Wer das Topic kennt, kann weiterhin eine PLAUSIBLE Note fuer
+    einen vergangenen Abend setzen und die echte ueberschreiben.  Dagegen
+    hilft nur Authentifizierung, und die Seite kann kein Geheimnis tragen -
+    sie ist statisch und oeffentlich.  Diese Grenze ist bekannt und
+    akzeptiert (siehe konfig.json, "_hinweis").
+    """
+    return not isinstance(note, bool) and isinstance(note, int) \
+        and note in NOTEN
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--seit", default="12h")
@@ -145,70 +178,97 @@ def main():
     with open(a.konfig) as f:
         kfg = json.load(f)
     zpfad = os.path.join(BASIS, "daten", "zustand.json")
-    zustand = {}
-    if os.path.exists(zpfad):
-        with open(zpfad) as f:
-            zustand = json.load(f)
 
-    neu = 0
+    # T-0058: der ntfy-Abruf steht VOR der Sperre.  Ihn darin zu halten hiesse,
+    # den Alarmlauf fuer die Dauer eines Netzabrufs zu blockieren - und der
+    # Abruf braucht den Zustand gar nicht.
+    post = []
     for ort in kfg["orte"]:
         topic = ort.get("ntfy_bewertung")
-        if not topic:
-            continue
-        eintrag = zustand.setdefault(ort["name"], {"abende": {}, "alarme": {}})
-        for zeit, m in hole(topic, a.seit):
-            if m.get("ort") and m["ort"] != ort["name"]:
-                continue
-            # Selbsttests gehoeren nicht in die Messdaten.  Zweimal am
-            # 15./16.08. habe ich beim Vorfuehren echte Noten ins
-            # Produktivtopic geschickt - einmal mit heutigem Datum, was
-            # Andres eigene Bewertung ueberschrieben haette.  ntfy haelt
-            # rund 12 h vor, ein Loeschen im Zustand allein reicht also
-            # nicht: der naechste Abruf holt sie zurueck.
-            if m.get("anlass") == "selbsttest":
-                continue
-            # WIDERRUF: loescht die Bewertung des Tages.  Ueberspringen allein
-            # genuegt nicht - der Poller liest bei jedem Lauf ALLE Nachrichten
-            # des Fensters chronologisch, eine falsche aeltere setzt die Note
-            # also immer wieder neu.  Nur ein spaeterer Widerruf kommt dagegen
-            # an.  Gebraucht am 16.08., als ein Selbsttest mit heutigem Datum
-            # im Produktivtopic landete; taugt aber auch fuer den Fall, dass
-            # Andre sich vertippt.
-            if m.get("anlass") == "widerruf":
-                ab = eintrag["abende"].get(m.get("tag"))
-                if ab:
-                    for k in ("bewertung", "bewertung_anlass",
-                              "bewertung_zeit", "bewertung_erfasst"):
-                        ab.pop(k, None)
-                continue
-            tag, note = m.get("tag"), m.get("note")
-            if not tag or note is None:
-                continue
-            if not sonnenuntergang_vorbei(tag, ort):
-                print("   %s %s: Sonnenuntergang war noch nicht - verworfen"
-                      % (ort["name"], tag))
-                continue
-            abend = eintrag["abende"].setdefault(tag, {})
-            # Spaetere Bewertung desselben Abends ueberschreibt - eine
-            # Korrektur ist gewollt, ein Duplikat schadet nicht.  Genau
-            # deshalb darf die Seite beliebig oft nachsenden (T-0023).
-            if abend.get("bewertung") != note:
-                neu += 1
-            abend["bewertung"] = note
-            abend["bewertung_zeit"] = zeit
-            # T-0021: kam die Note auf Aufforderung, nach einem Alarm, oder
-            # spontan?  Ohne diese Unterscheidung ist die Stichprobe nicht
-            # auswertbar - wer nur nach Alarmen bewertet, liefert keine
-            # Basisrate, sondern dieselbe Presence-only-Falle wie das Album.
-            if m.get("anlass"):
-                abend["bewertung_anlass"] = m["anlass"]
-            if m.get("erfasst"):
-                # Zeitpunkt am GERAET, nicht der Empfang bei ntfy.  Bei einer
-                # nachgesendeten Bewertung liegen die beiden Tage auseinander,
-                # und nur der erste sagt, wann tatsaechlich bewertet wurde.
-                abend["bewertung_erfasst"] = m["erfasst"]
-    with open(zpfad, "w") as f:
-        json.dump(zustand, f, indent=1)
+        if topic:
+            post.append((ort, hole(topic, a.seit)))
+
+    zaehler = {"neu": 0}
+
+    def eintragen(zustand):
+        neu = 0
+        for ort, nachrichten in post:
+            eintrag = zustand.setdefault(ort["name"],
+                                         {"abende": {}, "alarme": {}})
+            for zeit, m in nachrichten:
+                if m.get("ort") and m["ort"] != ort["name"]:
+                    continue
+                # Selbsttests gehoeren nicht in die Messdaten.  Zweimal am
+                # 15./16.08. habe ich beim Vorfuehren echte Noten ins
+                # Produktivtopic geschickt - einmal mit heutigem Datum, was
+                # Andres eigene Bewertung ueberschrieben haette.  ntfy haelt
+                # rund 12 h vor, ein Loeschen im Zustand allein reicht also
+                # nicht: der naechste Abruf holt sie zurueck.
+                if m.get("anlass") == "selbsttest":
+                    continue
+                # WIDERRUF: loescht die Bewertung des Tages.  Ueberspringen allein
+                # genuegt nicht - der Poller liest bei jedem Lauf ALLE Nachrichten
+                # des Fensters chronologisch, eine falsche aeltere setzt die Note
+                # also immer wieder neu.  Nur ein spaeterer Widerruf kommt dagegen
+                # an.  Gebraucht am 16.08., als ein Selbsttest mit heutigem Datum
+                # im Produktivtopic landete; taugt aber auch fuer den Fall, dass
+                # Andre sich vertippt.
+                if m.get("anlass") == "widerruf":
+                    ab = eintrag["abende"].get(m.get("tag"))
+                    if ab:
+                        for k in ("bewertung", "bewertung_anlass",
+                                  "bewertung_zeit", "bewertung_erfasst"):
+                            ab.pop(k, None)
+                    continue
+                tag, note = m.get("tag"), m.get("note")
+                if not tag or note is None:
+                    continue
+                # T-0052: erst pruefen, dann uebernehmen.  `tag` ist ueber
+                # plausibel() schon durch, `note` war es bis zum 22.08.2026 nicht.
+                if not gueltige_note(note):
+                    print("   %s %s: Note %r ist keine Note 0-5 - verworfen"
+                          % (ort["name"], tag, note))
+                    continue
+                if not sonnenuntergang_vorbei(tag, ort):
+                    print("   %s %s: Sonnenuntergang war noch nicht - verworfen"
+                          % (ort["name"], tag))
+                    continue
+                abend = eintrag["abende"].setdefault(tag, {})
+                # Spaetere Bewertung desselben Abends ueberschreibt - eine
+                # Korrektur ist gewollt, ein Duplikat schadet nicht.  Genau
+                # deshalb darf die Seite beliebig oft nachsenden (T-0023).
+                if abend.get("bewertung") != note:
+                    neu += 1
+                abend["bewertung"] = note
+                abend["bewertung_zeit"] = zeit
+                # T-0021: kam die Note auf Aufforderung, nach einem Alarm, oder
+                # spontan?  Ohne diese Unterscheidung ist die Stichprobe nicht
+                # auswertbar - wer nur nach Alarmen bewertet, liefert keine
+                # Basisrate, sondern dieselbe Presence-only-Falle wie das Album.
+                # Gleiche Fehlerklasse wie bei `note`: ein Feld aus einer
+                # oeffentlichen Nachricht wandert ungeprueft in den Zustand.
+                # `anlass` steuert die Auswertung (wer nur nach Alarmen bewertet,
+                # liefert keine Basisrate), also gilt die Liste der Werte, die
+                # die Erinnerung ueberhaupt erzeugen kann.
+                # isinstance ZUERST: `x in frozenset` wirft TypeError, wenn x
+                # unhashbar ist (Liste, dict) - die Pruefung selbst waere
+                # sonst der Absturz, den sie verhindern soll.
+                if isinstance(m.get("anlass"), str) and m["anlass"] in ANLAESSE:
+                    abend["bewertung_anlass"] = m["anlass"]
+                # `erfasst` ist ein ISO-Zeitstempel vom Geraet.  Als Text
+                # begrenzter Laenge uebernehmen - er wird nicht gerechnet,
+                # sondern nur festgehalten, aber ein Objekt oder eine 10-MB-
+                # Zeichenkette gehoert trotzdem nicht in die Zustandsdatei.
+                if isinstance(m.get("erfasst"), str) and len(m["erfasst"]) <= 40:
+                    # Zeitpunkt am GERAET, nicht der Empfang bei ntfy.  Bei einer
+                    # nachgesendeten Bewertung liegen die beiden Tage auseinander,
+                    # und nur der erste sagt, wann tatsaechlich bewertet wurde.
+                    abend["bewertung_erfasst"] = m["erfasst"]
+        zaehler["neu"] = neu
+
+    # T-0051 atomar UND T-0058 unter Sperre, gegen den frischen Stand.
+    zustand = aktualisiere(zpfad, eintragen)
+    neu = zaehler["neu"]
 
     gesamt = sum(1 for o in zustand.values()
                  for v in o.get("abende", {}).values()

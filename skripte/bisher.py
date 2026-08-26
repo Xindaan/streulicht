@@ -69,7 +69,23 @@ def eintraege(ort_name, alle_scores):
 
 
 def karte(e):
-    """Eine Bewertungskarte.  Note 0 ist eine Antwort, kein leerer Balken."""
+    """Eine Bewertungskarte.  Note 0 ist eine Antwort, kein leerer Balken.
+
+    T-0052, zweite Verteidigungslinie: `bewertungen_holen.py` laesst seit dem
+    22.08.2026 nur noch Noten 0-5 herein, aber was VORHER hereinkam, liegt
+    noch in `daten/zustand.json`.  Ohne die Pruefung unten stirbt hier der
+    ganze Seitenbau: `%d` auf einer Zeichenkette und `k < e["note"]` gegen
+    einen Nicht-Integer werfen beide TypeError - und `bisher.py` laeuft im
+    10-Minuten-Agenten, also faellt damit die Auslieferung aus, nicht nur
+    diese eine Karte.  Eine unbrauchbare Note wird gezeigt als das, was sie
+    ist, statt die Seite mitzunehmen.
+    """
+    n = e.get("note")
+    if isinstance(n, bool) or not isinstance(n, int) or not 0 <= n <= 5:
+        return ('<article class="bkarte"><div class="bkopf"><span>%s</span>'
+                '<span class="note-null">unbrauchbar</span></div>'
+                '<div class="balken">%s</div><p class="bzeile">%s</p></article>'
+                % (e["kopf"], "".join("<i></i>" for _ in range(5)), e["zeile"]))
     if e["note"] == 0:
         zahl = ('<span class="note-null">nicht gesehen</span>')
     else:

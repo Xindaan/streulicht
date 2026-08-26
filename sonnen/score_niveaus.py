@@ -1,4 +1,10 @@
-"""Niveauaufgeloeste Score-Variante - der eigentliche Betriebsscore.
+"""Niveauaufgeloeste Score-Variante - physikalisch besser, NICHT im Betrieb.
+
+Hier stand bis zum 23.08.2026 "der eigentliche Betriebsscore".  Das war
+falsch: `skripte/alarm.py` importiert `sonnen.score`, die 3-Schicht-Variante,
+und begruendet das in seinem Modulkopf (s\* = 0.7065 ist auf der
+3-Schicht-Klimatologie kalibriert).  Der Wechsel haengt an T-0006 und ist
+nach der Messung vom 14.08.2026 offen - rho = +0.697, Sommerfenster +0.504.
 
 Unterschied zur 3-Schicht-Variante in score.py:
   * Sechs Schirmniveaus (600..200 hPa) statt zwei, jedes mit eigener
@@ -121,16 +127,33 @@ def score(hole, mit_dickenstrafe=True, direkt=False, hoehen=None,
                 cs = [x for x in cs if x is not None]
                 if cs:
                     sicht_w.append(ueberlappung(cs))
-        sicht = 1.0 - (sum(sicht_w) / len(sicht_w) if sicht_w else 0.0)
+        # T-0054: leere Liste heisst NICHT "freie Sicht", sondern "nichts
+        # beobachtet".  Hier stand `... if sicht_w else 0.0`, was sicht auf
+        # 1.0 setzte - fehlende Daten wirkten also FUER den Abend.  Exakt der
+        # Fehler, der in score.py als Spiegelbild des Memberfehlers (Befund
+        # 27a) gefunden und behoben wurde; die Portierung hierher fehlte.
+        if not sicht_w:
+            continue
+        sicht = 1.0 - sum(sicht_w) / len(sicht_w)
 
         # Term B (b): Beleuchtungsweg
         stuetzen = [d for d in DISTANZEN_KM if SICHT_KM <= d < d_tan]
         jenseits = [d for d in DISTANZEN_KM if d >= d_tan]
         if jenseits:
             stuetzen.append(jenseits[0])
+        # `weg` startet bei 1.0 und BLEIBT dort, wenn kein Segment Daten hat -
+        # ein unbeobachteter Beleuchtungsweg saehe dann aus wie ein freies
+        # Fenster.  Deshalb wird mitgezaehlt (T-0054, uebernommen aus
+        # score.py): moeglich = Segmente, die ueberhaupt einen Wert tragen
+        # koennten, erfasst = Segmente, die einen bekamen.  Anders als in
+        # score.py gibt es hier keine Selbstblockade-Ausnahme - der
+        # Wegabschnitt beginnt bei 60 km, dort liegt der Strahl schon unter
+        # dem Schirmniveau (siehe Modulkopf).  Jedes Paar ist also moeglich.
         weg, segmente = 1.0, []
+        weg_moeglich = weg_erfasst = 0
         for i in range(len(stuetzen) - 1):
             d_nah, d_fern = stuetzen[i], stuetzen[i + 1]
+            weg_moeglich += 1
             niv = _niveaus_im_bereich(strahlhoehe_km(d_fern, d_tan),
                                       strahlhoehe_km(d_nah, d_tan), hoehen)
             zc = zg = 0.0
@@ -146,14 +169,30 @@ def score(hole, mit_dickenstrafe=True, direkt=False, hoehen=None,
                 continue
             c_seg = zc / zg
             weg *= (1.0 - c_seg) ** K_SEGMENT
+            weg_erfasst += 1
             segmente.append((d_nah, d_fern, niv, c_seg))
+
+        # Kein einziges auswertbares Segment, obwohl es welche gaebe: der
+        # Beleuchtungsweg ist vollstaendig unbeobachtet, weg waere 1.0 - und
+        # fehlende Daten schluegen bekannte Wolke.  weg_moeglich == 0 gibt es
+        # hier nur, wenn die Stuetzstellenliste leer ist; das ist etwas
+        # anderes und legitim.
+        if weg_moeglich > 0 and weg_erfasst == 0:
+            continue
 
         s = a * sicht * weg
         if s > bestes or detail is None:
             bestes, detail = s, {
                 "schirm": h, "hoehe_km": hoehen[h], "d_tangente": d_tan,
                 "A": a, "B": sicht * weg, "sicht": sicht, "weg": weg,
-                "segmente": segmente}
+                "segmente": segmente,
+                # Teildeckung bleibt erlaubt, aber sichtbar - gleiche Regel
+                # wie in score.py: nicht abgetastete Abschnitte gelten als
+                # frei und beguenstigen den Score.  Wer die Zahl ignoriert,
+                # misst ein Artefakt.
+                "weg_deckung": (weg_erfasst / weg_moeglich
+                                if weg_moeglich else 1.0),
+                "sicht_zellen": len(sicht_w)}
     return bestes, detail
 
 

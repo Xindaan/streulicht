@@ -164,7 +164,8 @@ def main():
     # 14.08.2026: die drei Schichten ab 2023, die Druckflaechen erst ab 2024.
     # Deshalb zwei Auswertungen mit verschiedenem n statt einer mit stiller
     # Verkleinerung auf den Durchschnitt beider.
-    bloecke, verworfen = [], {"fehlt": 0, "luecken": 0, "kein_era5": 0}
+    bloecke, verworfen = [], {"fehlt": 0, "luecken": 0, "kein_era5": 0,
+                              "phantom3": 0, "phantomN": 0}
     for ziel in plan["ziel"]:
         tage = [ziel] + plan["paare"][ziel]
         daten = {t: lade(t) for t in tage}
@@ -180,20 +181,56 @@ def main():
             continue
         hat_druck = all(deckung(v, DRUCKFLAECHEN) >= a.mindestdeckung
                         for v in daten.values())
+        # T-0060: `[0]` allein reicht nicht.  Beide Score-Varianten liefern
+        # (s, detail), und `detail is None` heisst "nicht auswertbar, es lagen
+        # keine Daten vor" - der Score ist dann 0.0.  Wer nur die Zahl nimmt,
+        # macht aus einer Datenluecke eine Null, und die geht als "besonders
+        # unauffaelliger Abend" in den Mittelrang ein.  Genau diese
+        # Phantomnullen vermeidet ablation.py ausdruecklich; hier fehlte die
+        # Regel.
+        #
+        # Der Deckungsfilter oben ist KEIN Ersatz: er prueft die Rohdaten,
+        # nicht die Auswertbarkeit des Scores.  Gemessen am Cache
+        # (23.08.2026) faellt er zwar zusammen - bei `--mindestdeckung 0.9`
+        # sind 0 von 55 Abenden betroffen -, aber die Deckung ist bimodal
+        # (rund 1.0 oder rund 0.0), und wer die Schwelle senkt, um mehr
+        # Bloecke zu bekommen, holt sich 36 von 175 Phantomnullen (21 %)
+        # herein, waehrend der Kopf des Berichts weiter "0 mit Datenluecken"
+        # meldet.
         w = {}
+        phantom3 = phantomN = False
         for t in tage:
-            w[t] = {"era5_3s": era5[t]["s"],
-                    "icon_3s": icon_3schicht(daten[t])[0],
-                    "icon_niv": (icon_niveaus(daten[t])[0] if hat_druck
-                                 else None)}
+            s3, d3 = icon_3schicht(daten[t])
+            if d3 is None:
+                phantom3 = True
+            if hat_druck:
+                sn, dn = icon_niveaus(daten[t])
+                if dn is None:
+                    phantomN = True
+            else:
+                sn = None
+            w[t] = {"era5_3s": era5[t]["s"], "icon_3s": s3, "icon_niv": sn}
+        if phantom3:
+            # Ohne icon_3s traegt der Block gar nichts - wie bei einer
+            # Datenluecke wird er ganz verworfen, nicht halb ausgewertet.
+            verworfen["phantom3"] += 1
+            continue
+        if phantomN:
+            verworfen["phantomN"] += 1
         bloecke.append({"ziel": ziel, "kontrollen": plan["paare"][ziel],
-                        "werte": w, "druck": hat_druck})
+                        "werte": w, "druck": hat_druck and not phantomN})
 
     mit_druck = [b for b in bloecke if b["druck"]]
     print("Bloecke auswertbar: %d von %d   (davon mit Druckflaechen: %d)"
           % (len(bloecke), len(plan["ziel"]), len(mit_druck)))
     print("  verworfen: %d ohne Cache, %d mit Datenluecken, %d ohne ERA5"
           % (verworfen["fehlt"], verworfen["luecken"], verworfen["kein_era5"]))
+    # Getrennt ausweisen, nicht unter "Datenluecken" mitzaehlen: das hier ist
+    # eine Luecke, die erst der SCORE bemerkt, nicht schon der Rohdatenfilter.
+    if verworfen["phantom3"] or verworfen["phantomN"]:
+        print("  nicht auswertbar (Score ohne Detail): %d Bloecke ganz "
+              "verworfen, %d nur ohne Niveaus-Verfahren"
+              % (verworfen["phantom3"], verworfen["phantomN"]))
     if len(bloecke) < 12:
         raise SystemExit("zu wenige Bloecke fuer eine Aussage")
 

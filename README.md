@@ -458,8 +458,8 @@ drei Versuchen (12:25, 13:03, 14:15) meldete der dritte nicht mehr das
 Stunden-, sondern das Tageslimit.
 
 Konsequenz fuers Nachholen: **einen** manuellen Lauf, nicht drei. Scheitert
-er, ist der naechste sinnvolle Zeitpunkt der regulaere 07:30-Lauf am
-Folgetag — das Tagesbudget setzt um 00:00 UTC zurueck. Die Seite zeigt in
+er, ist der naechste sinnvolle Zeitpunkt der regulaere Vormittagslauf
+(`lauf_morgens_utc`, heute 09:20 UTC) am Folgetag — das Tagesbudget setzt um 00:00 UTC zurueck. Die Seite zeigt in
 der Zwischenzeit den Hinweisstreifen mit dem Alter der Zahlen; das ist der
 richtige Zustand, kein Defekt.
 
@@ -472,6 +472,7 @@ richtige Zustand, kein Defekt.
 | `sonnen/score.py` | Score, 3-Schicht-Variante (Betrieb) |
 | `sonnen/score_niveaus.py` | Score, niveauaufgeloest (kuenftig) |
 | `skripte/alarm.py` | taeglicher Alarmlauf |
+| `skripte/zustandsdatei.py` | atomarer Schreibvorgang fuer Zustand, Archiv und Klimatologie (T-0051) |
 | `skripte/klimatologie.py` | Score ueber Jahre → Verteilung |
 | `skripte/auswertung.py` | Verteilung → s\*, Plot |
 | `skripte/abbruchtest.py` | Validierung gegen Fotoarchiv |
@@ -498,8 +499,25 @@ python3 skripte/test_grib2.py       # GRIB2-Leser, Vorzeichen-Betrag, Sektionen
 python3 skripte/test_seiten.py      # erzeugte Seiten und die neuen Grafiken
 python3 skripte/test_lauffenster.py # ein Lauf je Tag, ueber ein ganzes Jahr
 python3 skripte/test_abruf.py       # Wind nur am Ort, Advektion trotzdem aktiv
+python3 skripte/test_zustandsdatei.py    # atomarer Schreibvorgang (T-0051)
+python3 skripte/test_bewertung_nutzlast.py  # Notenvalidierung (T-0052)
+python3 skripte/test_alarm_versand.py    # Versandfehler kippt den Lauf nicht (T-0055)
+python3 skripte/test_phantomnullen.py    # Datenluecken werden nicht zu Nullen (T-0060)
+python3 skripte/test_zustandspflege.py   # Raeumung und Sperre der Zustandsdatei (T-0058)
+python3 skripte/test_ortsfilter.py       # --geplant rechnet nur faellige Orte (T-0056)
+python3 skripte/test_faechergeometrie.py # eine Faechergeometrie, nicht zwei (T-0057)
+python3 skripte/test_score_distanz.py    # Deckung und Luecken in score_distanz (T-0061)
 node   skripte/test_bewertungsseite.js   # Warteschlange und Freilegung
 ```
+
+Stand 23.08.2026: 273 Python-Pruefungen + 42 JS, alle gruen.
+
+`test_zustandsdatei.py` startet Kindprozesse und killt sie mit `SIGKILL`
+mitten im Schreiben &mdash; er dauert deshalb ein paar Sekunden laenger als
+die uebrigen. Das ist Absicht: ein Test, der nur den Quelltext liest,
+haette den Fehler nicht gefunden, gegen den er geschrieben ist.
+
+`test_phantomnullen.py` braucht den ICON-Cache (`daten/roh_icond2/`, 166 Dateien) und endet ohne ihn mit Code 2.
 
 `test_seiten.py` braucht `daten/zustand.json` und die erzeugten Seiten (also
 einen Alarmlauf und `skripte/ausliefern.py --trocken` davor); ohne sie endet

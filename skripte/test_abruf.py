@@ -42,6 +42,7 @@ def pruefe(bed, text):
 
 ARCHIV_NEU = []
 ZUSTAND_NACH_LAUF = "{}"
+SCHREIBWEG = {"truncate": 0, "replace": 0}   # T-0051, siehe Abschnitt 6
 MEMBER = [""] + ["%02d" % n for n in range(1, 51)]      # 51 wie ECMWF ENS
 ABRUFE = []                                             # Protokoll der Aufrufe
 
@@ -85,8 +86,31 @@ def main():
     sicherung = open(zp).read() if os.path.exists(zp) else None
     vorher = set(glob.glob(os.path.join(BASIS, "daten", "archiv", "*", "*.json")))
     sicher, sys.argv = sys.argv, ["alarm.py"]
+    # T-0051: WIE der Lauf die Zustandsdatei anfasst, nicht nur DASS.  Ein
+    # Modul kann `schreibe` importieren und trotzdem daneben mit json.dump
+    # schreiben - die erste Fassung der Pruefung ist genau daran vorbei-
+    # gelaufen.  Modus "w" auf der Zieldatei truncatet, os.replace tauscht.
+    global SCHREIBWEG
+    import builtins
+    _open, _replace = builtins.open, os.replace
+
+    def _mein_open(datei, modus="r", *aa, **kk):
+        if os.path.abspath(str(datei)) == os.path.abspath(zp) \
+                and "w" in str(modus):
+            SCHREIBWEG["truncate"] += 1
+        return _open(datei, modus, *aa, **kk)
+
+    def _mein_replace(src, dst, *aa, **kk):
+        if os.path.abspath(str(dst)) == os.path.abspath(zp):
+            SCHREIBWEG["replace"] += 1
+        return _replace(src, dst, *aa, **kk)
+
     try:
-        alarm.main()
+        builtins.open, os.replace = _mein_open, _mein_replace
+        try:
+            alarm.main()
+        finally:
+            builtins.open, os.replace = _open, _replace
     finally:
         sys.argv = sicher
         # Den geschriebenen Zustand FESTHALTEN, bevor er zurueckgesetzt wird -
@@ -171,6 +195,21 @@ def main():
     leck = [t for t, e in ab.items()
             if "member" in e or any("member" in v for v in (e.get("verlauf") or []))]
     pruefe(not leck, "kein Memberblock im Zustand (%s)" % (leck or "-"))
+
+    print("\n=== 6. Die Zustandsdatei wird atomar geschrieben (T-0051)")
+    # Vor dem 22.08.2026 stand hier `open(zpfad, "w")` + `json.dump`.  Stirbt
+    # der Prozess dazwischen, bleibt eine halbe Datei liegen - und die legt
+    # nicht diesen Lauf lahm, sondern ALLE vier Agenten, weil sieben Leser
+    # sie mit blankem json.load laden.  Geprueft wird das Verhalten am
+    # Dateisystem, nicht der Quelltext.
+    pruefe(SCHREIBWEG["truncate"] == 0,
+           "der Lauf oeffnet die Zustandsdatei nie mit Modus \"w\" (%d mal)"
+           % SCHREIBWEG["truncate"])
+    pruefe(SCHREIBWEG["replace"] >= 1,
+           "er tauscht sie per os.replace ein (%d mal)"
+           % SCHREIBWEG["replace"])
+    pruefe(ZUSTAND_NACH_LAUF.strip() not in ("", "{}"),
+           "und der Lauf hat wirklich geschrieben (sonst prueft das nichts)")
 
     for f in ARCHIV_NEU:                       # der Pruefstand raeumt auf
         os.remove(f)

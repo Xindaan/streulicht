@@ -1,6 +1,6 @@
 # STATE
 
-Stand: 20.08.2026 abends. **Der Betrieb laeuft, die Oberflaeche ist neu -
+Stand: 23.08.2026 morgens. **Der Betrieb laeuft, die Oberflaeche ist neu -
 auf beiden Schirmgroessen.** Repo oeffentlich, Pages liefert Prognose-,
 Bewertungs- und Bilanzseite, ntfy eingerichtet, fuenf launchd-Agenten
 geladen. Der UX-Overhaul (T-0031 bis T-0034) ist vollstaendig umgesetzt, die
@@ -151,7 +151,11 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
 
 ## Next actions
 
-1. **Den Archiv-Agenten ausladen** - Skript und plist sind entfallen, der
+1. **Der Review ist vollstaendig abgearbeitet.** T-0051 bis T-0061 erledigt
+   (TASK.md, Done 23.08.2026), T-0006 entschieden. Aus dem Review sind keine
+   offenen Punkte mehr da; die naechsten Schritte kommen wieder aus dem
+   eigenen Backlog.
+2. **Den Archiv-Agenten ausladen** - Skript und plist sind entfallen, der
    Agent laeuft sonst weiter ins Leere und haelt seinen roten Exitcode:
 
        launchctl bootout gui/$UID/de.greatbelow.streulicht.archiv
@@ -159,14 +163,43 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
        launchctl list | grep streulicht
 
    Danach stehen alle verbleibenden vier Agenten auf 0.
-2. **T-0040 Ueberwachung der Exitcodes.** Inzwischen dreimal aufgefallen,
+3. **T-0040 Ueberwachung der Exitcodes.** Inzwischen dreimal aufgefallen,
    dass ein Agent still scheitert - und jedes Mal hat es ein Mensch bemerkt,
    nicht das System. Das Archiv war seit dem 15.08. kaputt.
-3. **Beobachten.** Die Kette laeuft: zwei Alarmlaeufe am Tag, Auslieferung
+4. **Beobachten.** Die Kette laeuft: zwei Alarmlaeufe am Tag, Auslieferung
    alle zehn Minuten, Archiv als Nebenprodukt.
-4. **T-0038** Rundung an der 80er-Schwelle, wenn der Fall wieder auftritt.
+5. **T-0038** Rundung an der 80er-Schwelle, wenn der Fall wieder auftritt.
 
 ## Letzte Done
+
+- **23.08.2026 Review-Backlog fertig (T-0056 bis T-0059, T-0061).** Sperre
+  und Raeumung fuer die Zustandsdatei (ohne Sperre kamen 4 von 12 parallelen
+  Schreibvorgaengen an), Ortsfilter fuer `--geplant` (246 -> 103 Zellen bei
+  zwei Orten), Sparfaecher abgeschafft, Barrierefreiheit der Abendwahl, drei
+  Fehler in `score_distanz.py`. **273 Python-Pruefungen + 42 JS gruen**
+  (Baseline vor dem Review: 153).
+
+- **23.08.2026 T-0060 erledigt, mit Korrektur an meiner eigenen Einschaetzung.**
+  Phantomnullen in `icond2_test.py` und `klimatologie.py` abgestellt. Am
+  echten Cache gemessen ist der Befund beim Standardlauf **wirkungslos** (der
+  Deckungsfilter faengt alles ab) - erreichbar aber ueber `--mindestdeckung`,
+  und dann unsichtbar: 21 % Phantomnullen bei gleichzeitiger Meldung "0 mit
+  Datenluecken". **s\* ist nicht betroffen, gemessen:** keine der fuenf
+  Klimatologie-Dateien traegt eine einzige.
+
+- **23.08.2026 Externer Review abgearbeitet (T-0051 bis T-0055).** Zehn
+  Befunde von Ox Alpha, alle an der Fundstelle nachgelesen: acht bestaetigt,
+  einer bekannt/gewollt, keiner falsch. Gefixt: atomarer Schreibvorgang der
+  Zustandsdatei (ein abgebrochener Dump legte alle vier Agenten still),
+  Validierung der Bewertungsnoten (das Topic ist oeffentlich, eine Note 99
+  lief ungeprueft in die Messreihe), die seit T-0041 falsche Push-Auskunft
+  "morgens um 7:30", die Datenluecken-Behandlung in `score_niveaus` und ein
+  ntfy-Fehler, der den ganzen Alarmlauf samt Archiv verwarf.
+  Die Isomorphie-Checks fanden **fuenf** weitere Stellen derselben Klassen,
+  vier davon gleich mitgefixt. 192 Python-Pruefungen + 42 JS gruen (vorher
+  153). **Offen und wichtig: T-0060** &mdash; die T-0006-Zahlen (rho 0.697 /
+  0.504) sind unter einem Scorer entstanden, der Teilluecken anders
+  behandelte als sein Vergleichspartner.
 
 - **20.08.2026 T-0003 erledigt.** Das Tagesarchiv faellt jetzt als
   Nebenprodukt des Alarmlaufs an - 60 kB je Lauf, null zusaetzliche Abrufe.

@@ -155,6 +155,112 @@ pruefe(d_voll is not None and d_voll["weg_deckung"] == 1.0,
        "voller Faecher meldet Deckung 1.00")
 
 print()
+print("=== 4. Beide Score-Varianten behandeln Luecken gleich (T-0054)")
+# Der Wachhund aus Abschnitt 3 sass bis zum 22.08.2026 NUR in sonnen/score.py.
+# sonnen/score_niveaus.py - die Variante, auf die der Betrieb wechseln soll -
+# hatte den behobenen Fehler noch eingebaut: `sicht = 1.0 - (... if sicht_w
+# else 0.0)` macht aus fehlenden Daten freie Sicht, und `weg` blieb ohne
+# Segmentzaehlung auf 1.0.  Ein Member mit Daten nur im Nahbereich bekam
+# damit B = 1.0 und zaehlte mit vollem Score.
+#
+# Warum das KEIN Zukunftsproblem war: skripte/ablation.py rechnet mit
+# score_niveaus - das ist das Skript, das T-0006 gerechnet hat, also die
+# Entscheidung ueber den Wechsel selbst.  Bei einer TEILluecke lieferte
+# score_niveaus ein Detail (der Abend blieb also in der Stichprobe), score
+# verwarf (der Abend flog raus).  Verglichen wurde unter asymmetrischer
+# Lueckenbehandlung - dieselbe Fehlerklasse, die die Zahlen laut T-0006
+# schon einmal verbogen hat.
+from sonnen.score_niveaus import score as scoreN   # noqa: E402
+
+
+def feldN(belegt, niveaus=None, wert=0.9):
+    """Wie feld(), aber fuer die niveauaufgeloeste Signatur (direkt=True)."""
+    def hole(d, dv, p):
+        if (d, dv) not in belegt:
+            return None
+        return wert if (niveaus is None or p in niveaus) else None
+    return hole
+
+
+# (a) Der Fall, der den Fehler sichtbar macht: Daten NUR auf dem
+#     Schirmniveau im Nahbereich - nichts darunter, nichts in der Ferne.
+nur_nah = {(0.0, 0.0)} | {(d, dv) for d in (30.0,) for dv in FAECHER_AZIMUTE}
+sN, dN = scoreN(feldN(nur_nah, niveaus={600}), direkt=True,
+                mit_dickenstrafe=False)
+pruefe(dN is None,
+       "nur Schirmniveau im Nahbereich -> nicht bewertbar "
+       "(frueher S = 0.900 mit sicht=weg=1.0)")
+
+# (a2) Der Fall, der GENAU den sicht-Waechter isoliert.  Ohne ihn faellt (a)
+#      schon durch den weg-Waechter - die Negativprobe hat das aufgedeckt:
+#      den sicht-Waechter allein zu entfernen liess den Test gruen.  Ein
+#      Waechter ohne eigenen Fall ist ungeprueft, auch wenn er dasteht.
+#      Konstruktion: Schirm 600 hPa im Nahbereich belegt (Term A traegt), die
+#      Ferne vollstaendig belegt (der Weg traegt) - aber NICHTS unter dem
+#      Schirm im Sichtbereich.  Frueher wurde daraus sicht = 1.0, also freie
+#      Sicht aus fehlenden Daten.
+def nur_schirm_und_ferne(d, dv, p):
+    if d <= 60.0:
+        return 0.2 if p == 600 else None
+    return 0.2
+
+
+sS, dS = scoreN(nur_schirm_und_ferne, direkt=True, mit_dickenstrafe=False,
+                schirm_niveaus=(600,))
+pruefe(dS is None,
+       "Sichtbereich unter dem Schirm unbeobachtet -> verworfen "
+       "(frueher sicht = 1.0 aus fehlenden Daten)")
+
+# Gegenprobe zum Waechter selbst: liegen dort Daten, bleibt der Abend
+# bewertbar - sonst haette ich einen zu scharfen Riegel eingebaut.
+def auch_darunter(d, dv, p):
+    return 0.2
+
+
+sA, dA = scoreN(auch_darunter, direkt=True, mit_dickenstrafe=False,
+                schirm_niveaus=(600,))
+pruefe(dA is not None and dA["sicht"] < 1.0,
+       "mit Daten unter dem Schirm bewertbar, sicht = %.3f"
+       % (dA["sicht"] if dA else -1))
+
+# (b) Gar nichts belegt: beide Varianten muessen (0.0, None) liefern.
+s3_leer, d3_leer = score(feld(set()))
+sN_leer, dN_leer = scoreN(feldN(set()), direkt=True)
+pruefe(d3_leer is None and dN_leer is None,
+       "leerer Faecher -> beide Varianten verwerfen")
+
+# (c) Nur der Standort belegt - der Fall aus Abschnitt 3, jetzt gegen BEIDE.
+#     Genau hier liefen sie vorher auseinander: score verwarf, score_niveaus
+#     gab einen Wert zurueck.  Das ist die Asymmetrie in der Ablation.
+s3_p, d3_p = score(feld({(0.0, 0.0)}))
+sN_p, dN_p = scoreN(feldN({(0.0, 0.0)}), direkt=True, mit_dickenstrafe=False)
+pruefe(d3_p is None, "nur Standort -> 3-Schicht verwirft")
+pruefe(dN_p is None, "nur Standort -> niveauaufgeloest verwirft AUCH")
+pruefe((d3_p is None) == (dN_p is None),
+       "beide Varianten sind sich einig (das ist der Punkt)")
+
+# (d) Der Wachhund darf nicht zu scharf sein: voll belegt bleibt bewertbar,
+#     sonst haette ich den Fehler durch einen schlimmeren ersetzt.
+alle_zellen2 = {(d, dv) for d in DISTANZEN_KM for dv in FAECHER_AZIMUTE}
+sN_voll, dN_voll = scoreN(feldN(alle_zellen2), direkt=True,
+                          mit_dickenstrafe=False)
+pruefe(dN_voll is not None,
+       "voller Faecher bleibt bewertbar, S = %.4f" % sN_voll)
+pruefe(dN_voll is not None and dN_voll.get("weg_deckung") == 1.0,
+       "und meldet weg_deckung 1.00 wie die 3-Schicht-Variante")
+
+# (e) Teildeckung: bewertbar, aber ehrlich ausgewiesen - gleiche Regel wie
+#     in score.py.  Ohne die Zahl misst man ein Artefakt und merkt es nicht.
+teil2 = {(0.0, 0.0)} | {(d, dv) for d in (60.0, 120.0)
+                        for dv in FAECHER_AZIMUTE}
+sN_teil, dN_teil = scoreN(feldN(teil2), direkt=True, mit_dickenstrafe=False)
+pruefe(dN_teil is not None and "weg_deckung" in dN_teil,
+       "Teildeckung bleibt bewertbar und meldet weg_deckung")
+pruefe(dN_teil is not None and dN_teil["weg_deckung"] < 1.0,
+       "und die Deckung ist ehrlich unter 1.0 (%.2f)"
+       % (dN_teil["weg_deckung"] if dN_teil else -1))
+
+print()
 if fehler:
     print("FEHLGESCHLAGEN: %d" % len(fehler))
     sys.exit(1)

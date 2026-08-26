@@ -24,6 +24,7 @@ Lauf:  python3 skripte/test_seiten.py
 """
 import json
 import os
+import json as _json
 import re
 import sys
 
@@ -233,6 +234,97 @@ def main():
         koerper = html.split("</style>")[1].split("<script>")[0]
         pruefe(not re.search(r"unauff|Perzentil des Jahres", koerper),
                "keine Prognose im sichtbaren Dokument")
+
+    print("\n=== 7. Push-Auskunft nennt den echten Zeitpunkt (T-0053)")
+    # Bis zum 22.08.2026 stand hier fest "morgens um 7:30 Uhr" - seit T-0041
+    # (18.08.2026) laeuft der Alarm sonnenuntergangsrelativ.  Der Satz ist die
+    # EINZIGE Stelle, die dem Nutzer sagt, wann er mit einer Meldung rechnen
+    # darf, und er erscheint nur im Alarmfall - rund 18 Abende im Jahr, also
+    # genau dann, wenn er zaehlt.  Deshalb wird der Zweig hier ERZWUNGEN:
+    # ihn dem Zufall der Wetterlage zu ueberlassen hiesse, ihn nie zu pruefen.
+    import seite as _seite
+    kfg_ = _json.load(open(os.path.join(BASIS, "konfig.json")))
+    alarm_text = _seite.pushauskunft(0.62, 0.5, kfg_)
+    still_text = _seite.pushauskunft(0.09, 0.5, kfg_)
+    rueck_text = _seite.pushauskunft(0.62, 0.5, kfg_, rueckschau=True)
+
+    pruefe("7:30" not in alarm_text and "7:30" not in still_text,
+           "keine feste Uhrzeit mehr im Text")
+    pruefe("Sonnenuntergang" in alarm_text,
+           "der Alarmfall nennt den Sonnenuntergang als Bezug")
+    pruefe("einmal, nicht zweimal" in alarm_text,
+           "und weiterhin: einmal, nicht zweimal")
+    pruefe("kein Push" in still_text, "der Normalfall sagt weiter: kein Push")
+    pruefe("nichts gepusht" in rueck_text, "die Rueckschau bleibt unveraendert")
+
+    # Die Zahl kommt aus der Konfiguration, nicht aus dem Text: wer den Lauf
+    # verschiebt, verschiebt die Auskunft mit.  Sonst waere derselbe Fehler
+    # beim naechsten Mal wieder da, nur mit einer anderen Zahl.
+    for v, wort in ((2, "2"), (5, "5")):
+        t = _seite.pushauskunft(0.62, 0.5, dict(kfg_, lauf_vorlauf_stunden=v))
+        pruefe(wort in t and "Sonnenuntergang" in t,
+               "lauf_vorlauf_stunden=%d schlaegt in den Text durch" % v)
+    t1 = _seite.pushauskunft(0.62, 0.5, dict(kfg_, lauf_vorlauf_stunden=1))
+    pruefe("eine Stunde" in t1, "Einzahl bei einer Stunde")
+
+    print("\n=== 8. Die Abendwahl meldet sich bei assistiver Technik (T-0059)")
+    # Vorher: `waehle()` tauschte vierzehn Elemente stumm aus - Hero, Stufe,
+    # Grund, Zahlen, drei Kennzahlen, Band, Schnitt, Karte.  Per Screenreader
+    # oder Pfeiltaste wechselte die ganze Seite, ohne dass etwas angekuendigt
+    # wurde; die aktive Marke war allein ueber eine CSS-Klasse markiert.
+    # Geprueft wird die ERZEUGTE Seite, nicht die Vorlage.
+    ph = open(os.path.join(BASIS, "web", "index.html")).read()
+    # Kommentare raus, sonst zaehlen die eigenen Erklaerungen mit.
+    sichtbar = re.sub(r"<!--.*?-->", "", ph, flags=re.S)
+
+    pruefe('aria-live="polite"' in sichtbar,
+           "der Hero ist eine Live-Region")
+    pruefe('role="status"' in sichtbar,
+           "und als Status ausgezeichnet, nicht als Warnung")
+    # Genau EINE Live-Region: zwei wuerden sich gegenseitig unterbrechen.
+    pruefe(sichtbar.count('aria-live=') == 1,
+           "genau eine Live-Region (%d)" % sichtbar.count('aria-live='))
+
+    pruefe('role="tablist"' in sichtbar, "die Achse ist eine Tabliste")
+    n_tab = sichtbar.count('role="tab"')
+    n_abende = len(eintraege) if "eintraege" in dir() else n_tab
+    pruefe(n_tab > 0, "die Marken sind Tabs (%d)" % n_tab)
+    pruefe(sichtbar.count('aria-selected="true"') == 1,
+           "genau eine Marke ist ausgewaehlt (%d)"
+           % sichtbar.count('aria-selected="true"'))
+    pruefe(sichtbar.count('aria-selected="false"') == n_tab - 1,
+           "alle uebrigen sind ausdruecklich nicht ausgewaehlt")
+
+    # Roving Tabindex: EIN Tabstopp fuer die ganze Achse, nicht elf.  Sonst
+    # muss man sich durch jeden Abend durchtabben, um zum Fliesstext zu
+    # kommen.
+    pruefe(sichtbar.count('tabindex="0"') == 1,
+           "die Tabliste hat genau einen Tabstopp (%d)"
+           % sichtbar.count('tabindex="0"'))
+    pruefe(sichtbar.count('tabindex="-1"') == n_tab - 1,
+           "die uebrigen Marken sind aus der Tabreihenfolge genommen")
+
+    # Der Startzustand steht im MARKUP - ohne JavaScript ist die Seite sonst
+    # fuer assistive Technik zustandslos.  Dieselbe Regel wie beim Hero.
+    i_sel = sichtbar.find('aria-selected="true"')
+    i_an = sichtbar.find('class="marke')
+    pruefe(i_sel > 0 and i_an > 0,
+           "Auswahl und Marken stehen serverseitig im Dokument")
+
+    # Dekoration darf nicht mitgelesen werden: die Rangzahl im Button waere
+    # eine Dopplung des aria-labels.
+    pruefe(sichtbar.count('aria-hidden="true"') >= 3 * n_tab,
+           "Fahne, Punkt und Rangzahl sind als Dekoration ausgezeichnet (%d)"
+           % sichtbar.count('aria-hidden="true"'))
+    pruefe('class="achsenfuss" aria-hidden="true"' in sichtbar,
+           "der Achsenfuss ist Dekoration - er wiederholt nur die Marken")
+
+    # Die Tastaturbedienung muss den Fokus mitnehmen, sonst wandert die
+    # Auswahl ohne den Screenreader-Cursor.
+    pruefe("marken[z].focus()" in ph,
+           "die Pfeiltasten nehmen den Fokus mit")
+    pruefe('e.key==="Home"' in ph and 'e.key==="End"' in ph,
+           "Home/End springen an die Raender (in einer Tabliste erwartet)")
 
     print("")
     if fehler:

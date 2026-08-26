@@ -35,8 +35,32 @@ Historisch: `historical-forecast-api` war frei.
 **Vorher war das Skript verzerrt** — es zaehlte Abende ohne Daten als 0.0,
 wo BEIDE Verfahren uebereinstimmen, was rho nach oben trieb und damit genau
 auf 'die Rangfolgen fallen zusammen' zeigte. Behoben, siehe Befunde 27b.
-Load-bearing: s* kommt aus der 3-Schicht-Klimatologie, der Betrieb laeuft
-niveauaufgeloest. Laufen die Rangfolgen auseinander, ist s* nicht uebertragbar.
+Load-bearing: s\* UND der Betrieb laufen beide auf der 3-Schicht-Variante
+(`alarm.py` importiert `sonnen.score`, siehe Modulkopf dort). Hier stand bis
+zum 23.08.2026 "der Betrieb laeuft niveauaufgeloest" - das war falsch und hat
+die Dringlichkeit dieses Tasks ueberzeichnet. Richtig ist: die Rangfolgen
+entscheiden, ob s\* beim geplanten WECHSEL uebertragbar waere, nicht ob der
+laufende Betrieb einen falschen Schwellwert benutzt.
+
+**VERMERK 23.08.2026 zur Lueckenbehandlung (Entscheidung: NICHT neu
+rechnen).** Die Zahlen oben sind unter ASYMMETRISCHER Lueckenbehandlung
+entstanden: `ablation.py:173` verwarf schon immer Abende, bei denen eine der
+beiden Varianten `detail is None` lieferte - aber `score_niveaus` gab bei
+einer TEILluecke (Daten nur im Nahbereich) noch ein Detail zurueck, wo
+`score` verwarf. Solche Abende blieben also in der Stichprobe, mit einem
+ueberhoehten Niveaus-Wert. Seit T-0054 verwerfen beide gleich.
+
+Wie viele Abende das in den ERA5-Daten 2022-2025 betrifft, ist **nicht
+gemessen** - der historische Abruf kostet Kontingent. Nicht neu gerechnet,
+weil die Richtung des Fehlers gegen die Antwort spricht, nicht fuer sie: ein
+ueberhoehter Niveaus-Wert bei Teilluecken konnte zufaellig mit der
+3-Schicht-Variante uebereinstimmen und rho damit nach OBEN ziehen. Das
+gemessene rho ist also eher eine Obergrenze, und mit +0.697 bzw. +0.504 im
+Sommerfenster liegt schon die Obergrenze weit unter jeder Wechselschwelle.
+Die Antwort "NEIN" wird durch den Fix fester, nicht wackliger.
+
+Wer den Wechsel doch ernsthaft erwaegt, rechnet vorher neu - dann aber mit
+der heutigen Fassung beider Scorer, und der Vermerk hier faellt weg.
 - [ ] Spearman rho und Top-15-%-Ueberlappung ueber 42 Abende
 
 ### T-0003 Taegliche Ensemble-Archivierung
@@ -183,6 +207,151 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   Frage, die am 14.08. fuenfmal von Hand am Foto beantwortet wurde.
 
 ## Done
+
+### 23.08.2026 &mdash; Backlog des Reviews abgearbeitet (T-0056 bis T-0059, T-0061)
+Tests: **273 Python-Pruefungen + 42 JS**, alle gruen (Baseline vor dem Review:
+153). Vier neue Testdateien.
+
+- T-0058 **Wachstum und verlorene Schreibvorgaenge (erledigt).** Zwei
+  Probleme, die gleich aussehen und verschiedene Mittel brauchen.
+  *Wachstum:* `raeume()` in `alarm.py` entfernt unbewertete Abende aelter als
+  `BEHALTEN_TAGE = 30`; ihre Prognosedaten liegen im Tagesarchiv (T-0003).
+  **Bewertetes bleibt unbefristet** - eine Note ist die einzige Messgroesse
+  ohne zweite Quelle. `verlauf` wird auf `VERLAUF_MAX = 10` gekuerzt.
+  *Verlorene Schreibvorgaenge:* neu `gesperrt()` und `aktualisiere()` in
+  `zustandsdatei.py` (`fcntl.flock` auf einer eigenen `.lock`-Datei - ein Lock
+  auf der Zustandsdatei selbst zeigt nach `os.replace` ins Leere).
+  **Der atomare Schreibvorgang aus T-0051 half hier nicht:** er verhindert
+  halbe Dateien, nicht das Dazwischenkommen. Belegt: 12 parallele Prozesse,
+  ohne Sperre kamen 4 von 12 Erhoehungen an.
+  Alle drei Agenten rechnen/senden jetzt AUSSERHALB der Sperre und mergen ihr
+  Ergebnis gegen den frischen Stand - `alarm.py` bewahrt dabei ausdruecklich
+  die Bewertungsfelder, denn genau dort ging eine gerade eingesammelte Note
+  verloren (nachgestellt und behoben).
+- T-0056 **`--geplant` rechnet nur faellige Orte (erledigt).** Gemessen mit
+  zwei Orten (Berlin/Bilbao, Fenster ueberlappen nicht): vorher 246 Zellen in
+  6 Anfragen, jetzt 103 in 3. Ungefragte Orte werden auch nicht mehr als
+  "vonhand" gebucht - ihr Fenster bleibt fuer den Tag offen. Ein Lauf von
+  Hand rechnet weiterhin alle Orte.
+- T-0057 **Sparfaecher abgeschafft statt repariert (erledigt).**
+  `fan_setzen` hat `sonnen.score.FAECHER_AZIMUTE/DISTANZEN_KM` zur Laufzeit
+  ueberschrieben; zwoelf Module importieren sie by value und sahen das nie.
+  **Entscheidung, bewusst:** der saubere Weg waere, die Geometrie durch
+  `score()` zu reichen - die liest die Konstanten an dreizehn Stellen, das ist
+  ein Umbau der Kernfunktion des Betriebsscores. Fuer einen Hebel, der in
+  `konfig.json` auf `null` steht, nie benutzt wurde und ausserdem s* = 0.7065
+  ungueltig macht, ist das ein schlechtes Verhaeltnis. Eine alte Konfiguration
+  bricht jetzt mit Erklaerung ab, statt still ignoriert zu werden.
+- T-0059 **Abendwahl meldet sich bei assistiver Technik (erledigt).** Der Hero
+  ist `role="status"` + `aria-live="polite"` (nicht "assertive": Blaettern ist
+  Erkundung, keine Warnung). Die Achse ist eine Tabliste mit `role="tab"`,
+  `aria-selected` und Roving Tabindex - EIN Tabstopp statt elf. Fahne, Punkt,
+  Rangzahl und der Achsenfuss sind als Dekoration ausgezeichnet. Home/End
+  ergaenzt, und die Pfeiltasten nehmen den Fokus mit, aber nur wenn er in der
+  Achse liegt (ungefragtes Fokussieren ist selbst ein Fehler). Der
+  Anfangszustand steht im MARKUP - ohne das ist die Seite bis zum ersten
+  `waehle()` zustandslos. Visuell gegengeprueft: unveraendert.
+- T-0061 **`score_distanz.py`: drei Befunde (erledigt).** Nicht im
+  Betriebspfad (kein Modul importiert es), aber sie sassen an einer Zeile.
+  (1) Die Deckung teilte einen STUETZSTELLENZAEHLER durch eine LAENGE - volle
+  Belegung meldete 0.899 statt 1.00. **Diesen Fehler hat der Test gefunden,
+  nicht ich:** meine erste Fassung setzte `noetig` ein und war damit nur
+  weniger falsch. (2) `noetig` war eine tote Variable - ein halber Reparatur-
+  versuch fuer (1); mit `erfasst / moeglich` entfaellt sie ersatzlos.
+  (3) Die Luecken-Klasse aus T-0054/T-0060: `sicht` und `weg` blieben bei 1.0,
+  wenn nichts beobachtet war.
+
+### 23.08.2026 &mdash; Phantomnullen (T-0060), und was die Messung ergab
+- T-0060 **Datenluecken werden nicht mehr zu Nullen (erledigt).** Beide
+  Score-Varianten liefern `(s, detail)`; `detail is None` heisst "nicht
+  auswertbar", der Score ist dann 0.0. `icond2_test.py:187` nahm nur `[0]`.
+  Gefixt dort (Bloecke werden verworfen und **im Kopf des Berichts
+  genannt**) und &mdash; Isomorphie-Check &mdash; in `klimatologie.py:206`.
+  **Die Messung hat meine eigene Einschaetzung korrigiert.** Ich hatte den
+  Befund als wichtigsten offenen Punkt gemeldet; am echten Cache
+  (166 Dateien) ist er beim Standardlauf **wirkungslos**: der Deckungsfilter
+  `>= 0.9` laesst 0 von 55 Abenden mit fehlendem Detail durch. Die von mir
+  genannten "36 von 175" waren genau die Abende, die `hat_druck` ohnehin
+  ausschliesst.
+  **Erreichbar ist er trotzdem, und dann unsichtbar:** die Deckung ist
+  bimodal (rund 1.0 oder rund 0.0). Wer `--mindestdeckung` senkt, um mehr
+  Bloecke zu bekommen, holt sich 36 von 175 Phantomnullen (21 %) herein -
+  und der Bericht meldete dabei weiter "0 mit Datenluecken" und gab
+  `icon_niv 0.496` als Ergebnis aus. Genau dieser Lauf ist jetzt der Test
+  (`skripte/test_phantomnullen.py`, gegen den echten Cache).
+  **s\* ist NICHT betroffen, und das ist gemessen:** in allen fuenf
+  vorliegenden `score_berlin_g0.5_*.json` steht `schirm: null` kein einziges
+  Mal. Die 677 bzw. 308 Nullen darin sind echte dichte Bewoelkung. Der
+  `klimatologie.py`-Riegel gilt kuenftigen Laeufen (anderer Ort, anderes
+  Jahr, am Kontingent abgebrochener Abruf), nicht dem Bestand.
+  **Drei Fehlalarme aus dem Sweep**, selbst nachgelesen und verworfen:
+  `schnitt.py:207` stuerzt bei `det is None` laut ab (TypeError, kein
+  stiller Wert), `seite.py:236` verwirft Score und Detail ohnehin,
+  `test_seiten.py:70` prueft nur den Wertebereich.
+  Regression: der Standardlauf liefert unveraendert 0.593 / 0.657 bei
+  35 Bloecken. Tests: 206 Python-Pruefungen + 42 JS gruen.
+- **Nebenbefund, nicht gefixt:** `seite.py:234-237` faengt jede Exception aus
+  `schnitt_neu` mit `except Exception: pass` ab. Das Bild fehlt dann
+  kommentarlos - andere Fehlerklasse (stiller Ausfall), eigener Task waere
+  faellig, wenn es je auftritt.
+
+### 23.08.2026 &mdash; Externer Review abgearbeitet (T-0051 bis T-0055)
+Ox Alpha (stealth/ox-alpha via OpenRouter) hat am 22.08.2026 zehn Befunde
+gemeldet, ohne den Code auszufuehren. Triage: **alle zehn an der Fundstelle
+nachgelesen**, vier davon reproduziert. Ergebnis: acht BESTAETIGT, einer
+BEKANNT/GEWOLLT (verstreute Ortskonstanten &mdash; D4 ist in `seite.py`
+ausdruecklich als "vorbereitet, NICHT gebaut" dokumentiert, blockiert durch
+T-0013 und T-0007), keiner FALSCH. Nachtrag zur Methode: **keine einzige
+Zeilenangabe des Reviews stimmte** (durchgehend 20 bis 75 Zeilen zu niedrig)
+&mdash; der Inhalt an der gemeinten Stelle jedes Mal.
+
+Umgesetzt wurden die fuenf mit Schaden; T-0056 bis T-0059 liegen im Backlog.
+Tests: 192 Python-Pruefungen + 42 JS, alle gruen (vorher 153).
+
+- T-0051 **Zustandsdatei atomar (erledigt).** Neuer Helfer
+  `skripte/zustandsdatei.py`: tmp im selben Verzeichnis, `flush` + `fsync`
+  auf Datei UND Verzeichnis, dann `os.replace`. Belegt: 25 von 25
+  SIGKILL-Abbruechen zerlegen den naiven Weg, 25 von 25 lassen den atomaren
+  heil. **Isomorphie-Check ueber alle 24 `json.dump`-Stellen im Repo:** zwei
+  weitere derselben Klasse gefunden und mitgefixt &mdash;
+  `klimatologie.py:215` (die Klimatologie lesen SIEBZEHN Module, darunter
+  alle drei Seitenbauer des 10-Minuten-Agenten) und `alarm.py:131`
+  (Tagesarchiv, stiller Datenverlust im Bestand fuer T-0008). Die uebrigen
+  20 sind Caches und Ausgaben manueller Analyseskripte &mdash; ein Abbruch
+  dort haelt keine Betriebskette an.
+- T-0052 **Bewertungs-Nutzlast validiert (erledigt).** `gueltige_note()`:
+  int, kein bool, 0..5. `anlass` gegen die Werte, die die Erinnerung
+  ueberhaupt erzeugen kann; `erfasst` als Text begrenzter Laenge. Zweite
+  Verteidigungslinie in `bisher.py`: was VOR dem Fix hereinkam, liegt noch
+  in der Datei, und `%d` auf einer Zeichenkette liess den ganzen Seitenbau
+  sterben &mdash; nicht nur die eine Karte. **NICHT uebernommen:** der vom
+  Review vorgeschlagene `erfasst`-Monotonie-Riegel; er bricht das
+  Nachsende-Verhalten (T-0023) und den Widerruf. Restrisiko steht ehrlich im
+  Modulkopf: gegen einen Willensangreifer hilft nur Auth, und eine statische
+  oeffentliche Seite kann kein Geheimnis tragen.
+- T-0053 **Push-Auskunft aus der Konfiguration (erledigt).** Neue Funktion
+  `seite.pushauskunft()`, Zeit aus `lauf_vorlauf_stunden`. **Korrektur am
+  Review:** er nennt das eine "taeglich sichtbare Falschaussage" &mdash; sie
+  war es nicht. Der Satz erscheint nur im Alarmfall, also rund 18 Abende im
+  Jahr, und genau deshalb ist er seit T-0041 unbemerkt falsch geblieben. Der
+  Test erzwingt den Zweig, statt ihn der Wetterlage zu ueberlassen.
+  **Isomorphie-Check** fand eine zweite Fundstelle: `README.md` nannte den
+  "regulaeren 07:30-Lauf" als aktuelle Betriebsanweisung fuers Nachholen.
+  Die uebrigen 07:30-Stellen sind historisch korrekt (Vorfall 17.08.2026).
+- T-0054 **Datenluecken in `score_niveaus` (erledigt).** Beide Waechter aus
+  `score.py` portiert, `weg_deckung`/`sicht_zellen` ins Detail. Belegt: mit
+  Daten nur auf dem Schirmniveau im Nahbereich lieferte die Variante **0.9**
+  (sicht=1.0, weg=1.0), wo `score` verwirft. **Die Negativprobe hat einen
+  Testmangel aufgedeckt:** den `sicht`-Waechter allein zu entfernen liess
+  alles gruen &mdash; der erste Testfall wurde schon vom `weg`-Waechter
+  abgefangen. Ein Waechter ohne eigenen Fall ist ungeprueft, auch wenn er
+  dasteht. Jetzt schlaegt jeder einzeln an.
+- T-0055 **Versandfehler reisst den Lauf nicht mehr mit (erledigt).**
+  try/except je Ort in `alarm.py`, Buchung nur bei Erfolg &mdash; sonst
+  gaelte ein Abend als gemeldet, ohne dass eine Meldung ankam, und die
+  Idempotenzsperre verhinderte dauerhaft das Nachholen. **Isomorphie-Check:**
+  dieselbe Klasse in `erinnerung.py`, mitgefixt (bei einem Ort folgenlos, ab
+  dem zweiten geht die Buchung des ersten verloren).
 
 ### 20.08.2026 &mdash; Archiv als Nebenprodukt (T-0003 erledigt), zwei Fehler dabei
 - T-0003 **Taegliche Ensemble-Archivierung &mdash; erledigt, aber anders als

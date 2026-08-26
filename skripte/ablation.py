@@ -2,7 +2,8 @@
 niveauaufgeloeste?
 
 Das ist load-bearing, nicht kosmetisch: s* kommt aus der 3-Schicht-Klimatologie
-(ERA5, vier Jahre), der Betrieb laeuft niveauaufgeloest auf ECMWF.  Wenn die
+(ERA5, vier Jahre); niveauaufgeloest soll der Betrieb erst NOCH laufen -
+heute tut er es nicht (`alarm.py` nutzt `sonnen.score`).  Wenn die
 Rangfolgen auseinanderlaufen, ist der Schwellwert nicht uebertragbar und E2
 haette keine Zahl.
 

@@ -155,6 +155,62 @@ def kurzmarke(d, erster):
     return "%d." % d.day
 
 
+def pushauskunft(hoechste, schwelle_p, kfg, rueckschau=False):
+    """Der Absatz, der sagt, wann der Nutzer mit einer Meldung rechnen darf.
+
+    Er ist die EINZIGE Stelle, die das ueberhaupt sagt - und stand bis zum
+    22.08.2026 auf "morgens um 7:30 Uhr".  Das war seit T-0041 (18.08.2026)
+    falsch: der Alarm laeuft seitdem sonnenuntergangsrelativ, in Berlin also
+    zwischen etwa 12:50 und 18:30 Ortszeit.  Aufgefallen ist es niemandem,
+    weil der Satz nur im Alarmfall erscheint - rund 18 Abende im Jahr, also
+    genau dann, wenn er zaehlt.
+
+    Deshalb steht die Zeit jetzt NICHT mehr im Text, sondern kommt aus
+    `lauf_vorlauf_stunden`.  Wer den Lauf verschiebt, verschiebt die Auskunft
+    mit; ein zweiter Ort mit anderem Sonnenuntergang bekommt sie automatisch
+    richtig.
+
+    WARUM DER HINWEIS AUF "SELTEN" DAZUGEHOERT (26.08.2026).  Andre hat am
+    25.08. einen als "auffaellig" vorhergesagten Abend gesehen und auf einen
+    Push gewartet, der nicht kam.  Er kam zu Recht nicht - aber nicht nur,
+    weil 12 % unter 50 % liegen, sondern weil "auffaellig" die Schwelle gar
+    nicht reissen KANN:
+
+        p >= 50 %  heisst, mindestens die Haelfte der Member liegt ueber s*
+                   also liegt auch der Median ueber s*
+        s*         IST das 95. Perzentil
+        also       Stufe = "selten"
+
+    Ueber alle bisher gerechneten Abende stimmen die beiden Bedingungen
+    ausnahmslos ueberein.  Die Seite zeigt aber drei Stufen und weckt damit
+    die Erwartung, dass die mittlere auch etwas ausloest.  Deshalb steht es
+    jetzt im Text.
+
+    "spaetestens": den Push traegt der ERSTE Lauf, der die Schwelle sieht -
+    das kann schon der Vormittagslauf sein (`lauf_morgens_utc`).  Der
+    Abendlauf ist die Obergrenze, nicht der Termin.  "einmal, nicht zweimal"
+    bleibt richtig: `zustand["alarme"]` haelt je Abend hoechstens einen fest.
+    """
+    if rueckschau:
+        return ("R&uuml;ckschau: hier wurde nichts vorhergesagt und "
+                "nichts gepusht.")
+    p = round(schwelle_p * 100)
+    h = round(hoechste * 100)
+    if hoechste < schwelle_p:
+        return ("Kein Abend im Fenster rei&szlig;t die Schwelle von "
+                "%d&nbsp;%% (h&ouml;chstens %d&nbsp;%%). Es kommt kein "
+                "Push. Das ist der normale Zustand: rund 18 Abende im "
+                "Jahr sind es nicht. Ein Push kommt nur bei <b>selten</b> "
+                "&mdash; <b>auff&auml;llig</b> allein l&ouml;st keinen aus."
+                % (p, h))
+    v = kfg.get("lauf_vorlauf_stunden", 3)
+    wann = ("rund eine Stunde vor Sonnenuntergang" if v == 1
+            else "rund %g&nbsp;Stunden vor Sonnenuntergang" % v)
+    return ("Mindestens ein Abend rei&szlig;t die Schwelle von %d&nbsp;%% "
+            "(h&ouml;chstens %d&nbsp;%%). Der Push geht sp&auml;testens "
+            "%s raus &mdash; einmal, nicht zweimal." % (p, h, wann))
+
+
 def letztes_laufziel(jetzt, kfg, breite=52.52, laenge=13.405):
     """Zeitpunkt des letzten ABENDlaufs, dessen Fenster schon zu ist.
 
@@ -615,7 +671,13 @@ __VERALTET__
 <section class="kopfbild">
 <div class="bandflaeche" id="bandflaeche">__BAND__</div>
 <i class="schleier s-quer"></i><i class="schleier s-hoch"></i>
-<div class="heroinhalt">
+<!-- T-0059: role="status" + aria-live="polite".  waehle() tauscht hier
+     Etikett, Datum, Stufe, Grund, Zahlen und drei Kennzahlen aus - per
+     Screenreader oder Pfeiltaste wechselte damit die ganze Seite, ohne dass
+     etwas angekuendigt wurde.  Die neue Information existierte nur visuell.
+     "polite" statt "assertive": das Blaettern ist eine Erkundung, keine
+     Warnung - es darf den Vorlesefluss nicht unterbrechen. -->
+<div class="heroinhalt" role="status" aria-live="polite">
 <p class="etikett" id="etikett">__ETIKETT__</p>
 <h1 class="datum" id="datum">__DATUM__</h1>
 <p class="stufe __KLASSE__" id="stufe">__STUFE__</p>
@@ -645,8 +707,9 @@ Jahres<span class="nurgross"> &#183; &#8592; &#8594; bl&auml;ttert</span></span>
  aria-hidden="true"><polyline points="__LINIE__" fill="none"
  stroke="__LINIENFARBE__" stroke-width=".7"
  vector-effect="non-scaling-stroke"/></svg>
-<div class="marken">__MARKEN__</div></div>
-<div class="achsenfuss">__ACHSENFUSS__</div></section>
+<div class="marken" role="tablist"
+ aria-label="Abende im Vorhersagefenster">__MARKEN__</div></div>
+<div class="achsenfuss" aria-hidden="true">__ACHSENFUSS__</div></section>
 
 <section class="grafiken">
 <div class="karte"><p class="kartentitel">Der Weg des Lichts</p>
@@ -680,7 +743,15 @@ const fuesse=[...document.querySelectorAll(".achsenfuss div")];
 let gewaehlt=__GEWAEHLT__;
 function waehle(i){
   gewaehlt=i;
-  marken.forEach((x,k)=>x.classList.toggle("an",k===i));
+  // T-0059: die aktive Marke war nur ueber eine CSS-Klasse markiert - fuer
+  // assistive Technik unsichtbar.  aria-selected macht sie hoerbar, und
+  // tabindex sorgt dafuer, dass die Tabliste EINEN Tabstopp hat statt elf
+  // (Roving Tabindex - so bedient man eine Tabliste per Tastatur).
+  marken.forEach((x,k)=>{
+    x.classList.toggle("an",k===i);
+    x.setAttribute("aria-selected",k===i?"true":"false");
+    x.tabIndex=k===i?0:-1;
+  });
   fuesse.forEach((x,k)=>x.classList.toggle("an",k===i));
   const m=META[i];
   document.getElementById("etikett").textContent=
@@ -716,9 +787,19 @@ document.addEventListener("keydown",e=>{
   let z=gewaehlt;
   if(e.key==="ArrowRight") z=Math.min(META.length-1,gewaehlt+1);
   else if(e.key==="ArrowLeft") z=Math.max(0,gewaehlt-1);
+  else if(e.key==="Home") z=0;
+  else if(e.key==="End") z=META.length-1;
   else return;
   e.preventDefault();
-  if(z!==gewaehlt) waehle(z);
+  if(z!==gewaehlt){
+    waehle(z);
+    // T-0059: den Fokus mitnehmen, wenn er in der Achse liegt.  Sonst wandert
+    // die Auswahl, der Screenreader-Cursor aber nicht - und die naechste
+    // Tab-Taste springt an eine Stelle, die mit dem Gehoerten nichts zu tun
+    // hat.  Liegt der Fokus woanders (jemand liest gerade den Fliesstext),
+    // bleibt er, wo er ist: ungefragtes Fokussieren ist selbst ein Fehler.
+    if(marken.includes(document.activeElement)) marken[z].focus();
+  }
 });
 </script></body></html>"""
 
@@ -809,13 +890,23 @@ def main():
     # 260 px hohen Achse sitzen.  y(p) ist damit dimensionslos und die
     # Achsenhoehe eine reine CSS-Angabe.
     y = lambda p: (1.0 - p) * 100.0                               # noqa: E731
+    # T-0059: role="tab" + aria-selected + Roving Tabindex, und der
+    # ANFANGSZUSTAND steht im Markup, nicht erst im Skript - dieselbe Regel wie
+    # beim Hero (siehe Kommentar bei "ANFANGSZUSTAND STEHT IM MARKUP").  Ohne
+    # das ist die Seite bis zum ersten waehle() fuer assistive Technik
+    # zustandslos, und ohne JavaScript bleibt sie es.
+    # Die inneren <i>/<b> sind Dekoration: der Screenreader liest das
+    # aria-label des Buttons, die Rangzahl darin waere eine Dopplung.
     marken = "".join(
-        '<button class="marke %s%s" data-i="%d" '
+        '<button class="marke %s%s" data-i="%d" role="tab" '
+        'aria-selected="%s" tabindex="%d" '
         'aria-label="%s, %s, %d. Perzentil">'
-        '<i class="fahne" style="top:%.3f%%"></i>'
-        '<i class="punkt" style="top:%.3f%%"></i>'
-        '<b class="rang" style="top:calc(%.3f%% + 14px)">%d.</b></button>'
+        '<i class="fahne" style="top:%.3f%%" aria-hidden="true"></i>'
+        '<i class="punkt" style="top:%.3f%%" aria-hidden="true"></i>'
+        '<b class="rang" style="top:calc(%.3f%% + 14px)" '
+        'aria-hidden="true">%d.</b></button>'
         % (e["klasse"], " an" if i == gewaehlt else "", i,
+           "true" if i == gewaehlt else "false", 0 if i == gewaehlt else -1,
            e["lang"], e["stufe"], round(e["p"] * 100),
            y(e["p"]), y(e["p"]), y(e["p"]), round(e["p"] * 100))
         for i, e in enumerate(eintraege))
@@ -877,20 +968,7 @@ def main():
     # und "kein Push" ist der haeufigste Zustand.  Ohne ihn sieht Schweigen
     # aus wie ein Defekt.
     hoechste = max((e["wahrsch"] or 0.0) for e in eintraege)
-    if a.rueckschau:
-        pushtext = ("R&uuml;ckschau: hier wurde nichts vorhergesagt und "
-                    "nichts gepusht.")
-    elif hoechste >= schwelle_p:
-        pushtext = ("Mindestens ein Abend rei&szlig;t die Schwelle von "
-                    "%d&nbsp;%% (h&ouml;chstens %d&nbsp;%%). Der Push geht "
-                    "morgens um 7:30&nbsp;Uhr raus &mdash; einmal, nicht "
-                    "zweimal." % (round(schwelle_p * 100), round(hoechste * 100)))
-    else:
-        pushtext = ("Kein Abend im Fenster rei&szlig;t die Schwelle von "
-                    "%d&nbsp;%% (h&ouml;chstens %d&nbsp;%%). Es kommt kein "
-                    "Push. Das ist der normale Zustand: rund 18 Abende im "
-                    "Jahr sind es nicht."
-                    % (round(schwelle_p * 100), round(hoechste * 100)))
+    pushtext = pushauskunft(hoechste, schwelle_p, kfg, a.rueckschau)
 
     # ANFANGSZUSTAND STEHT IM MARKUP, nicht erst im Skript.  Vorher baute
     # waehle() beim Laden Hero, Band und beide Bilder auf; bis dahin war die

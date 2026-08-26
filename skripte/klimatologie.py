@@ -20,6 +20,8 @@ from datetime import date, timedelta
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sonnen.geometrie import sonnenuntergang  # noqa: E402
 from sonnen.score import faecherpunkte, score  # noqa: E402
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from zustandsdatei import schreibe  # noqa: E402
 
 GITTER = float(os.environ.get('WETTER_GITTER', '0.5'))
 SCHICHTEN = ("low", "mid", "high")
@@ -175,6 +177,8 @@ def main():
         return
 
     ergebnis = {}
+
+    ohne_daten = []                  # T-0060, siehe unten
     for jahr in range(a.von, a.bis + 1):
         gesucht = {}
         for t in tage(date(jahr, 1, 1), date(jahr, 12, 31)):
@@ -202,17 +206,41 @@ def main():
                 return None if v is None else v / 100.0
 
             s, det = score(hole)
-            ergebnis[tag] = {"s": s, "schirm": det["schirm"] if det else None,
-                             "A": det["A"] if det else None,
-                             "B": det["B"] if det else None}
+            # T-0060: `det is None` heisst "nicht auswertbar", und score()
+            # gibt dann 0.0 zurueck.  Diese Null als Messwert abzulegen waere
+            # eine Phantomnull am UNTEREN Ende der Verteilung - und aus genau
+            # dieser Verteilung kommt s* = 0.7065.  Ein Abend ohne Daten
+            # wuerde also den Schwellwert mitbestimmen, den er nie gesehen
+            # hat.  Er wird deshalb ausgelassen, nicht als 0.0 gebucht.
+            #
+            # GEMESSEN (23.08.2026): in allen fuenf vorliegenden
+            # score_berlin_*.json steht `schirm: null` KEIN einziges Mal -
+            # die Klasse ist im Code moeglich, in den bisherigen Daten aber
+            # nie eingetreten. s* ist also nicht betroffen.  Der Riegel gilt
+            # kuenftigen Laeufen: anderer Ort, anderes Jahr, oder ein am
+            # Kontingent abgebrochener Abruf.
+            if det is None:
+                ohne_daten.append(tag)
+                continue
+            ergebnis[tag] = {"s": s, "schirm": det["schirm"],
+                             "A": det["A"], "B": det["B"]}
         del feld
+    if ohne_daten:
+        # Sichtbar machen, nicht wegschweigen: ein Lauf, der still die Haelfte
+        # der Abende auslaesst, sieht sonst aus wie ein vollstaendiger.
+        print("%d Abende ohne auswertbare Daten ausgelassen (NICHT als 0.0 "
+              "gewertet): %s%s"
+              % (len(ohne_daten), ", ".join(ohne_daten[:5]),
+                 " ..." if len(ohne_daten) > 5 else ""))
     if not ergebnis:
         print("nichts gerechnet - Kontingent war sofort erschoepft.")
         return
     teil = os.path.join(BASIS, "daten", "score_%s_g%g_teil.json" % (a.name, GITTER))
     fertig = len(ergebnis) >= len(proTag) * 0.99
-    with open(ziel if fertig else teil, "w") as f:
-        json.dump(ergebnis, f)
+    # T-0051: atomar.  Diese Datei lesen SIEBZEHN Module, darunter alle drei
+    # Seitenbauer, die der 10-Minuten-Agent startet - eine halbe Klimatologie
+    # legt die Auslieferung genauso still wie eine halbe Zustandsdatei.
+    schreibe(ziel if fertig else teil, ergebnis, indent=None)
     print("geschrieben: %s (%d von %d Abenden)"
           % (ziel if fertig else teil, len(ergebnis), len(proTag)))
 

@@ -176,17 +176,45 @@ def score(hole):
             # --- Beleuchtungsweg vom Tangentenpunkt bis zum Schirm
             d_tan = d_s + tangentendistanz_km(h)
             weg = 1.0
-            erfasst = 0.0
+            moeglich = erfasst = 0.0
             for x in DISTANZEN_KM:
                 if not d_s < x <= d_tan:
                     continue
+                moeglich += 1.0
                 z = (d_tan - x) ** 2 / (2.0 * R_EFF_KM)
                 cs = mittel(x, _schicht_bei(z))
                 if cs is not None:
                     weg *= (1.0 - cs) ** K_SEGMENT
                     erfasst += 1.0
-            noetig = max(1.0, (min(d_tan, DISTANZEN_KM[-1]) - d_s) / 60.0)
-            deckung = min(1.0, erfasst / max(1.0, (d_tan - d_s) / 60.0))
+            # T-0061, DREI Befunde an dieser Stelle:
+            #
+            # (1) Die Deckung rechnete `erfasst / max(1.0, (d_tan - d_s)/60.0)`
+            #     - ein STUETZSTELLENZAEHLER geteilt durch eine LAENGE.  Die
+            #     beiden passen nicht zusammen: bei d_s = 0 und h = 4.2 km
+            #     liegen vier Stuetzstellen im Intervall, der Nenner ergibt
+            #     4.45, und volle Belegung meldete 0.899 statt 1.00.
+            #     Richtig ist `erfasst / moeglich` - beides zaehlt dasselbe,
+            #     und es ist dieselbe Formel wie `weg_deckung` in score.py.
+            #
+            # (2) `noetig` wurde berechnet und nie gelesen.  Es war ein Versuch,
+            #     (1) zu reparieren - mit Deckel bei DISTANZEN_KM[-1], weil der
+            #     Faecher bei 420 km endet und alles dahinter nicht abtastbar
+            #     ist.  Der Deckel war richtig gedacht, die Groesse trotzdem
+            #     die falsche (siehe 1).  Mit `moeglich` erledigt sich beides:
+            #     was jenseits von 420 km liegt, hat gar keine Stuetzstelle und
+            #     zaehlt deshalb auch nicht als "moeglich".  `noetig` ist damit
+            #     ersatzlos entfallen, nicht vergessen.
+            #
+            # (3) `weg` und `sicht` starten bei 1.0 und BLEIBEN dort, wenn kein
+            #     Abschnitt Daten hat - fehlende Daten wirkten wie ein freies
+            #     Fenster.  Dieselbe Fehlerklasse wie in score.py (T-0054) und
+            #     icond2_test.py (T-0060).  Anders als dort steht hier eine
+            #     Summe ueber Beitraege, kein Produkt: ein unbeobachteter
+            #     Beitrag wird deshalb nicht gewertet, statt den ganzen Abend
+            #     zu verwerfen.
+            deckung = erfasst / moeglich if moeglich else 1.0
+            if moeglich > 0.0 and erfasst == 0.0:
+                continue
 
             beitrag = c * omega * sicht * weg
             summe += beitrag
