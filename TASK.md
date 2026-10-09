@@ -268,6 +268,13 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   liest die Produktiv-Konfig (bewertung#9); test_ortsfilter ersetzt
   `alarm.sende` nicht - pruefen, ob ein echter ntfy-POST moeglich ist;
   test_wn3 nicht netzfrei, 13 von 13 Verdrahtungsmutanten ueberleben (wn3#F7).
+  Stand 09.10.2026: umgesetzt - f4b2d8f. Neu `test_netz.py` (Wanduhr-Frist) und
+  `test_bewertungen_holen.py` (hole() echt, vier Eingangswaechter); in
+  `test_ausliefern.py` Allow-Liste und Zweigriegel am lokalen Commit; Advektion
+  in alle Himmelsrichtungen und zirkulaeres Mittel am Produktionslauf;
+  test_ortsfilter (fester Tag, `alarm.sende` aufgezeichnet), test_seiten (Bauzeit
+  der Seite statt Wanduhr) und test_erinnerung (Testkonfig) entkoppelt. NICHT
+  erledigt: wn3#F7 (test_wn3 netzfrei, Verdrahtungsmutanten) bleibt offen.
 - T-0080 UI/UX-Paket (Review 09.10.2026): Bilanz ohne Nenner, ohne die beiden
   Alarmabende, ohne Laufalter (uiux#5, #6); Hero zeigt nach Sonnenuntergang den
   vergangenen Abend (uiux#2); Textwidersprueche ("18 im Jahr" gegen
