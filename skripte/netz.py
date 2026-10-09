@@ -32,7 +32,13 @@ def warte_auf_netz(minuten=20, pause=30, name=PROBE, melde=print):
     Wartehelfer, der das Programm beendet, ist ein Wartehelfer, der bei der
     naechsten Aenderung uebersehen wird.
     """
-    frist = time.monotonic() + minuten * 60
+    # WANDUHR, nicht monotonic (T-0070, 02.09.2026).  `time.monotonic()`
+    # steht auf macOS waehrend des Ruhezustands still: schlaeft der Rechner
+    # mitten im Warten ein, laeuft die Frist nicht weiter, und aus den
+    # zugesagten 20 Minuten werden real Stunden.  Genau das ist am
+    # 01.09.2026 passiert - "Warte bis zu 20 Minuten" um 18:28, "Netz ist
+    # da" um 18:57.  Gemeint sind Minuten an der Wand, nicht Minuten wach.
+    frist = time.time() + minuten * 60
     erster = True
     while True:
         try:
@@ -42,7 +48,7 @@ def warte_auf_netz(minuten=20, pause=30, name=PROBE, melde=print):
             return True
         except socket.gaierror:
             pass
-        if time.monotonic() >= frist:
+        if time.time() >= frist:
             melde("   Kein Netz nach %d Minuten - es wird trotzdem versucht."
                   % minuten)
             return False

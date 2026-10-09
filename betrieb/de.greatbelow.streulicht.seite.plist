@@ -6,7 +6,7 @@
 	<string>de.greatbelow.streulicht.seite</string>
 	<key>ProgramArguments</key>
 	<array>
-		<string>/usr/local/bin/python3</string>
+		<string>/Users/Andre/src/wetter/.venv/bin/python3</string>
 		<string>/Users/Andre/src/wetter/skripte/ausliefern.py</string>
 	</array>
 	<key>StandardErrorPath</key>

@@ -64,6 +64,30 @@ def im_fenster(jetzt_utc, tag, breite, laenge):
     return d if 0 <= d <= FENSTER_MIN else None
 
 
+def verstrichen(jetzt_utc, tag, breite, laenge):
+    """Minuten seit Fensterbeginn - aber nur, wenn das Fenster DURCH ist.
+
+    NACHHOLEN (T-0067, 02.09.2026).  Das Fenster ist 75 Minuten breit und
+    der Agent tickt stuendlich; schlaeft der Rechner darueber hinweg, gab es
+    an diesem Abend gar keine Aufforderung - und damit sehr wahrscheinlich
+    keine Note.  Der Alarmlauf holt seinen verpassten Tick seit T-0048 nach,
+    die Erinnerung tat es nicht, obwohl sie an derselben Maschine haengt und
+    die Bewertungen die einzige nicht nachproduzierbare Messgroesse sind.
+
+    Die Grenze ist der LOKALE Tageswechsel, und sie ergibt sich von selbst:
+    aufgerufen wird das hier nur mit dem heutigen lokalen Datum.  Eine
+    Aufforderung um 23:30 ist weniger wert als eine um 21:00 - aber
+    unvergleichlich mehr wert als keine.
+    """
+    stunde, _ = sonnenuntergang(tag, breite, laenge)
+    if stunde is None:
+        return None
+    su = datetime.combine(tag, datetime.min.time(), tzinfo=timezone.utc) \
+        + timedelta(hours=stunde)
+    d = (jetzt_utc - (su + timedelta(minutes=VERSATZ_MIN))).total_seconds() / 60.0
+    return d if d > FENSTER_MIN else None
+
+
 def gezogen(ort_name, tag, pro_woche):
     """Deterministische Wochenstichprobe: welche Tage der Woche werden gefragt?
 
@@ -119,11 +143,21 @@ def main():
         # Der Abend ist der LOKALE Tag - um 22 Uhr Berlin ist es UTC schon
         # derselbe Tag, im Winter aber nicht immer.
         tag = jetzt.astimezone(zone).date()
+        heute_lokal = tag
         d = im_fenster(jetzt, tag, ort["breite"], ort["laenge"])
         if d is None:
             # auch den Vortag pruefen: kurz nach Mitternacht lokal
             tag = tag - timedelta(days=1)
             d = im_fenster(jetzt, tag, ort["breite"], ort["laenge"])
+        nachgeholt = False
+        if d is None:
+            # T-0067: Fenster des HEUTIGEN lokalen Abends verpasst?  Dann
+            # bis zum lokalen Mitternacht nachholen.  Der Vortag wird NICHT
+            # nachgeholt - nach Mitternacht bewertet niemand mehr den
+            # vorletzten Abend, und die Frage waere dann irrefuehrend.
+            tag = heute_lokal
+            d = verstrichen(jetzt, tag, ort["breite"], ort["laenge"])
+            nachgeholt = d is not None
         if d is None:
             print("   %s: ausserhalb des Fensters" % ort["name"])
             continue
@@ -174,7 +208,9 @@ def main():
         erinnert[str(tag)] = jetzt.isoformat(timespec="seconds")
         gebucht.append((ort["name"], str(tag)))
         gesendet += 1
-        print("   %s %s: aufgefordert" % (ort["name"], tag))
+        print("   %s %s: aufgefordert%s"
+              % (ort["name"], tag,
+                 " (nachgeholt, +%.0f min)" % d if nachgeholt else ""))
 
     if not a.trocken and gebucht:
         def buchen(z):

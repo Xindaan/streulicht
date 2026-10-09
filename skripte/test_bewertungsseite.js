@@ -18,6 +18,12 @@ const vm = require("vm");
 const BASIS = path.dirname(__dirname);
 const SEITE = path.join(BASIS, "web", "bewerten-berlin.html");
 
+// Dieselbe Liste wie in der Seite (web/bewerten.html).  Sie steht hier
+// bewusst noch einmal: der Test soll nicht aus der Seite ableiten, was die
+// Seite schreiben darf.
+const MONATE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli",
+                "August", "September", "Oktober", "November", "Dezember"];
+
 let fehler = [];
 function pruefe(bed, text) {
   console.log("   " + (bed ? "ok  " : "FEHL") + "  " + text);
@@ -155,8 +161,13 @@ async function lauf(opt) {
          "Maschinendaten stecken im Klickziel");
   pruefe(/bewerten-berlin\.html/.test(g._klick || ""),
          "Klickziel oeffnet die Bewertungsseite");
-  pruefe(/August/.test(g._text || ""),
-         "erste Zeile nennt das Datum ausgeschrieben");
+  // KEIN fester Monatsname (T-0068, 02.09.2026).  Hier stand /August/ -
+  // geprueft wird aber die Seite MIT dem heutigen Datum, also war der Test
+  // ab dem 1. September rot, ohne dass sich etwas geaendert haette.  Ein
+  // Test, der einmal im Monat von selbst umkippt, wird nicht mehr gelesen.
+  // Die Eigenschaft ist "Tag und Monat ausgeschrieben", nicht "August".
+  pruefe(new RegExp("\\d{1,2}\\. (" + MONATE.join("|") + ")").test(g._text || ""),
+         "erste Zeile nennt das Datum ausgeschrieben: \"" + g._text + "\"");
   pruefe(/auf Nachfrage/.test(g._text || ""),
          "erste Zeile nennt den Anlass in Worten");
   // Prioritaet 1 = min: die Quittung geht an dasselbe Geraet zurueck, von

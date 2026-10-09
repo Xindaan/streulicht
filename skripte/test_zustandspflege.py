@@ -38,6 +38,13 @@ def pruefe(bed, text):
 
 
 HEUTE = dt.date.today()
+# FESTE Uhrzeit fuer die Laeufe (T-0068, 02.09.2026).  Abschnitt 4 erwartet,
+# dass der Lauf fuer HEUTE eine Zahl schreibt - nach Sonnenuntergang faellt
+# der heutige Abend aber heraus (er ist vorbei, alarm.py ueberspringt ihn).
+# Der Test war damit jeden Abend rot, ohne dass am Code etwas falsch war,
+# und ein Test, der von der Tageszeit abhaengt, wird irgendwann ignoriert.
+# 06:00 UTC liegt an jedem Tag des Jahres vor dem Sonnenuntergang.
+JETZT = "%sT06:00" % HEUTE
 
 
 def tag(minus):
@@ -151,7 +158,8 @@ with tempfile.TemporaryDirectory() as d:
     alarm.modelllauf = lambda m: "2026-01-01T00:00+00:00"
     alarm.warte_auf_netz = lambda *a_, **k_: None
     alarm.lauf_ort = lauf_ort_mit_stoerung
-    sicher, sys.argv = sys.argv, ["alarm.py", "--konfig", kp]
+    sicher, sys.argv = sys.argv, ["alarm.py", "--konfig", kp,
+                                  "--jetzt", JETZT]
     try:
         alarm.main()
     finally:
@@ -189,7 +197,8 @@ with tempfile.TemporaryDirectory() as d:
     alarm.abfrage = test_abruf.falscher_abruf
     alarm.modelllauf = lambda m: "2026-01-01T00:00+00:00"
     alarm.warte_auf_netz = lambda *a_, **k_: None
-    sicher, sys.argv = sys.argv, ["alarm.py", "--konfig", kp]
+    sicher, sys.argv = sys.argv, ["alarm.py", "--konfig", kp,
+                                  "--jetzt", JETZT]
     try:
         for _ in range(alarm.VERLAUF_MAX + 4):     # mehr Laeufe als erlaubt
             alarm.main()

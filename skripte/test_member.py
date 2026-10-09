@@ -261,6 +261,42 @@ pruefe(dN_teil is not None and dN_teil["weg_deckung"] < 1.0,
        % (dN_teil["weg_deckung"] if dN_teil else -1))
 
 print()
+print("=== 4. Das Detail gehoert zum MEDIAN, nicht zum besten Member (T-0064)")
+# Bis zum 02.09.2026 stand in verdichte() `max(gueltig, key=...)`.  Median
+# und Wahrscheinlichkeit beschrieben damit die Mitte der Verteilung, die
+# Begruendung daneben ihr optimistisches Ende - auf der Seite jeden Abend
+# ein Widerspruch.  Beleg vom 01.09.2026 fuer den 11.09.: Median 0.03,
+# Wahrscheinlichkeit 2 %, Stufe "unauffaellig", und darunter "Licht kommt
+# von Westen frei durch", weil EIN Member von 51 auf S = 0.88 kam.
+#
+# Die Member sind hier absichtlich unsortiert uebergeben: verdichte() muss
+# selbst sortieren, und zwar nur nach dem Score.
+mitte_d = {"schirm": "mid", "A": 0.50, "B": 0.40, "sicht": 0.9, "weg": 0.44}
+gut_d = {"schirm": "high", "A": 0.95, "B": 0.93, "sicht": 1.0, "weg": 0.93}
+mies_d = {"schirm": "low", "A": 0.10, "B": 0.05, "sicht": 0.2, "weg": 0.25}
+v4 = verdichte([(0.20, mies_d), (0.88, gut_d), (0.20, mies_d),
+                (0.88, gut_d), (0.20, mies_d)], 0.6)
+pruefe(abs(v4["median"] - 0.20) < 1e-9,
+       "der Median ist 0.20 (%.2f)" % v4["median"])
+pruefe(v4["detail"] is mies_d,
+       "und das Detail stammt aus DIESEM Member (schirm=%s, A=%.2f)"
+       % (v4["detail"]["schirm"], v4["detail"]["A"]))
+pruefe(v4["detail"] is not gut_d,
+       "nicht aus dem besten - der traegt hier S = 0.88")
+
+# Und die Gegenprobe zur Gegenprobe: bei ungerader Zahl steht der Median
+# wirklich in der Mitte, nicht daneben.
+v5 = verdichte([(0.10, mies_d), (0.50, mitte_d), (0.90, gut_d)], 0.6)
+pruefe(v5["detail"] is mitte_d,
+       "bei drei Membern gewinnt der mittlere (A = %.2f)" % v5["detail"]["A"])
+# Datenlose Member zaehlen auch hier nicht mit: sie sind schon vor der
+# Sortierung raus, sonst verschoebe jede Datenluecke den Median.
+v6 = verdichte([(0.0, None), (0.10, mies_d), (0.50, mitte_d),
+                (0.90, gut_d), (0.0, None)], 0.6)
+pruefe(v6["detail"] is mitte_d and v6["n_member"] == 3,
+       "und datenlose Member verschieben ihn nicht (n = %d)" % v6["n_member"])
+
+print()
 if fehler:
     print("FEHLGESCHLAGEN: %d" % len(fehler))
     sys.exit(1)

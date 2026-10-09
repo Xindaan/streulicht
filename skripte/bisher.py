@@ -27,12 +27,14 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import tokens  # noqa: E402
 from seite import MONAT, WOCHENTAG, stufe  # noqa: E402
+# EINE Quelle fuer das Anfangsdatum (T-0071).  Es stand hier als zweite
+# Kopie: dort die Plausibilitaetsgrenze des Pollers, hier die Korpusangabe
+# der Bilanzseite.  Zwei Zahlen mit derselben Bedeutung laufen auseinander,
+# und die Bilanz behauptete dann einen Zeitraum, den der Poller gar nicht
+# durchlaesst.  Der Import zieht nur stdlib nach, kein Netz.
+from bewertungen_holen import ERSTER_ABEND  # noqa: E402
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# Vor diesem Abend gab es die Bewertungsseite nicht.  Dieselbe Zahl steht in
-# skripte/bewertungen_holen.py als ERSTER_ABEND; sie ist dort die
-# Plausibilitaetsgrenze und hier die Korpusangabe.
-ERSTER_ABEND = date(2026, 8, 15)
 
 ANLASS_TEXT = {"aufgefordert": "Auf Nachfrage bewertet",
                "alarm": "Nach Alarm bewertet"}

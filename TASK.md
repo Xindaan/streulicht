@@ -8,6 +8,81 @@ E2 Alarm · E3 Oberflaeche.
 
 ## Doing
 
+### T-0072 WeatherNext 3 anbinden - ENTSCHIEDEN 08.09.2026
+Zuschnitt (a): die Faecherextraktion laeuft in us-east1, der Mac liest nur
+eine kleine JSON-Datei. `ecmwf_ifs025` bleibt Rueckfall - er ist genau ein
+Konfigwert entfernt. Messwerte, Kostenrechnung und die verworfenen Wege
+stehen im Backlog-Block T-0072.
+- [x] Zeitzuordnung `lead_subtime` = [-5..0] relativ zum Blockende, gegen
+      das `datetime`-Array gegengeprueft (nicht geraten)
+- [x] `skripte/wn3.py` - Leser mit austauschbarem Speicher
+- [x] `skripte/test_wn3.py` - 18 Pruefungen, 5 Negativproben, alle gruen
+- [x] Gegen echte Daten gefahren: Lauf 20260908_00hr, drei Schichten,
+      stuendliche Zeitachse, plausible Werte
+- [x] **Kostenriegel** (08.09.2026, auf Ansage "keine Kostenrisiken"):
+      `in_region()` fragt den GCE-Metadatendienst - ein Nachweis, keine
+      Annahme. Ausserhalb us-east1 gilt eine harte Grenze von 500 MB je
+      Prozess, bewusst hebbar mit `--budget-mb`. Gebucht wird VOR der
+      Uebertragung aus der in den Metadaten bekannten Chunkgroesse; die
+      erste Fassung buchte danach und hatte bei Grenze 1 MB schon
+      148 MB bezahlt, als sie anschlug.
+- [x] **Reihenfolge gedreht (08.09.2026, auf Ansage "keine Kostenrisiken"):
+      erst kostenlos messen, dann ueber Infrastruktur entscheiden.**
+      `Statistik` in `skripte/wn3.py` liest das NICHT requester-pays
+      Bucket - Mittel und fuenf Perzentile, 0,1 Grad, stuendlich, von
+      hier aus gratis. Kein p (Perzentile je Gitterpunkt geben keinen
+      kohaerenten Member her) und keine Druckflaechen, also kein
+      Alarmbetrieb - aber genug fuer die Vorfrage, ob WN3 unsere Abende
+      ueberhaupt besser trifft als ECMWF.
+- [x] **Kreuzvalidierung der beiden Leser gegeneinander** (10.09., 16Z,
+      Berlin): Ensemble-Member 0 meldet mid 86,8 %, die unabhaengig
+      gerechnete Statistik p50 = 53,1 und p90 = 99,4. Der Member sitzt
+      zwischen Median und p90 - zwei getrennte Leser auf zwei getrennten
+      Produkten stimmen ueberein.
+- [x] **Vergleich gerechnet, 08.09.2026** (`skripte/wn3_vergleich.py`,
+      818 MB kostenlos, 5 min). Elf Abende mit Note UND Archiv, gleicher
+      Score, gleicher Faecher, WN3-Lauf jeweils so gewaehlt, wie er zum
+      Abrufzeitpunkt verfuegbar gewesen waere.
+
+      | Ergebnis | Wert |
+      |---|---|
+      | Korrelation der Scorereihen | **r = 0,868** |
+      | WN3 hoeher als ECMWF | **8 von 11 Abenden** |
+      | mittlere Abweichung | **+0,135**, groesste +0,620 |
+      | ECMWF reisst s* = 0,7065 | **0 von 11** |
+      | WN3 reisst s* | **3 von 11**, bei Noten 1, 4 und **0** |
+
+      **Deutung.** Die beiden Modelle ordnen die Abende aehnlich (r hoch),
+      aber WN3 liegt systematisch HOEHER. Ein Modellwechsel ohne neue
+      Schwelle wuerde aus null Ausloesungen drei in elf Abenden machen -
+      eine davon an einem Abend mit Note 0. Das ist kein Argument gegen
+      WN3, sondern die Bestaetigung dessen, was `konfig.json` ohnehin
+      festhaelt: **s* ist modellspezifisch und waere neu zu bestimmen.**
+
+      **NICHT beantwortet ist, welches Modell besser trifft.** 14 Noten,
+      davon eine gute - das traegt keine Aussage. Wer aus dieser Tabelle
+      "WN3 ist besser" liest, liest Rauschen.
+
+- [ ] **Neuer Blocker, groesser als die Kosten: s* laesst sich fuer WN3
+      nicht so bestimmen wie fuer ECMWF.** s* = 0,7065 kommt aus vier
+      Jahren und 74 Ereignissen; das Album reicht von 2014 bis 2022. WN3s
+      Archiv beginnt am 01.01.2026 - diese Abende sind fuer WN3
+      unerreichbar. Ausweg waere die Quantilabbildung, die Befund E1 schon
+      fuer GFS->ECMWF vorgesehen hat, ueber eine Ueberlappungsperiode.
+      Das ist zu klaeren, BEVOR ueber eine Instanz geredet wird.
+- [ ] Ab sofort je Lauf das WN3-Medianfeld mitschreiben (kostenlos), damit
+      die Ueberlappung waechst statt zu warten. Dieselbe Lehre wie in
+      Befund E1: "jeder Tag Wartezeit ist ein verlorener Kalibrierungstag".
+- [ ] Betriebsvehikel - nur falls der Vergleich dafuer spricht: e2-micro
+      (Freikontingent nach Instanzstunden, langsam) gegen Cloud Run Job
+      (schnell, Freikontingent knapp). Compute Engine ist in
+      `gardena-wetter` noch gar nicht aktiviert, die freie e2-micro also
+      unangetastet.
+- [ ] Uebergabe: kleines Bucket in `gardena-wetter`, Mac zieht die JSON
+- [ ] `alarm.py`: zweiter Weg neben `abfrage()`, gesteuert ueber `modell`
+- [ ] Zeitbudget echt messen statt hochrechnen (meine 1,5-2,5 h je Lauf
+      sind eine Schaetzung vom Mac aus, keine Messung auf der Instanz)
+
 ### T-0001b Absichtssignal fuer den Abbruchtest
 Der Presence-Only-Test scheiterte an einem konfundierten Label (siehe STATE).
 Favoriten und Minutenabstand extrahieren, dann INNERHALB der Draussen-Abende
@@ -83,7 +158,94 @@ DEM-Freigaengigkeit des Strahls. Ab freier Ortswahl zwingend, nicht optional
 Rangdiagramm des Scores; Korrelation Ensemble-Median gegen Kurzfrist-Score
 je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
 
+### T-0074 Abruf inkrementell und gedeckelt (Kontingent) - aus Review 09.10.2026
+Seit 16.09. gelangen 18 von 76 Fensterlaeufen; an 13 von 38 Abenden seit 01.09.
+fehlt der Abendlauf. Ein 429 (Stunde/Tag) verwirft alles Geholte, jeder
+stuendliche Nachhol-Tick zahlt Pass 1 und Pass 2 erneut. Der Lauf wuchs von 217
+auf 378-383 Ortsabrufe, getrieben vom saisonalen Abstand Sonnenuntergang zu
+Modellschritt (Spitze Anfang Oktober, wieder Maerz/Juni), Pass 2 ohne Deckel.
+Befunde alarm#1, #2, #3, #4, #10, #12, tests#6 in `docs/review-2026-10-09.md`.
+- Blockcache je Modelllauf/Variablen/Zellen: ein Retry holt nur Fehlendes.
+- Nach "Hourly" Sperrvermerk bis zur vollen Stunde, nach "Daily" bis 00 UTC,
+  im Zustand; Ticks davor beenden sich ohne Abruf.
+- Obergrenze fuer Pass 2 mit lauter Logzeile; Kostenzahlen in README, STATE
+  (Abschnitt Kontingent, "Memberzahl multipliziert NICHT") und alarm.py auf die
+  Messung bringen.
+- Akzeptanz: Verhaltenstest "429 mitten in Pass 2, Folge-Tick holt nur die
+  fehlenden Bloecke", mit Negativprobe je Waechter.
+
+### T-0075 Ausfall sichtbar machen (ergaenzt T-0040) - aus Review 09.10.2026
+Kein Melder; `last exit code` wird vom naechsten Leerlauf-Tick mit 0
+ueberschrieben; ein Waechter auf dem Mac faellt mit dem Mac aus. Der
+Altersstreifen entsteht nur beim Bauen - Mac ganz aus heisst alte Seite ohne
+Warnung. Befunde alarm#5, #6, #8, seiten#1, betrieb#3, tests#10.
+- Seite traegt den Abrufzeitpunkt maschinenlesbar, ein kleines Skript
+  vergleicht ihn mit der Uhr der Betrachter:innen.
+- Waechter AUSSERHALB des Macs (Mac-Ausfall ist die haeufigste Ursache).
+- Ein Lauf ohne ein einziges Ergebnis darf nicht als Erfolg gebucht werden
+  (alarm#8); die Nachtluecke nach zwei gescheiterten Laeufen entscheiden
+  (alarm#6).
+
+### T-0076 Commit-Rueckstand seit 26.08.2026 aufloesen - aus Review 09.10.2026
+22 Dateien geaendert, 5 ungetrackt; die Plists in HEAD zeigen auf das nicht
+mehr vorhandene `/usr/local/bin/python3`, es gibt keinen Rueckfallpunkt; das
+oeffentliche Repo zeigt noch den Advektionsfehler. **Vor dem Push** die private
+E-Mail-Adresse aus dem Messblock von T-0072 entfernen (wn3#F8). Entscheidung
+Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
+
 ## Backlog
+
+- T-0077 Bewertungskanal haerten (Review 09.10.2026). Das oeffentliche
+  Bewertungs-Topic ist zugleich das abonnierte Erinnerungs-Topic: jede:r kann
+  Pushs mit Titel, Text und Klickziel an Andres Telefon schicken (bewertung#3).
+  Dazu: `plausibel()` nimmt auch 20260915 und 2026-W38-2 (bewertung#2); die
+  Sonnentafel der Bewertungsseite liefert ausserhalb von +-4 Tagen still den
+  letzten Tafeltag (bewertung#1, Randfall mit stillem Datenschaden); die als
+  erledigt gemeldete Umbuchung aus T-0043 fehlt im Zustand (bewertung#4);
+  Quittung nach stillem Nachsenden (bewertung#6).
+- T-0078 Methodik-Paket (Review 09.10.2026, Befunde methodik#F1-F13,
+  physik#4, physik#13). Die Seite ordnet den Member-MEDIAN in die Verteilung
+  einzelner Analysen ein - "auffaellig"/"selten" treffen der Median nur in 10 %
+  bzw. 0,3 % (F3). Album-Trefferquote gilt fuer S >= 0,630, nicht s* (F4).
+  T-0006 verglich zwei verschieden gewichtete Scores; neu gerechnet: Sommer
+  rho 0,690 statt 0,504, Kernaussage NEIN haelt (physik#13). Sichtfaktor
+  gewichtet den Standort 1/6, Term A 75-89 % (physik#4). WN3-Blocker-Begruendung
+  falsch: das Album reicht bis 2026 (F8). Beide Alarme kamen erst bei Lead 0
+  (F11). Noten bisher ohne Zusammenhang, Abgabe selektiv (F9, F10). Datum des
+  Advektionsfixes in README/alarm.py: 04.09., nicht 02.09. (F6).
+- T-0079 Testluecken (Review 09.10.2026): ausliefern.py ungetestet
+  (Allow-Liste, Zweigriegel; tests#9); netz.warte_auf_netz (tests#8);
+  bewertungen_holen.hole() und vier Eingangswaechter (bewertung#8, tests#7);
+  Advektion nur mit Westwind (tests#1); test_ortsfilter jedes Jahr 10.05.-02.08.
+  rot (tests#4); test_seiten haengt an der Wanduhr (tests#5); test_erinnerung
+  liest die Produktiv-Konfig (bewertung#9); test_ortsfilter ersetzt
+  `alarm.sende` nicht - pruefen, ob ein echter ntfy-POST moeglich ist;
+  test_wn3 nicht netzfrei, 13 von 13 Verdrahtungsmutanten ueberleben (wn3#F7).
+- T-0080 UI/UX-Paket (Review 09.10.2026): Bilanz ohne Nenner, ohne die beiden
+  Alarmabende, ohne Laufalter (uiux#5, #6); Hero zeigt nach Sonnenuntergang den
+  vergangenen Abend (uiux#2); Textwidersprueche ("18 im Jahr" gegen
+  "unbekannt", "keine Prozentzahl" neben Prozent, "0 %" bei 0/51; uiux#4);
+  Push-Text und fehlender Deep-Link (uiux#9, #10); Tippziele 31 px, Markenfarbe
+  (uiux#13); Tastatur schluckt Cmd/Alt+Pfeil (uiux#12); SVG-Style ueberschreibt
+  die Hervorhebung (seiten#8); Faecherkarte schneidet den Faecher ab (physik#5).
+- T-0081 Betriebsrobustheit (Review 09.10.2026): die 27 Noten liegen nur in
+  `daten/zustand.json`, Time-Machine-Netzziel seit 29.05.2026 ohne Sicherung
+  (betrieb#6); Logs ohne Datum und ohne Rotation (architektur#14);
+  erinnerung.py wartet nicht aufs Netz und endet bei Fehler mit 0 (bewertung#5);
+  git push ohne Timeout (seiten#9); ein Absturz von seite.py stoppt auch
+  Bewertungs- und Bilanzseite (seiten#4, architektur#6).
+- T-0082 Doku und Steuerdateien (Review 09.10.2026): STATE.md 335 Zeilen statt
+  Kurzstand, Next actions doppelt nummeriert und ueberfaellig (architektur#2);
+  Doing mit 5 statt 3 Eintraegen, T-0003/T-0001/T-0006 erledigt bzw.
+  entschieden, T-0014 laengst gebaut (architektur#1); README-Drift: "Ein Cron",
+  Henyey-Greenstein im Betriebsscore, `faecher` optional, "E3 offen",
+  Mehrortliste (architektur#3, #4, #11, #16); Kommentare mit 3-h-Takt (#17).
+- T-0083 WN3-Befunde aus dem Review 09.10.2026 (zu T-0072): Windfeld in m/s
+  statt km/h (physik#1); Zielzeit per Gleichheit, echte Sonnenuntergaenge
+  fallen durch (wn3#F4); der Zuschnitt (a) kennt die ~300 Pass-2-Zellen nicht
+  (wn3#F6); Vergleich misst Medianfeld gegen eine Schwelle fuer Memberscores,
+  ECMWF-Seite auf 0,5 Grad vergroebert (wn3#F1, #F2); r = 0,868 bei n = 11
+  traegt "systematisch hoeher" nicht (wn3#F3); Testzahlen veraltet (wn3#F10).
 
 - T-0009 Eigene Bewertungsseite und ntfy-Rueckkanal (E2)
 - T-0015 Seiten ausliefern. **ERLEDIGT 15.08.2026.** Repo oeffentlich,
@@ -206,7 +368,492 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   Beantwortet fuer jeden Albumabend, ob die Wolke ueberhaupt da war — die
   Frage, die am 14.08. fuenfmal von Hand am Foto beantwortet wurde.
 
+- T-0072 WeatherNext 3 (erschienen 03.09.2026). Haelt die Modellentscheidung
+  aus Befund 2 gegen: `ecmwf_ifs025` wurde **allein wegen C3** gewaehlt
+  (3-h-Raster; WN2 nur 6 h). WN3 laeuft stuendlich, 64 Member, Wolken auf
+  0.1 Grad, Druckflaechen auf 0.25 Grad, 15 Tage.
+
+  **Zugang ist da** (Google-Freischaltung 14.08.2026, Andres Google-Konto;
+  gcloud lokal angemeldet, Projekt `gardena-wetter`). Die Freischaltung deckt
+  auch WN3, obwohl sie aelter ist als das Modell — geprueft 08.09.2026:
+  anonym HTTP 401, mit Konto lesbar.
+
+  **Alles Folgende gemessen am 08.09.2026, nicht aus der Doku:**
+
+  | Groesse | Wert |
+  |---|---|
+  | Verzug Init -> Datei fertig | **6 h 33 min** (23z) / **7 h 05 min** (00z), gegen heute 9,3-22,3 h bei ECMWF |
+  | Laufdichte | stuendlich, 6002 Laeufe zurueck bis 2026-01-01 |
+  | `gs://weathernext3_spatial` | requester-pays, volles 64-Member-Ensemble |
+  | Chunk `high_cloud_cover` | `[1 Member, 1 lead_time, 6 h, 1801, 3600]` = **116,2 MB** je Chunk, gemessen an `c/0/10/0/0/0` |
+  | Chunk `u_component_of_wind` | `[1, 1, 1 Level, 721, 1440]` = **3,70 MB**, 13 Druckflaechen vorhanden |
+  | `gs://weathernext3_statistics_spatial` | frei lesbar (kein requester-pays), Chunk **20,91 MB** je Stunde und Groesse |
+  | Statistik-Variablen | nur `mean`,`p10`,`p25`,`p50`,`p75`,`p90`; `total/low/medium/high_cloud_cover` vorhanden, **keine Druckflaechen** |
+
+  **Der Blocker ist die Chunk-Geometrie, nicht der Zugang.** Kein Chunk ist
+  raeumlich unterteilt: ein Abruf fuer Berlin laedt jedes Mal die ganze Erde.
+  Unser 5x8-Faecher liegt komplett in EINEM Chunk — er kostet exakt so viel
+  wie der Planet. Daraus folgt (Rechnung, keine Messung; Egress-Listenpreis
+  0,12 USD/GB):
+
+  - p ueber 64 Member, 3 Wolkenschichten, EIN Abend: 64x3x116,2 MB =
+    **22,3 GB = rund 2,70 USD je Lauf**
+  - fuer alle 10 Vorlauftage: **223 GB = rund 27 USD je Lauf**, bei zwei
+    Laeufen taeglich rund **1.600 USD im Monat**
+  - Advektionswind ist dagegen billig: 64 Member x 1 Druckflaeche = 237 MB
+
+  Das Statistik-Bucket kostet nichts (627 MB je Lauf fuer 3 Schichten x 10
+  Abende), traegt aber **weder p noch Advektion**: Perzentile je Gitterpunkt
+  zerstoeren die Memberzuordnung, und unser p ist der Memberanteil, dessen
+  SCORE ueber s\* liegt — eine nichtlineare Funktion ueber 40 Faecherpunkte
+  und drei Schichten. Aus Perzentilen ist kein einziger kohaerenter Member
+  rekonstruierbar.
+
+  **Damit ist Open-Meteo doch der Weg — aber aus einem anderen Grund, als
+  hier zuerst stand.** Nicht weil der Zugang fehlt, sondern weil Open-Meteo
+  global gechunkte Gitter in Zeitreihen je Punkt umbaut. Genau diese
+  Umchunkung ist der Wert, und sie ist nichts, was wir fuer 40 Punkte selbst
+  nachbauen wollen.
+
+  **Ungeprueft geblieben:** ob Earth Engine oder BigQuery fuer WN3
+  serverseitigen Punktausschnitt mit **Membern** liefert. `bq ls` auf
+  `gcp-public-data-weathernext` gab mit diesem Konto nichts zurueck; die
+  Google-Doku nennt fuer beide nur Mittel und Perzentile. Faende sich dort
+  ein Memberzugang, kippt die Empfehlung sofort — dann ist WN3 ohne
+  Egress-Kosten nutzbar. Das ist der einzige offene Punkt, der es wert ist.
+
+  **KORREKTUR 08.09.2026, noch am selben Tag.** Die Rechnung oben (223 GB =
+  27 USD je Lauf, 1.600 USD im Monat) unterstellt stillschweigend, dass die
+  Daten ins INTERNET fliessen. Das ist der teuerste denkbare Weg und nicht
+  der noetige. Gemessen: **beide Buckets liegen in `US-EAST1`**, einer
+  einzelnen Region. Egress von Cloud Storage zu einer Recheneinheit in
+  DERSELBEN Region kostet 0 USD/GB — unabhaengig von jedem Freikontingent.
+  Laeuft die Faecherextraktion in us-east1, verlassen die 223 GB die Region
+  nie; nach Hause reisen nur die 40 Punkte.
+
+  Was dann noch anfaellt (Requester-pays traegt Operationen und Egress):
+  - Class-B-Operationen: 64 Member x 3 Schichten x 10 Abende = 1.920 GETs je
+    Lauf, plus Wind rund 640 = ~2.560. Bei zwei Laeufen taeglich ~154.000 im
+    Monat, davon 50.000 im Always-Free-Kontingent, Rest zu 0,004 USD je
+    10.000 -> **rund 0,04 USD im Monat**.
+  - Egress in der Region: **0 USD**.
+  - Rechenzeit: Always Free gibt genau in us-east1 eine e2-micro (720 h/Monat,
+    30 GB Platte) und bei Cloud Run 180.000 vCPU-Sekunden im Monat.
+
+  **Zeitbudget ist der neue Engpass, nicht Geld.** Gemessen auf dem Mac:
+  Dekompression eines Chunks 0,18 s, also ~346 s reine CPU je Lauf fuer die
+  1.920 Wolkenchunks. Auf einer e2-micro (0,25 vCPU Grundlast) grob
+  hochgerechnet 45-60 min CPU plus Netz — realistisch **1,5 bis 2,5 h je
+  Lauf**. Der Alarm rechnet drei Stunden vor Sonnenuntergang; das ginge auf,
+  laesst aber kaum Reserve. Stellschrauben, beide linear: weniger Abende
+  (3 statt 10 -> 67 GB) oder weniger Member (16 statt 64 -> p mit rund
+  +/-12 % statt +/-6 %). Cloud Run mit 4 vCPU passt rechnerisch knapp ins
+  Freikontingent (60 Laeufe x ~2.900 vCPU-s = ~174.000 von 180.000).
+
+  **Member-Frage abschliessend geklaert (08.09.2026).** Es gibt KEINEN Dienst
+  mit serverseitigem Punktausschnitt UND Membern:
+  - BigQuery: Schema ist `init_time`, `geography`, `forecast` (RECORD) mit
+    `_mean/_p10/_p25/_p50/_p75/_p90`. Die Doku verweist fuer die 64 Rohmember
+    ausdruecklich auf GCS/Zarr. Partitioniert nach `init_time`, geclustert
+    nach `geography`; 1 TiB Abfragevolumen im Monat frei.
+  - Earth Engine: dieselben Assets `weathernext_3_0_0_0p1deg` /
+    `_0p05deg`, dieselben sechs Statistiken. Keine Member.
+  - GCS/Zarr: einziger Ort mit Membern. Dimension `sample` = 64, selbst
+    gemessen.
+
+  **End-to-End-Nachweis gefuehrt, nicht behauptet.** Chunk
+  `high_cloud_cover/c/0/10/0/0/0` geladen (116.238.817 B), mit dem
+  `zstd`-Kommandozeilenwerkzeug entpackt -> 155.606.400 B = exakt
+  6 x 1801 x 3600 x 4. Achsen entpackt: `lat_0p1` laeuft von -90 aufsteigend,
+  `lon_0p1` von 0 bis 359,9. Berlin trifft `lat[1425]=52,50`,
+  `lon[134]=13,40`. `datetime[lead_time=10]` = 2026-09-10T18:00Z, also
+  Init +66 h. Member 0 liefert dort sechs Stundenwerte hohe Bewoelkung
+  (alle 0,0), globaler Wertebereich 0,0 bis 1,0, in 1 Grad Umkreis bis 0,15.
+  **Der ganze 5x8-Faecher liegt in genau diesem einen Chunk** — 441 Punkte im
+  2-Grad-Quadrat stammen alle daraus, die Faechergeometrie kostet also nichts
+  extra. Kein `zarr`- oder `xarray`-Paket noetig: `zstd` plus
+  `numpy.fromfile` mit `reshape` reicht.
+
+  Damit ist A aus der Entscheidungsvorlage vom 08.09. nicht mehr an den
+  Kosten gescheitert. Was bleibt, ist eine Betriebsfrage, und die zerfaellt
+  in zwei sehr verschiedene Zuschnitte:
+
+  - **(a) nur die Extraktion zieht um.** Etwas Kleines in us-east1 schneidet
+    die 40 Faecherpunkte heraus und legt wenige kB als JSON ab; der Mac holt
+    die Datei und macht ab da alles wie bisher — Score, Schwelle, Push,
+    Seiten, Archiv. `konfig_geheim.json` und der `gh-pages`-Push bleiben
+    lokal.
+  - **(b) der ganze Alarm zieht um**, der Mac ist nur noch
+    Entwicklungsrechner.
+
+  Sinnvoll ist (a). **Aber Vorsicht mit einem Argument, das hier zuerst
+  stand:** (a) loest die WLAN- und Schlafprobleme aus `skripte/netz.py` und
+  T-0070 NICHT — der Mac muss weiter wach sein und rechnen. Das ist ein
+  Argument fuer (b) und gehoert nicht an (a).
+
+  Der Preis von (a) ist ein ZWEITER Betriebsort. Das Projekt hat heute genau
+  einen, und die Fehlerklasse ist bekannt (Memory `streulicht-agenten-
+  scheitern-still`: kaputter Programmpfad schreibt nichts ins Log, nur der
+  Exitcode verraet ihn). Dazu haengt ein Google-Rechnungskonto am Betrieb und
+  es entsteht der neue Fehlerfall "Cloud-Datei fehlt oder ist von gestern".
+  Die Entscheidung lautet deshalb nicht "Mac oder Cloud", sondern: **nehmen
+  wir einen zweiten Betriebsort in Kauf, um an WN3 zu kommen?**
+
+- T-0073 WeatherNext 2 als Zweitmeinung tatsaechlich bauen. Befund 2 haelt
+  seit E1 fest "WN2 bleibt als Zweitmeinung: 64 Member, physikalisch
+  unabhaengiger Ansatz, adressiert die Unterdispersionsfrage besser als zwei
+  Varianten derselben Physik" — geprueft 08.09.2026: **`weathernext` kommt in
+  keiner .py, .js oder .json vor**, nur in `docs/` und `STATE.md`. Die
+  Zweitmeinung ist entschieden und nie gebaut worden. Sie ist heute
+  erreichbar (siehe Tabelle in T-0072), kostet einen zweiten `models=`-Wert
+  im selben Abruf und beantwortet die Frage, die WN3 spaeter im Grossen
+  stellt, schon jetzt im Kleinen: weichen die 64 ML-Member an unseren
+  Faecherpunkten systematisch von den 51 IFS-Membern ab? Offen und vorher zu
+  klaeren: Kontingentkosten des zweiten Modells, und der 6-h-Versatz
+  (`skripte/interpolation.py` misst genau diesen Fall).
+
 ## Done
+
+### 04.09.2026 &mdash; Fremdreview umgesetzt (T-0063 bis T-0071)
+
+Ein fremdes Modell (Fable 5.1) hat die Codebase gelesen und zehn Befunde
+gemeldet. Neun sind hier abgearbeitet, einer braucht eine Entscheidung von
+Andre. **Stand danach: 310 Python-Pruefungen + 41 JS, alle gruen.**
+
+Jeder neue Waechter hat eine EIGENE Negativprobe bekommen &mdash; die Regel
+aus T-0054 (ein Waechter ohne eigenen Fall ist ungeprueft) ist hier viermal
+angewandt worden, und zweimal hat sie einen zu schwachen Test entlarvt.
+
+#### T-0063 Advektion tastete stromab statt stromauf ab &mdash; Korrektheit
+
+`skripte/alarm.py`. Das Modellfeld liegt zu einem nativen 3-h-Schritt vor,
+der Sonnenuntergang liegt daneben. Gesucht ist die Wolke, die zum
+Sonnenuntergang ueber dem Fanpunkt steht &mdash; zum frueheren Modellschritt
+war dieselbe Luft noch **stromauf**. Der Lauf hat den Transportvektor aber
+ADDIERT statt ihn abzuziehen und damit die Zelle auf der falschen Seite
+gelesen, mit dem doppelten Fehler 2&middot;v&middot;|dt|: bei 100 km/h und
+dt = 0,5 h sind das 100 km daneben.
+
+Aufgefallen ist es nie, weil ein verschobener Faecher genauso plausible
+Zahlen liefert wie ein richtiger. `versatz_km()` selbst war korrekt; der
+Fehler sass eine Ebene darueber, und der bestehende Test prueft genau die
+richtige Funktion und deshalb am Fehler vorbei.
+
+**Warum das dringend war:** die Livekalibrierung von s\* und p\* nach sechs
+bis acht Wochen haette einen verschobenen Score kalibriert, und das ist
+rueckwirkend nicht mehr trennbar.
+
+- [x] Vorzeichen gedreht, Fundstelle ausfuehrlich kommentiert
+- [x] `test_advektion.py`: Pass-2-Zellen muessen bei Westwind westlich der
+      Pass-1-Zellen liegen, und zwar deutlich (> 0,25 Grad, nicht um eine
+      Rundung)
+- [x] Negativprobe: altes Plus wieder eingebaut &rarr; 2 Pruefungen rot
+      (11,333 gegen 10,020 Grad Ost)
+
+**Erster Testentwurf war zu schwach und ist verworfen worden.** Er legte
+Wolke nur westlich des Ortes an und erwartete, dass Term A steigt. A kam auf
+0,034 &mdash; nicht wegen der Richtung, sondern weil A im Nahbereich
+raumwinkelgewichtet ist und der Standortpunkt allein rund drei Viertel
+traegt. Ein Test, dessen Ergebnis mehr an der Gewichtung haengt als an der
+geprueften Eigenschaft, misst nicht das Gemeinte.
+
+#### T-0064 Die Begruendung kam vom besten Member, die Zahl vom Median
+
+`skripte/alarm.py`, `verdichte()`. Schirm, A, Sicht, Weg und die
+Segmentliste stammten aus `max(gueltig, key=...)`. Stufe und
+Wahrscheinlichkeit beschrieben also die Mitte der Verteilung, der Satz
+darunter ihr optimistisches Ende &mdash; auf der Seite jeden Abend ein
+Widerspruch.
+
+**Beleg** (ausgelieferte Seite vom 01.09.2026 fuer den 11.09.): Median 0,03,
+Wahrscheinlichkeit 2 %, Stufe "unauffaellig", darunter "Mittelhohe Wolken,
+Licht kommt von Westen frei durch". Ein einziger von 51 Membern kam auf
+S = 0,88.
+
+Jetzt kommt alles aus demselben Member. Beim Push ist das kein Verlust: der
+geht erst ab p >= 0,5 raus, und dann liegt der Medianmember ohnehin ueber
+s\*. Die Streuung geht nicht verloren &mdash; das Tagesarchiv haelt
+weiterhin je Member eine eigene Zeile mit S, A, B, Sicht und Weg.
+
+- [x] `verdichte()` sortiert nach Score und nimmt Median samt Detail aus
+      demselben Member (`key=lambda x: x[0]`, sonst vergleicht `sorted` bei
+      Gleichstand die Detail-dicts und stirbt am TypeError)
+- [x] `test_member.py` Abschnitt 4, vier Faelle inkl. Datenluecken
+- [x] Negativprobe: `max()` wieder eingesetzt &rarr; 4 Pruefungen rot
+
+#### T-0065 Modelllauf-Verfuegbarkeit: gemessen statt behauptet
+
+Zwei Dinge in einem. Erstens holte `alarm.py` den Modelllauf ERST nach der
+Ortsschleife, also rund vier Minuten nach dem Abruf &mdash; genau dazwischen
+kann ein neuer Lauf verfuegbar werden, und dann trugen Archiv und
+Standzeile eine Initialisierung, aus der die Zahlen nicht stammten. Das ist
+ausgerechnet das Feld, auf dem alle Verzugsaussagen des Projekts beruhen.
+
+Zweitens stand in `konfig.json` "der 00z-Lauf wird 08:44 UTC verfuegbar",
+aus **einer** Probe vom 18.08.2026. **Nachgezaehlt am Tagesarchiv, 27 Laeufe
+vom 21.08. bis 04.09.2026:**
+
+| Fenster | n | benutzter Lauf | Verzug min/Median/max |
+|---|---|---|---|
+| `morgens` 09:20 UTC | 13 | **13x 18z des Vortags, 0x 00z** | 15,3 / 15,3 / 15,6 h |
+| `abends` ~3 h vor SU | 14 | 8x 06z, 4x 00z, 2x 18z | 9,3 / 11,3 / 22,3 h |
+
+Der Vormittagslauf sieht den 00z also **nie**; 09:20 UTC ist zu frueh. Wie
+viel spaeter er liegen muesste, ist nicht gemessen &mdash; und genau deshalb
+wird `lauf_morgens_utc` jetzt NICHT auf Verdacht verschoben.
+
+- [x] `modelllauf()` vor den Abruf gezogen
+- [x] Jeder stuendliche Leerlauf-Tick schreibt den verfuegbaren Modelllauf
+      ins Log (statische Datei, kein Kontingent). Nach zwei Wochen ist
+      `lauf_morgens_utc` belegbar statt geraten.
+- [x] `konfig.json` und README auf die gemessenen Zahlen
+- [ ] **offen:** nach zwei Wochen Logdaten `lauf_morgens_utc` nachziehen
+
+#### T-0066 Bewertungsabruf stuendlich statt alle drei Stunden
+
+ntfy.sh haelt rund 12 h vor; die Bewertungsseite markiert eine Note nach dem
+ersten erfolgreichen POST als erledigt und sendet nie wieder nach. Im
+Alarmlog stehen ueber 318 Laeufe **17 Luecken von mehr als 70 Minuten, die
+laengste 724 Minuten** &mdash; knapp unter der 12-h-Grenze, aber eben knapp.
+
+- [x] `betrieb/de.greatbelow.streulicht.bewertung.plist` auf 24 stuendliche
+      Termine, `plutil -lint` sauber
+- [x] **Geladen am 04.09.2026** (bootout + bootstrap durch Andre).
+      Gegenprobe: 24 Kalendertermine, alle 24 Stunden belegt, installierte
+      plist identisch mit der im Repo.
+- [x] **Geplantes Aufwecken gesetzt am 04.09.2026** (Andre, mit Passwort).
+      Erst 08:00, nach der Rechnung unten korrigiert auf **02:00**.
+      Gegenprobe `pmset -g sched`: `wakepoweron at 2:00AM every day`.
+
+**Die Weckzeit ist eine Rechnung, keine Gewohnheit.** Ich hatte 08:00
+vorgeschlagen, weil man morgens aufsteht, und nicht nachgerechnet. Die
+Bedingung lautet: der naechste Abruf nach dem Wecken muss innerhalb von 12 h
+nach der Bewertung liegen. Frueheste Bewertung ist der Sonnenuntergang
+selbst (spontan, ohne Aufforderung), und der wandert in Berlin um mehr als
+fuenfeinhalb Stunden. Gerechnet mit `sonnen.geometrie` ueber ein volles Jahr,
+schlimmster Tag jeweils der 13.12.2026:
+
+| Weckzeit | kleinste Luft im Jahr | |
+|---|---|---|
+| 08:00 | −4,2 h | Luecke |
+| 06:00 | −2,2 h | Luecke |
+| 04:00 | −0,2 h | Luecke |
+| **03:00** | **+0,8 h** | traegt |
+| **02:00** | **+1,8 h** | traegt, mit Reserve |
+
+Ab etwa dem 01.10.2026 verliert 08:00 die erste Note; am 05.09. lag die Luft
+noch bei +0,2 h, also eine Zufallsmehrheit. Gewaehlt ist **02:00**: ntfy haelt
+"rund 12 h", keine zugesicherten 12,0 h, und 03:00 liesse dafuer nur
+48 Minuten. `pmset repeat` ersetzt den bestehenden Eintrag, es braucht kein
+Loeschen davor. Preis: der Rechner wacht jede Nacht kurz auf (Ruhezustand
+nach 10 min Leerlauf, der Abruf dauert Sekunden).
+
+**Noch nicht beobachtet:** dass der 02:05-Abruf nach einem geplanten Wecken
+wirklich laeuft. Erwartet wird eine Zeile in `daten/bewertung.log` gegen
+02:05; `launchctl print ... | grep runs` zaehlt mit. Falls nicht: der
+Rechner schlaeft nach dem `wakepoweron` moeglicherweise zu schnell wieder
+ein, dann muss der Abruf naeher an die Weckzeit (Minute 0 statt 5).
+
+Dieselbe Fehlerklasse wie die falsche launchctl-Gegenprobe eine Stunde
+vorher: **eine Zahl, die plausibel klingt, statt einer, die nachgerechnet
+ist.** Beide Male hat erst die Gegenprobe den Fehler gezeigt.
+
+**Die Gegenprobe war beim ersten Anlauf falsch dokumentiert** und meldete
+einen Fehlschlag, den es nicht gab. Empfohlen war
+`launchctl print ... | grep -c "minute = 5"` &rarr; Ergebnis 0, obwohl alles
+richtig geladen war. `launchctl print` schreibt die Kalendertermine als
+`"Minute" => 5`, nicht als `minute = 5`. Richtig ist:
+
+```bash
+launchctl print gui/$UID/de.greatbelow.streulicht.bewertung | grep -c '"Minute" => 5'
+```
+
+Merksatz derselben Klasse wie in `~/src/CLAUDE.md` zur ID-Suche: **ein
+Pruefbefehl, der still zu wenig findet, ist schlimmer als keiner.** Hier
+hat er in die andere Richtung geirrt - er meldete einen Defekt statt ihn zu
+verschweigen, was billiger ist, aber dieselbe Ursache hat: das Suchmuster
+war geraten und nie gegen eine echte Ausgabe gehalten.
+
+#### T-0067 Erinnerung wird bis Mitternacht nachgeholt
+
+Das Fenster ist 75 Minuten breit, der Agent tickt stuendlich. Schlaeft der
+Rechner darueber hinweg, gab es an diesem Abend gar keine Aufforderung und
+damit sehr wahrscheinlich keine Note. Der Alarmlauf holt seinen verpassten
+Tick seit T-0048 nach, die Erinnerung tat es nicht &mdash; obwohl sie an
+derselben Maschine haengt und die Bewertungen die **einzige nicht
+nachproduzierbare** Messgroesse des Projekts sind.
+
+Nachgeholt wird bis zum **lokalen** Mitternacht und nur der heutige Abend.
+Die Grenze ergibt sich von selbst, weil nur mit dem heutigen lokalen Datum
+aufgerufen wird; nach Mitternacht bewertet niemand mehr den vorletzten
+Sonnenuntergang.
+
+- [x] `verstrichen()` in `skripte/erinnerung.py`, Log sagt "(nachgeholt, +N min)"
+- [x] Neuer Test `skripte/test_erinnerung.py`, 9 Pruefungen, kein Netz,
+      eigenes Temp-Verzeichnis &mdash; inkl. Winterabend (21.12., SU 14:53 UTC)
+- [x] Negativprobe A: Nachhol-Zweig tot &rarr; 4 Pruefungen rot
+- [x] Negativprobe B: Mitternachtsgrenze aufgeweicht &rarr; 5 Pruefungen rot
+
+#### T-0068 Testhygiene: keine Betriebsdaten, keine Uhrzeitabhaengigkeit
+
+Drei Tests, zwei Fehlerklassen.
+
+**`test_abruf.py` lief gegen die produktive Zustandsdatei.** Er startete
+einen vollstaendigen `alarm.main()` OHNE `--trocken`, sicherte
+`daten/zustand.json` weg und schrieb sie danach mit `open(zp, "w")` zurueck
+&mdash; truncierend und ohne Sperre. Faellt in diese Sekunden ein
+Bewertungsabruf oder eine Erinnerung, ist deren Schreibvorgang verloren.
+Ausserdem ueberschrieb er ein vorhandenes `<heute>_vonhand.json` im echten
+Tagesarchiv. Laeuft jetzt in einem eigenen Temp-Verzeichnis
+(`alarm.BASIS` umgebogen, Muster aus T-0058), plus Riegel auf `sende`.
+
+**Zwei Tests haengen an der Uhr und waren regelmaessig rot, ohne dass am
+Code etwas falsch war:**
+- `test_zustandspflege.py` erwartete eine Zahl fuer den heutigen Abend, den
+  `alarm.py` nach Sonnenuntergang aber ueberspringt &mdash; jeden Abend rot.
+- `test_bewertungsseite.js` suchte den festen Monatsnamen "August" &mdash;
+  ab dem 1. September rot.
+
+Ein Test, der einmal am Tag oder einmal im Monat von selbst umkippt, wird
+nicht mehr gelesen, und dann faellt auch der echte Fehler nicht auf.
+
+- [x] `test_abruf.py` auf Temp-BASIS; verifiziert: `daten/zustand.json`
+      md5 und Archivstand vor und nach dem Lauf identisch
+- [x] `lauf_ort(ort, kfg, jetzt)` &mdash; `--jetzt` steuerte bisher nur die
+      Fensterpruefung, waehrend im Lauf die echte Uhr lief. Die nie
+      gelesenen Parameter `zustand` und `trocken` sind dabei entfallen.
+- [x] `test_zustandspflege.py` faehrt gegen feste 06:00 UTC
+- [x] `test_bewertungsseite.js` prueft gegen alle zwoelf Monatsnamen
+
+#### T-0069 Voruebergehende Netzstoerungen kippten den Lauf
+
+`_hole()` behandelte NUR 429. Ein Timeout, ein abgebrochener
+Verbindungsaufbau oder ein 502 riss den ganzen Lauf mit Traceback ab &mdash;
+und jeder gescheiterte Versuch hatte sein Kontingent schon verbraucht. Der
+Abendlauf wird vom naechsten Tick nachgeholt, der Vormittagslauf nicht.
+Zweiter Fehler an derselben Stelle: ein 429 ohne JSON-Rumpf starb am
+`json.loads` statt die gemeinte Kontingentmeldung auszugeben.
+
+Wiederholt werden 5xx, URLError, Timeout und truncierte Antworten
+(5/15/45 s). **Nicht** wiederholt werden 4xx &mdash; eine kaputte Anfrage
+wird beim Wiederholen nicht besser, verbrennt aber Kontingent und verdeckt
+den eigenen Fehler. Kontingent (429 stuendlich/taeglich) bleibt terminal.
+
+- [x] `test_abruf.py` Abschnitt 7, 7 Faelle gegen gestubbtes `urlopen`
+- [x] Negativprobe C: alte `_hole`-Fassung &rarr; 4 Pruefungen rot
+- [x] Negativprobe D: auch 4xx wiederholen &rarr; 1 Pruefung rot
+      (der Fall hat also seinen eigenen Waechter, nicht nur Deckung durch
+      die anderen)
+
+#### T-0070 `netz.py` zaehlte Wachzeit statt Wanduhrzeit
+
+`time.monotonic()` steht auf macOS im Ruhezustand still. Schlaeft der
+Rechner mitten im Warten ein, laeuft die Frist nicht weiter, und aus den
+zugesagten 20 Minuten werden real Stunden. Belegt im Log vom 01.09.2026:
+"Warte bis zu 20 Minuten" um 18:28, "Netz ist da" um 18:57.
+
+- [x] `time.time()` statt `time.monotonic()`
+
+#### T-0071 Aufraeumen und Doku
+
+- [x] **Winterlauf-Widerspruch aufgeloest.** `konfig.json` sagte "beide
+      Laeufe benutzen denselben 00z", README sagte "18z". Richtig ist 18z
+      (Abendfenster im Dezember 11:53 UTC, da ist der 00z noch nicht da).
+- [x] **Vertikalschnitt bekommt den Schirm aus dem Zustand.** `schnitt_neu`
+      rechnete `score()` aus dem Medianfeld neu und waehlte daraus sein
+      Niveau &mdash; das kann ein anderes sein als das, auf das sich Stufe
+      und Text beziehen. Dann zeigt das Bild eine Tangente bei 402 km,
+      waehrend daneben "mittelhohe Wolken" steht.
+- [x] **Ein-Ort-Grenze benannt.** `orte[]` ist eine Liste, aber
+      Prognoseseite, Bilanz, Schnitt und Karte sind auf Berlin fest
+      verdrahtet. Ein zweiter Ort bekaeme Pushs gegen Berlins s\* und eine
+      Seite, die Berlin zeigt &mdash; beide Laeufe enden mit Exitcode 0.
+      `ausliefern.py` warnt jetzt; bewusst KEIN Abbruch, weil
+      Mehrortfaehigkeit ein erklaertes Ziel aus E0 ist.
+- [x] Tote Funktionen `nachrichten()` und `_abschnitte()` aus
+      `sonnen/grib2.py` entfernt (nirgends aufgerufen)
+- [x] `ERSTER_ABEND` hatte zwei Kopien &mdash; `bisher.py` importiert es
+      jetzt aus `bewertungen_holen.py`
+- [x] Doppelter `ZoneInfo`-Import in `lokalzeit()` entfernt
+- [x] `verlaufszeile` traegt `jetzt.date()` statt `date.today()`
+
+**Bewusst NICHT geaendert** (Befund war richtig, Aufwand lohnt nicht):
+`feld_seite` schluesselt die Fanpunkte auf das 0.5-Grad-Gitter um; zwei
+Punkte koennen dieselbe Zelle treffen, der letzte gewinnt. Betrifft nur das
+BILD, und beide Punkte tragen ohnehin Medianwerte derselben Datenlage. Eine
+Zusammenfassung (max? Mittel?) waere eine willkuerliche Entscheidung an
+einer Stelle, an der nichts davon abhaengt.
+
+### 30.08.2026 &mdash; T-0062 Automationen auf gepflegtes Python umgestellt
+Die vier Agenten liefen auf `/usr/local/bin/python3` &mdash; einem Symlink auf
+das python.org-Framework **3.10.11**, dessen Sicherheitsunterstuetzung im
+Oktober 2026 endet. Ziel war Homebrew `python@3.13` (3.13.15).
+
+**Umgestellt auf `/Users/Andre/src/wetter/.venv/bin/python3`** &mdash; acht
+Dateien, je Agent die Repo-Kopie in `betrieb/` UND die installierte in
+`~/Library/LaunchAgents/` (beide waren byteweise identisch und sind es
+wieder). Danach je `launchctl bootout` + `bootstrap`; `launchctl print`
+meldet fuer alle vier den neuen `program`-Pfad.
+
+**Der Umweg ueber eine venv ist Absicht, nicht Paketverwaltung.** Der
+Automationspfad braucht **keine einzige Fremdbibliothek**: der transitive
+Import-Baum der vier Einstiegsskripte, inklusive der drei per `subprocess`
+gestarteten Generatoren (`seite.py`, `bewertungsseite.py`, `bisher.py`),
+erreicht 15 lokale Module und ausser der stdlib nichts. Die venv liefert
+statt dessen einen **stabilen Pfad**: sie ist ueber den unversionierten
+`/opt/homebrew/opt/python@3.13/bin/python3.13` angelegt, ihr Symlink zeigt
+auf genau diesen Pfad, und ein brew-Minorupdate von 3.13.15 auf 3.13.16
+bricht sie deshalb nicht. Die Plists muessen nie wieder angefasst werden.
+
+**Billig war die Migration wegen `ausliefern.py:64`:** die Kindprozesse
+werden ueber `sys.executable` gestartet, nicht ueber einen verdrahteten
+Pfad. Der Interpreterwechsel in der Plist erbt sich damit von selbst auf
+`seite.py`, `bewertungsseite.py` und `bisher.py`. Nachgewiesen: Eltern- und
+Kindprozess melden beide `.venv/bin/python3` und 3.13.15.
+
+`numpy` und `matplotlib` sind trotzdem in die venv gekommen, aber aus einem
+anderen Grund: `sonnen/grib2.py` importiert `numpy` lazy, und ohne das faellt
+`skripte/test_grib2.py` aus. Unter dem alten 3.10 war es da (numpy 1.26.4,
+matplotlib 3.10.8, aus dem projektuebergreifenden site-packages-Sammelsurium);
+ohne Nachinstallation waere die Migration eine **stille Regression** im
+Testlauf gewesen. Jetzt numpy 2.5.2 / matplotlib 3.11.1, festgehalten in
+`betrieb/anforderungen.txt`.
+
+**Verifikation, inhaltlich statt Exitcode.**
+- Rauchtest vorab: alle 15 erreichten Module unter 3.13 importierbar (15/15).
+- Testlauf: **273 Python-Pruefungen + 42 JS gruen** &mdash; identisch zur
+  Baseline vom 23.08.2026, kein Verlust durch den Versionssprung.
+- `bewertung`: echter ntfy-Abruf, 10 Bewertungen verarbeitet, Histogramm.
+- `alarm`: Volllauf mit `--trocken` &mdash; 186 Ortsabrufe, 51 Member, 88
+  native Schritte, Prognosetabelle ueber 11 Tage. Der geplante Lauf selbst
+  faellt ausserhalb seiner Fenster und beweist fuer sich zu wenig.
+- `erinnerung`: der geplante Lauf lag ausserhalb des Fensters, deshalb den
+  Sendepfad zusaetzlich mit `--jetzt` ins Fenster gelegt (`--trocken`, kein
+  POST): Sonnenuntergangsgeometrie, Text und Klick-URL werden korrekt
+  gebaut (+28 bis +58 min nach SU).
+- `seite`: alle drei Seiten neu gebaut (index 0.29 MB, bewerten-berlin
+  44.7 kB, bisher 15.0 kB), danach korrekt "unveraendert seit dem letzten
+  Push". Der `push --force` blieb also aus, weil der Inhalt gleich war &mdash;
+  das ist die Idempotenz des Jobs, kein ausgelassener Test.
+
+**Negativprobe, einzeln pro Agent** (nicht eine, die alle vier abdeckt):
+Interpreterpfad je Job auf einen nicht existierenden verbogen, neu geladen,
+angestossen. Alle vier scheitern mit `last exit code = 78: EX_CONFIG`,
+danach zurueckgenommen und ein Bestaetigungslauf gefahren &mdash; alle vier
+wieder auf 0.
+
+**Nebenbefund, der eine eigene Aufgabe verdient (siehe T-0040):** ein
+kaputter Interpreterpfad schreibt **nichts** ins Log. `daten/alarm.log` &
+Co. bleiben beim Fehlschlag leer; sichtbar ist er nur in `launchctl print`.
+Genau die Logs sind aber das, was hier von Hand gelesen wird.
+
+**Nicht angefasst, bewusst:** `/usr/local/bin/python3` und das
+python.org-3.10-Framework bleiben, wie sie sind &mdash; daran haengt noch das
+Mailarchiv-Projekt. Ebenso `de.xindaan.strapazierrasen-fern.plist.disabled`:
+der ruft zwar auch `/usr/local/bin/python3`, gehoert aber zu Gardena und ist
+deaktiviert. Die zentrale Entfernung des alten Interpreters erst, wenn beide
+Projekte umgestellt sind.
+
 
 ### 23.08.2026 &mdash; Backlog des Reviews abgearbeitet (T-0056 bis T-0059, T-0061)
 Tests: **273 Python-Pruefungen + 42 JS**, alle gruen (Baseline vor dem Review:

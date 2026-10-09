@@ -102,16 +102,6 @@ def felder(daten):
     return aus
 
 
-def nachrichten(daten):
-    """Altname von felder().  Ein Feld je Eintrag, nicht eine Nachricht."""
-    return felder(daten)
-
-
-def _abschnitte(daten):
-    """(Nummer, Bytes) je Sektion des ERSTEN Feldes.  Altbestand."""
-    return sorted(felder(daten)[0].items())
-
-
 def gitter(s3):
     """Parameter der geostationaeren Sicht aus Sektion 3 (Vorlage 3.90).
 

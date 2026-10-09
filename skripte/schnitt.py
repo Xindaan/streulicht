@@ -386,7 +386,8 @@ def _tok(name):
     return tokens.werte()[name]
 
 
-def schnitt_neu(tag, feld, segmente=None, breite=BREITE, laenge=LAENGE):
+def schnitt_neu(tag, feld, segmente=None, breite=BREITE, laenge=LAENGE,
+                schirm=None):
     """Vertikalschnitt fuer die Produktseite.  Gibt nur das SVG zurueck.
 
     `segmente` ist die Segmentliste des Score-Laufs [(d_nah, d_fern, Schichten,
@@ -394,6 +395,13 @@ def schnitt_neu(tag, feld, segmente=None, breite=BREITE, laenge=LAENGE):
     Rechnung, die auch den Score gemacht hat.  Fehlt sie, werden die Ringe aus
     dem Feld nachgerechnet; fuer das Bild vertretbar, aber eine zweite Rechnung
     neben der ersten.
+
+    `schirm` ebenso: der Wert aus dem Zustand, also das Niveau, das den
+    ausgewiesenen Score getragen hat.  Ohne ihn wuerde hier aus dem
+    MEDIANFELD neu gerechnet - und dessen bestes Niveau kann ein anderes
+    sein als das des Members, von dem die Zahlen stammen.  Dann zeigt das
+    Bild eine Tangente bei 402 km, waehrend daneben "mittelhohe Wolken"
+    steht (T-0071).
     """
     fl = FL_NEU
     X0, Y0, BR, HO = fl["x0"], fl["y0"], fl["br"], fl["ho"]
@@ -433,7 +441,7 @@ def schnitt_neu(tag, feld, segmente=None, breite=BREITE, laenge=LAENGE):
         return vs[-1][1] if d <= vs[-1][0] + 60 else 0.0
 
     s_wert, det = score(hole)
-    name = (det or {}).get("schirm") or SCHIRME[0][0]
+    name = schirm or (det or {}).get("schirm") or SCHIRME[0][0]
     hoehe = dict(SCHIRME)[name]
     d_tan = tangentendistanz_km(hoehe)
 

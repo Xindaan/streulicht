@@ -168,6 +168,35 @@ def veroeffentliche(trocken, immer=False):
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+def ein_ort_pruefen():
+    """Warnt, wenn mehr als ein Ort konfiguriert ist (T-0071).
+
+    DIE SEITEN KOENNEN NUR EINEN ORT.  `konfig.json` fuehrt `orte[]` als
+    Liste, und Alarm, Erinnerung und Bewertungsseite arbeiten sie auch
+    wirklich durch - die Prognoseseite, die Bilanz, der Vertikalschnitt und
+    die Faecherkarte nicht: Berlins Koordinaten und die Berliner
+    Klimatologie stehen dort fest im Quelltext (`skripte/seite.py`,
+    `skripte/bisher.py`, `skripte/schnitt.py`, `skripte/faecher.py`).
+
+    Ein zweiter Ort bekaeme deshalb Pushs, die gegen Berlins s* gerechnet
+    sind, und eine Prognoseseite, die Berlin zeigt.  Das faellt nirgends
+    auf - beide Laeufe enden mit Exitcode 0.
+
+    Bewusst eine WARNUNG und kein Abbruch: die Mehrortfaehigkeit ist ein
+    erklaertes Ziel (E0, "Ort als Parameter, auch fuer Freunde"), und ein
+    harter Riegel wuerde den halb fertigen Weg dorthin versperren.
+    """
+    import json
+    with open(os.path.join(BASIS, "konfig.json")) as f:
+        orte = json.load(f).get("orte") or []
+    if len(orte) > 1:
+        print("   WARNUNG: %d Orte konfiguriert (%s), aber Prognoseseite, "
+              "Bilanz, Schnitt und Karte sind auf Berlin fest verdrahtet - "
+              "die ausgelieferten Seiten zeigen NUR den ersten Ort."
+              % (len(orte), ", ".join(o.get("name", "?") for o in orte)))
+    return len(orte)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--trocken", action="store_true")
@@ -175,6 +204,7 @@ def main():
                     help="auch pushen, wenn sich nichts geaendert hat")
     a = ap.parse_args()
     print("Bauen ...")
+    ein_ort_pruefen()
     baue(a.trocken)
     print("Veroeffentlichen ...")
     veroeffentliche(a.trocken, a.immer)

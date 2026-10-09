@@ -1,9 +1,35 @@
 # STATE
 
-Stand: 23.08.2026 morgens. **Der Betrieb laeuft, die Oberflaeche ist neu -
+**Stand 09.10.2026: Gesamtreview liegt vor** (`docs/review-2026-10-09.md`,
+108 gegengepruefte Befunde, keiner widerlegt). Der Betrieb liefert seit Mitte
+September an vielen Tagen nichts: Kontingent (T-0074) und Mac-Schlaf, und
+niemand merkt es (T-0075). Seit 26.08. ist nichts committet (T-0076). Der
+Rest dieses Kopfes ist der Stand vom 04.09.
+
+Stand: 04.09.2026 abends. **Der Betrieb laeuft; ein Fremdreview hat einen
+Rechenfehler im Kern gefunden.** Die Advektion tastete stromab statt
+stromauf ab (T-0063) - bei Wind lag der Faecher systematisch auf der
+falschen Seite, um 2&middot;v&middot;|dt|. Behoben und mit einer
+Verhaltenspruefung abgesichert. Wichtig fuer die Planung: **belastet sind die
+Zahlen aus Livelaeufen vor dem 04.09.2026** (die 27 archivierten Laeufe, der
+Zustand, Notenvergleiche, der WN3-Vergleich) - **nicht** Klimatologie, s\*,
+Albumtests und Ablation, die nie an der Advektion hingen (korrigiert
+09.10.2026, Gesamtreview; `versatz_km` steckt nur in `alarm.py`). Die
+Livekalibrierung von s\* und p\* (6-8 Wochen) beginnt faktisch jetzt neu -
+haette der Fehler bis dahin gelegen, waere ein verschobener Score kalibriert
+worden, und das ist rueckwirkend nicht trennbar.
+
+Zweiter Befund mit Aussenwirkung: die Seite begruendete jeden Abend mit dem
+BESTEN von 51 Membern, waehrend Stufe und Zahl vom Median kamen (T-0064).
+Jetzt kommt beides aus demselben Member.
+
+**Der Betrieb laeuft, die Oberflaeche ist neu -
 auf beiden Schirmgroessen.** Repo oeffentlich, Pages liefert Prognose-,
-Bewertungs- und Bilanzseite, ntfy eingerichtet, fuenf launchd-Agenten
-geladen. Der UX-Overhaul (T-0031 bis T-0034) ist vollstaendig umgesetzt, die
+Bewertungs- und Bilanzseite, ntfy eingerichtet, **vier** launchd-Agenten
+geladen - seit dem 30.08. auf Homebrew `python@3.13` statt auf dem
+auslaufenden python.org-3.10 (T-0062). Hier stand bis dahin "fuenf Agenten";
+der Archiv-Agent ist laengst ausgeladen, seine plist existiert nicht mehr
+(nachgesehen, nicht erinnert). Der UX-Overhaul (T-0031 bis T-0034) ist vollstaendig umgesetzt, die
 Echo-Pushs sind weg, und die Desktopfassung (T-0037) laeuft als Breakpoint
 in derselben Datei.
 Fachlich unveraendert: Anwesenheit der Wegwolken (35), ihre Hoehe (36) und
@@ -151,26 +177,96 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
 
 ## Next actions
 
-1. **Der Review ist vollstaendig abgearbeitet.** T-0051 bis T-0061 erledigt
-   (TASK.md, Done 23.08.2026), T-0006 entschieden. Aus dem Review sind keine
-   offenen Punkte mehr da; die naechsten Schritte kommen wieder aus dem
-   eigenen Backlog.
-2. **Den Archiv-Agenten ausladen** - Skript und plist sind entfallen, der
-   Agent laeuft sonst weiter ins Leere und haelt seinen roten Exitcode:
+**Ab 09.10.2026 zuerst (aus dem Gesamtreview, Reihenfolge = Vorschlag):**
+1. **T-0076** Commit-Rueckstand aufloesen - vorher die private Adresse aus dem
+   T-0072-Messblock nehmen; Andres Entscheidung, weil das Repo oeffentlich ist.
+2. **T-0074** Abruf inkrementell und gedeckelt - der groesste Hebel gegen die
+   Ausfaelle.
+3. **T-0075** Ausfall sichtbar machen, Waechter ausserhalb des Macs.
 
-       launchctl bootout gui/$UID/de.greatbelow.streulicht.archiv
-       rm ~/Library/LaunchAgents/de.greatbelow.streulicht.archiv.plist
-       launchctl list | grep streulicht
+Die Punkte darunter sind der Stand vom 08.09.; "Wecken nachsehen" ist
+beantwortet (wirkt, in allen 6 im Energielog sichtbaren Naechten 03.-08.10.,
+betrieb#8).
 
-   Danach stehen alle verbleibenden vier Agenten auf 0.
+1. **T-0072 weiterbauen: Betriebsvehikel waehlen und die Extraktion nach
+   us-east1 bringen.** Entschieden am 08.09.2026: WeatherNext 3 wird
+   angebunden, Zuschnitt (a) - nur die Faecherextraktion zieht um, der Mac
+   liest eine kleine JSON-Datei, `ecmwf_ifs025` bleibt Rueckfall. Der Leser
+   `skripte/wn3.py` steht und ist gegen echte Daten gefahren
+   (`skripte/test_wn3.py`, 18 Pruefungen + 5 Negativproben gruen). Offen
+   sind e2-micro gegen Cloud Run, der Uebergabeweg und die echte Messung
+   des Zeitbudgets auf der Instanz - meine 1,5 bis 2,5 h je Lauf sind vom
+   Mac hochgerechnet, nicht gemessen.
+   **Stand 08.09.2026 abends:** Der kostenlose Vergleich ist gerechnet
+   (`skripte/wn3_vergleich.py`). WN3 und ECMWF ordnen die elf bewerteten
+   Abende aehnlich (r = 0,868), WN3 liegt aber systematisch hoeher und
+   wuerde s* dreimal reissen, wo ECMWF es keinmal tut - einmal an einem
+   Abend mit Note 0. Damit steht ein Blocker VOR der Betriebsfrage: s*
+   waere fuer WN3 neu zu bestimmen, und das Album (2014-2022) ist fuer
+   WN3 unerreichbar, weil dessen Archiv erst am 01.01.2026 beginnt.
+
+2. **Morgen frueh einmal nachsehen, ob das Wecken traegt.** Der
+   Notenverlust ist seit dem 04.09.2026 geschlossen (T-0066): Abruf
+   stuendlich, Rechner weckt sich taeglich um 02:00. Beides ist gesetzt und
+   geprueft - **nicht** geprueft ist, ob der Abruf um 02:05 nach einem
+   geplanten Wecken wirklich durchlaeuft. Eine Zeile genuegt:
+   ```
+   grep -c . daten/bewertung.log && tail -3 daten/bewertung.log
+   ```
+   Steht dort kein Eintrag gegen 02:05, schlaeft der Rechner nach dem
+   Wecken zu schnell wieder ein und der Abruf muss auf Minute 0.
+
+2. **T-0065 in zwei Wochen auswerten.** Jeder stuendliche Tick schreibt
+   jetzt den verfuegbaren Modelllauf ins Log. Gemessen ist bereits: der
+   Vormittagslauf um 09:20 UTC bekam in 13 von 13 Faellen den 18z des
+   Vortags, **nie** den 00z. Ab etwa dem 18.09. laesst sich
+   `lauf_morgens_utc` aus den Logdaten belegen statt raten.
+
+3. **Der Fremdreview vom 02.09.2026 ist abgearbeitet** - T-0063 bis T-0071
+   (TASK.md, Done 04.09.2026). Offen daraus nur die beiden Punkte unter 1.
+   Der aeltere Review (T-0051 bis T-0061) ist seit dem 23.08. erledigt,
+   T-0006 entschieden.
+2. **Erledigt, nicht mehr offen: der Archiv-Agent ist ausgeladen.** Hier
+   stand bis zum 30.08.2026 die Anweisung, ihn auszuladen. Nachgesehen
+   (`launchctl list | grep streulicht`, `ls ~/Library/LaunchAgents`): es
+   sind genau die vier verbleibenden Agenten geladen, alle auf Exitcode 0,
+   und eine `...streulicht.archiv.plist` gibt es nicht mehr.
 3. **T-0040 Ueberwachung der Exitcodes.** Inzwischen dreimal aufgefallen,
    dass ein Agent still scheitert - und jedes Mal hat es ein Mensch bemerkt,
    nicht das System. Das Archiv war seit dem 15.08. kaputt.
+   **Dazu ein Befund vom 30.08. (T-0062):** ein kaputter Interpreterpfad
+   schreibt gar nichts ins Log - `daten/alarm.log` & Co. bleiben leer, und
+   sichtbar ist der Fehlschlag nur in `launchctl print` als
+   `last exit code = 78`. Eine Ueberwachung, die nur Logs liest, wuerde
+   genau diese Klasse uebersehen; sie muss die Exitcodes abfragen.
 4. **Beobachten.** Die Kette laeuft: zwei Alarmlaeufe am Tag, Auslieferung
    alle zehn Minuten, Archiv als Nebenprodukt.
 5. **T-0038** Rundung an der 80er-Schwelle, wenn der Fall wieder auftritt.
 
 ## Letzte Done
+
+- **04.09.2026 T-0063 bis T-0071: Fremdreview umgesetzt.** Neun von zehn
+  Befunden abgearbeitet, 310 Python-Pruefungen + 41 JS gruen. Der schwerste:
+  die Advektion tastete auf der falschen Seite ab (T-0063). Dazu: Erklaerung
+  vom Median- statt vom Bestmember (T-0064), Modelllauf-Verfuegbarkeit
+  gemessen statt behauptet (T-0065, 27 Laeufe), Erinnerung wird nachgeholt
+  (T-0067), `test_abruf.py` fasst keine Betriebsdaten mehr an (T-0068),
+  Netzstoerungen kippen den Lauf nicht mehr (T-0069). Jeder neue Waechter
+  mit eigener Negativprobe.
+- **30.08.2026 T-0062: Automationen auf Homebrew python@3.13 umgestellt.**
+  Die vier Agenten liefen auf dem python.org-3.10, das im Oktober 2026 aus
+  der Sicherheitsunterstuetzung faellt. Jetzt
+  `/Users/Andre/src/wetter/.venv/bin/python3` (3.13.15), venv ueber den
+  unversionierten brew-Pfad angelegt, damit Minorupdates sie nicht brechen.
+  Acht Plists geaendert (je Agent Repo-Kopie und installierte). Der
+  Automationspfad braucht **keine** Fremdbibliothek - gemessen am
+  transitiven Import-Baum, 15 lokale Module, nur stdlib; `numpy`/`matplotlib`
+  kamen nur mit, damit `test_grib2.py` nicht ausfaellt.
+  **273 Python-Pruefungen + 42 JS gruen**, unveraendert zur Baseline.
+  Jeder Agent einzeln echt gelaufen und inhaltlich geprueft, jeder einzeln
+  mit falschem Interpreterpfad zum Fehlschlag gebracht (EX_CONFIG) und
+  zurueckgenommen. `/usr/local/bin/python3` bleibt unangetastet - das
+  Mailarchiv-Projekt haengt noch daran.
 
 - **23.08.2026 Review-Backlog fertig (T-0056 bis T-0059, T-0061).** Sperre
   und Raeumung fuer die Zustandsdatei (ohne Sperre kamen 4 von 12 parallelen

@@ -4,7 +4,7 @@
 <plist version="1.0"><dict>
   <key>Label</key><string>de.greatbelow.streulicht.erinnerung</string>
   <key>ProgramArguments</key>
-  <array><string>/usr/local/bin/python3</string><string>/Users/Andre/src/wetter/skripte/erinnerung.py</string></array>
+  <array><string>/Users/Andre/src/wetter/.venv/bin/python3</string><string>/Users/Andre/src/wetter/skripte/erinnerung.py</string></array>
   <key>WorkingDirectory</key><string>/Users/Andre/src/wetter</string>
   <key>StandardOutPath</key><string>/Users/Andre/src/wetter/daten/erinnerung.log</string>
   <key>StandardErrorPath</key><string>/Users/Andre/src/wetter/daten/erinnerung.log</string>

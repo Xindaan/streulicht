@@ -1,0 +1,18 @@
+# Python-Abhaengigkeiten des Projekts, Stand 29.08.2026 (Migration auf 3.13).
+#
+# Der AUTOMATIONSPFAD braucht nichts davon: alarm.py, bewertungen_holen.py,
+# erinnerung.py und ausliefern.py (samt der per subprocess gestarteten
+# seite.py / bewertungsseite.py / bisher.py) kommen mit der stdlib aus.
+# Nachgewiesen ueber den transitiven Import-Baum, 15 lokale Module, kein
+# einziger Fremdimport.
+#
+# Die beiden hier stehen fuer die Analyse-Skripte und den Testlauf:
+#   numpy       <- sonnen/grib2.py (lazy), kalibriere_eis2.py
+#                  -> ohne numpy faellt skripte/test_grib2.py aus
+#   matplotlib  <- auswertung.py (lazy)
+#
+# Installieren:
+#   /opt/homebrew/opt/python@3.13/bin/python3.13 -m venv .venv
+#   .venv/bin/python3 -m pip install -r betrieb/anforderungen.txt
+numpy==2.5.2
+matplotlib==3.11.1

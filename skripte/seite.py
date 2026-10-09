@@ -251,7 +251,10 @@ def _bilder(tag, feld, segmente, azimut, schirm):
     """
     schnitt_bild = karte_bild = ""
     try:
-        schnitt_bild = schnitt_neu(tag, feld, segmente)[0]
+        # `schirm` kommt aus dem Zustand mit: sonst waehlt der Schnitt sein
+        # Niveau aus dem Medianfeld neu und kann ein anderes erwischen als
+        # das, auf das sich Stufe und Text beziehen.
+        schnitt_bild = schnitt_neu(tag, feld, segmente, schirm=schirm)[0]
     except Exception:                                            # noqa: BLE001
         pass
     try:

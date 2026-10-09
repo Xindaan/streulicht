@@ -25,3 +25,8 @@ konfig_geheim.json
 .env
 .vorschau/
 .claude/launch.json
+
+# Projekt-venv auf Homebrew python@3.13 (T-Migration 29.08.2026).
+# Angelegt ueber den unversionierten Pfad /opt/homebrew/opt/python@3.13,
+# damit brew-Minorupdates die Symlinks nicht brechen.
+.venv/

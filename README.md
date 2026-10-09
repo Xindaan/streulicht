@@ -16,12 +16,27 @@ ein paar Skripte, eine JSON-Datei.
 
 ```bash
 git clone https://github.com/Xindaan/streulicht.git && cd streulicht
-python3 skripte/alarm.py --trocken          # rechnen, nichts senden
-python3 skripte/alarm.py                    # rechnen und pushen
+/opt/homebrew/opt/python@3.13/bin/python3.13 -m venv .venv
+.venv/bin/python3 -m pip install -r betrieb/anforderungen.txt
+.venv/bin/python3 skripte/alarm.py --trocken   # rechnen, nichts senden
+.venv/bin/python3 skripte/alarm.py             # rechnen und pushen
 ```
 
 Nur `numpy` und `matplotlib` werden gebraucht, und die nur fuer Kalibrierung
 und Auswertung — der Alarmlauf selbst kommt mit der Standardbibliothek aus.
+
+**Warum `.venv/bin/python3` und nicht einfach `python3`** (seit 30.08.2026,
+T-0062): die vier Agenten liefen bis dahin auf `/usr/local/bin/python3`, dem
+python.org-Framework 3.10, dessen Sicherheitsunterstuetzung im Oktober 2026
+endet. Sie laufen jetzt auf Homebrew `python@3.13`. Ein blankes `python3` in
+der Shell zeigt auf dieser Maschine **nicht** darauf: bis Anfang Oktober 2026
+auf das alte 3.10, seitdem (der alte Pfad ist entfernt) auf das
+Apple-System-Python 3.9.6 — wer also von Hand mit `python3 ...` startet,
+testet einen anderen Interpreter als den, unter dem der Betrieb laeuft.
+Deshalb ueberall der explizite venv-Pfad.
+Die venv ist ueber den unversionierten Pfad `/opt/homebrew/opt/python@3.13`
+angelegt: ein brew-Minorupdate von 3.13.15 auf 3.13.16 bricht sie damit
+nicht.
 
 ## Nutzung
 
@@ -97,7 +112,18 @@ Die Prognoseseite zeigt je Abend **zwei Zahlen, die nicht dasselbe sind**:
 - **Perzentil** — klimatologischer Rang des Member-MEDIANS. "Wie selten?"
 
 Die Achse traegt das Perzentil (Schwellen bei 80. und 95.), weil sie danach
-gebaut ist; die Wahrscheinlichkeit steht als Text daneben. Der Vertikalschnitt
+gebaut ist; die Wahrscheinlichkeit steht als Text daneben.
+
+**Die Begruendung daneben gehoert zum MEDIAN-Member** (seit 02.09.2026,
+T-0064). Bis dahin kamen Schirm, A, Sicht, Weg und die Segmentliste vom
+BESTEN der 51 Member — Stufe und Zahl beschrieben also die Mitte der
+Verteilung, der Satz darunter ihr optimistisches Ende. Auf der Seite las
+sich das jeden Abend als Widerspruch. Beleg vom 01.09.2026 fuer den 11.09.:
+Median 0,03, Wahrscheinlichkeit 2 %, Stufe "unauffaellig" — und darunter
+"Mittelhohe Wolken, Licht kommt von Westen frei durch", weil ein einziger
+Member auf S = 0,88 kam. Jetzt stammt alles aus demselben Member. Die
+Streuung geht nicht verloren: das Tagesarchiv haelt weiterhin je Member eine
+eigene Zeile. Der Vertikalschnitt
 wird aus dem gespeicherten Medianfeld gezeichnet - fuer das BILD richtig, fuer
 die ZAHL nicht: S ist ein Produkt nichtlinearer Terme, der Score des
 Medianfelds ist nicht der Median der Scores (Jensen). Deshalb kommt jede Zahl
@@ -153,6 +179,37 @@ aus dem Arbeitsverzeichnis, nicht aus dem Repo.
 **Vor 4 Uhr morgens** zaehlt die Bewertung noch zum Vorabend — wer um eins
 bewertet, meint den Sonnenuntergang von gestern.
 
+### Bekannte Grenze: die Seiten koennen nur EINEN Ort
+
+`konfig.json` fuehrt `orte[]` als Liste, und Alarm, Erinnerung und
+Bewertungsseite arbeiten sie auch wirklich durch. Die **Prognoseseite, die
+Bilanz, der Vertikalschnitt und die Faecherkarte nicht**: Berlins
+Koordinaten und die Berliner Klimatologie stehen dort fest im Quelltext
+(`skripte/seite.py`, `skripte/bisher.py`, `skripte/schnitt.py`,
+`skripte/faecher.py`). Ein zweiter Ort bekaeme also Pushs, die gegen Berlins
+s\* gerechnet sind, und eine Prognoseseite, die Berlin zeigt — beide Laeufe
+enden dabei mit Exitcode 0, es faellt nirgends auf.
+
+`ausliefern.py` sagt es seit dem 02.09.2026 wenigstens laut, wenn mehr als
+ein Ort konfiguriert ist. Ein harter Abbruch waere falsch: die
+Mehrortfaehigkeit ist ein erklaertes Ziel aus E0 ("Ort als Parameter, auch
+fuer Freunde"), und der Weg dorthin ist halb gebaut, nicht verworfen.
+
+### Bekannte Grenze: eine Note kann verlorengehen
+
+ntfy.sh haelt Nachrichten rund **12 Stunden** vor. Die Bewertungsseite
+markiert eine Note nach dem ersten erfolgreichen POST als erledigt und
+sendet sie nie wieder — ist der Mac zwischen Abgabe und Abruf laenger als
+12 h im Ruhezustand, ist die Note weg, und zwar lautlos. Im Alarmlog stehen
+ueber 318 Laeufe 17 Luecken von mehr als 70 Minuten, die laengste 724
+Minuten; das ist knapp unter der Grenze, aber eben knapp.
+
+Der Abruf laeuft seit dem 02.09.2026 **stuendlich** statt alle drei Stunden.
+Das verkleinert das Fenster, schliesst es aber nicht: gegen einen Schlaf von
+mehr als 12 h hilft nur ein geplantes Aufwecken
+(`pmset repeat wakeorpoweron ...`), und das ist eine Systemeinstellung, die
+Andre selbst setzen muss.
+
 ## Konfiguration
 
 `konfig.json`:
@@ -162,7 +219,7 @@ bewertet, meint den Sonnenuntergang von gestern.
 | `schwelle_score` | s\* — ab diesem Score gilt ein Abend als Ereignis |
 | `schwelle_wahrscheinlichkeit` | p\* — ab diesem Memberanteil wird gepusht |
 | `vorlauf_tage` | wie weit voraus gerechnet wird |
-| `advektion` | semi-Lagrangesche Zeitinterpolation an/aus |
+| `advektion` | semi-Lagrangesche Zeitinterpolation an/aus (siehe unten) |
 | `orte[]` | Name, Koordinaten, Zeitzone, Bewertungs-Topic |
 | `faecher` | optional: reduzierte Abfragegeometrie |
 
@@ -187,14 +244,18 @@ Cron feuert im Schlaf nicht und holt einen verpassten Lauf auch nicht nach;
 `launchd` mit `StartCalendarInterval` startet ihn beim Aufwachen nach. Genau
 das braucht ein Alarm, dessen Fenster einmal am Tag offen steht.
 
-Fuenf Agenten in `~/Library/LaunchAgents/`, alle mit
-`WorkingDirectory` und absolutem Interpreterpfad (launchd hat kein PATH):
+Vier Agenten in `~/Library/LaunchAgents/`, alle mit `WorkingDirectory` und
+absolutem Interpreterpfad (launchd hat kein PATH). Der Interpreter ist seit
+dem 30.08.2026 `/Users/Andre/src/wetter/.venv/bin/python3` (Homebrew 3.13);
+die Vorlagen dazu liegen versioniert in `betrieb/`. `ausliefern.py` startet
+seine Kindprozesse ueber `sys.executable`, der Wechsel erbt sich also von
+selbst auf `seite.py`, `bewertungsseite.py` und `bisher.py`:
 
 | Label | Skript | Wann |
 |---|---|---|
 | `de.greatbelow.streulicht.alarm` | `alarm.py --geplant` | stuendlich zur 20. Minute, **rechnet zweimal: 09:20 UTC und rund 3 h vor Sonnenuntergang** |
 | `de.greatbelow.streulicht.erinnerung` | `erinnerung.py` | stuendlich zur 15. Minute |
-| `de.greatbelow.streulicht.bewertung` | `bewertungen_holen.py` | alle 3 h zur 5. Minute |
+| `de.greatbelow.streulicht.bewertung` | `bewertungen_holen.py` | **stuendlich** zur 5. Minute |
 | `de.greatbelow.streulicht.seite` | `ausliefern.py` | **alle 10 Minuten**, pusht nur bei Aenderung |
 
 ### Warum der Alarm sonnenuntergangsrelativ laeuft
@@ -202,12 +263,31 @@ Fuenf Agenten in `~/Library/LaunchAgents/`, alle mit
 Bis zum 18.08.2026 lief er fest um 07:30. Zwei Messungen haben das gekippt:
 
 **Erstens die Frische.** ECMWF ENS rechnet viermal am Tag (00z/06z/12z/18z),
-aber die Daten stehen erst **rund 13 Stunden nach der Initialisierung** zur
-Verfuegung. Der Verzug ist nicht konstant: gemessen an
+aber die Daten stehen erst Stunden nach der Initialisierung zur Verfuegung.
+Der Verzug ist **nicht konstant**, und das ist der Punkt: gemessen an
 `ecmwf_ifs025_ensemble/static/meta.json` waren es 8,7 h fuer einen
 18z-Lauf (18.08.2026) und 12,9 h fuer einen 00z-Lauf (20.08.2026). Das
 ENSEMBLE ist dabei deutlich langsamer als der deterministische Lauf
 desselben Modells (7,2 h in derselben Messung).
+
+**Nachgezaehlt am Tagesarchiv (02.09.2026, 27 Laeufe vom 21.08. bis 04.09.):**
+
+| Fenster | n | benutzter Lauf | Verzug (min / Median / max) |
+|---|---|---|---|
+| `morgens` 09:20 UTC | 13 | **13x 18z des Vortags, 0x 00z** | 15,3 / 15,3 / 15,6 h |
+| `abends` ~3 h vor SU | 14 | 8x 06z, 4x 00z, 2x 18z | 9,3 / 11,3 / 22,3 h |
+
+Zwei Dinge stehen damit fest, die vorher Vermutung waren. Erstens: **der
+Vormittagslauf sieht den 00z nie** — 09:20 UTC ist zu frueh, entgegen der
+Zahl "08:44 UTC", die aus einer einzigen Probe stammte und in `konfig.json`
+stand. Zweitens: der Abendlauf erwischt meist den **06z**, nicht den 00z.
+
+Wie viel spaeter der Vormittagslauf liegen muesste, ist **noch nicht
+gemessen**. Seit T-0065 schreibt deshalb jeder stuendliche Tick den gerade
+verfuegbaren Modelllauf ins Log — die Datei ist statisch und kostet kein
+Kontingent. Nach zwei Wochen ist `lauf_morgens_utc` belegbar statt geraten.
+Bis dahin bleibt 09:20 stehen: ein Vormittagslauf auf dem 18z ist immer noch
+frischer als der Vorabendstand.
 
 **Korrektur zur ersten Fassung dieses Abschnitts:** hier stand 8,7 h als
 feste Groesse, aus einer einzigen Probe. Damit war auch die Folgerechnung
@@ -216,12 +296,15 @@ zu guenstig. Mit dem realistischeren Wert:
 | Abruf | benutzter Lauf | Vorlauf auf den Sonnenuntergang |
 |---|---|---|
 | alt, 07:30 (August) | 12z des Vortags | 30,4 h |
-| **neu, 3 h vor SU (August)** | **00z desselben Tages** | **18,4 h** |
+| **neu, 3 h vor SU (August)** | **06z desselben Tages** | **12,4 h** |
 | alt, 07:30 (Dezember) | 12z des Vortags | 26,9 h |
 | **neu, 3 h vor SU (Dezember)** | 18z des Vortags | 20,9 h |
 
-Die Umstellung bleibt richtig - sie spart im August zwoelf Stunden Vorlauf.
-Aber sie halbiert ihn nicht, wie hier zuerst stand.
+Die Umstellung bleibt richtig - sie spart im August rund achtzehn Stunden
+Vorlauf. Die Augustzeile stand hier zweimal falsch: erst mit 8,7 h Verzug
+gerechnet (zu guenstig), dann mit dem 00z angesetzt (zu pessimistisch).
+Gemessen wird tatsaechlich meist der **06z** benutzt, siehe die Zaehlung
+oben.
 
 **Was die Grenze kostet.** Die freie Stufe erlaubt 600 Aufrufe/Minute,
 5.000/Stunde, 10.000/Tag und **300.000/Monat**. Zwei Laeufe am Tag sind rund
@@ -256,13 +339,13 @@ Seit dem 18.08.2026 gibt es **zwei** Fenster:
 | Fenster | Wann | Modelllauf | Wozu |
 |---|---|---|---|
 | `morgens` | 09:20 UTC, fest | 18z des Vortags | vormittags aktuelle Zahlen auf der Seite |
-| `abends` | rund 3 h vor Sonnenuntergang | 00z desselben Tages (im Sommer) | der wichtige: kuerzester Vorlauf |
+| `abends` | rund 3 h vor Sonnenuntergang | meist 06z desselben Tages (im Sommer) | der wichtige: kuerzester Vorlauf |
 
-Bei rund 13 h Verzug wird der 00z-Lauf gegen **14:51 Ortszeit** verfuegbar.
-Im Sommer liegt das Abendfenster danach, im Winter davor &mdash; dort
-benutzen beide Laeufe denselben 18z und der zweite bringt nichts Neues.
-Frueher geht es nicht: bei Sonnenuntergang um 15:53 gibt es schlicht nichts
-Frischeres.
+Die Spalte "Modelllauf" ist **gemessen, nicht hergeleitet** (27 Laeufe, siehe
+Tabelle weiter oben). Im Sommer liegt das Abendfenster nach der
+Verfuegbarkeit des 06z, im Winter davor &mdash; dort benutzen beide Laeufe
+denselben 18z und der zweite bringt nichts Neues. Frueher geht es nicht: bei
+Sonnenuntergang um 15:53 gibt es schlicht nichts Frischeres.
 
 **Der zweite Lauf schiebt keinen zweiten Push nach.** Je Abend geht
 hoechstens ein Alarm raus, das haelt `zustand["alarme"]` fest. Der
@@ -348,6 +431,15 @@ auf die naechste Kalenderzeit zu warten. Logs liegen unter `daten/*.log`.
 **Warum die Erinnerung stuendlich laeuft und nicht zur Sonnenuntergangszeit:**
 die wandert im Jahr um mehr als vier Stunden. Das Skript prueft selbst, ob
 sie gerade im Fenster liegt, und ist je Abend idempotent.
+
+**Und sie wird nachgeholt** (seit 02.09.2026, T-0067). Das Fenster ist 75
+Minuten breit, der Agent tickt stuendlich — schlaeft der Rechner darueber
+hinweg, gab es an diesem Abend gar keine Aufforderung und damit sehr
+wahrscheinlich keine Note. Der Alarmlauf holt seinen verpassten Tick seit
+T-0048 nach, die Erinnerung tat es nicht, obwohl sie an derselben Maschine
+haengt. Nachgeholt wird bis zum **lokalen Mitternacht** und nur der heutige
+Abend: nach Mitternacht bewertet niemand mehr den vorletzten
+Sonnenuntergang, die Frage waere dann irrefuehrend statt hilfreich.
 
 Auf einem NAS oder Linux-Rechner tut es stattdessen ein gewoehnlicher Cron;
 die Zeiten sind dieselben.
@@ -489,28 +581,49 @@ richtige Zustand, kein Defekt.
 | `skripte/fensterterm.py` | Fensterterm gegen die Maske: Phantom oder bestaetigt (T-0027) |
 | `skripte/wegterm.py` | Wegterm anders aggregiert, fuenf Varianten gegen Album/Referenz (T-0029) |
 | `sonnen/grib2.py` | GRIB2-Leser fuer die Wolkenmaske, ohne Fremdbibliothek |
+| `betrieb/*.plist` | Vorlagen der vier launchd-Agenten (Kopie dessen, was installiert ist) |
+| `betrieb/anforderungen.txt` | die zwei Fremdpakete, mit Begruendung wofuer |
 
 ### Tests
 
 ```bash
-python3 skripte/test_member.py      # Member-Verdichtung, Faecher, Deckung
-python3 skripte/test_advektion.py   # semi-Lagrangesche Verschiebung
-python3 skripte/test_grib2.py       # GRIB2-Leser, Vorzeichen-Betrag, Sektionen
-python3 skripte/test_seiten.py      # erzeugte Seiten und die neuen Grafiken
-python3 skripte/test_lauffenster.py # ein Lauf je Tag, ueber ein ganzes Jahr
-python3 skripte/test_abruf.py       # Wind nur am Ort, Advektion trotzdem aktiv
-python3 skripte/test_zustandsdatei.py    # atomarer Schreibvorgang (T-0051)
-python3 skripte/test_bewertung_nutzlast.py  # Notenvalidierung (T-0052)
-python3 skripte/test_alarm_versand.py    # Versandfehler kippt den Lauf nicht (T-0055)
-python3 skripte/test_phantomnullen.py    # Datenluecken werden nicht zu Nullen (T-0060)
-python3 skripte/test_zustandspflege.py   # Raeumung und Sperre der Zustandsdatei (T-0058)
-python3 skripte/test_ortsfilter.py       # --geplant rechnet nur faellige Orte (T-0056)
-python3 skripte/test_faechergeometrie.py # eine Faechergeometrie, nicht zwei (T-0057)
-python3 skripte/test_score_distanz.py    # Deckung und Luecken in score_distanz (T-0061)
+.venv/bin/python3 skripte/test_member.py      # Member-Verdichtung, Faecher, Deckung
+.venv/bin/python3 skripte/test_advektion.py   # semi-Lagrangesche Verschiebung
+.venv/bin/python3 skripte/test_grib2.py       # GRIB2-Leser, Vorzeichen-Betrag, Sektionen
+.venv/bin/python3 skripte/test_seiten.py      # erzeugte Seiten und die neuen Grafiken
+.venv/bin/python3 skripte/test_lauffenster.py # ein Lauf je Tag, ueber ein ganzes Jahr
+.venv/bin/python3 skripte/test_abruf.py       # Wind nur am Ort, Advektion trotzdem aktiv
+.venv/bin/python3 skripte/test_wn3.py         # WeatherNext-3-Leser, Zeitachse, Negativproben
+.venv/bin/python3 skripte/test_zustandsdatei.py    # atomarer Schreibvorgang (T-0051)
+.venv/bin/python3 skripte/test_bewertung_nutzlast.py  # Notenvalidierung (T-0052)
+.venv/bin/python3 skripte/test_alarm_versand.py    # Versandfehler kippt den Lauf nicht (T-0055)
+.venv/bin/python3 skripte/test_phantomnullen.py    # Datenluecken werden nicht zu Nullen (T-0060)
+.venv/bin/python3 skripte/test_zustandspflege.py   # Raeumung und Sperre der Zustandsdatei (T-0058)
+.venv/bin/python3 skripte/test_ortsfilter.py       # --geplant rechnet nur faellige Orte (T-0056)
+.venv/bin/python3 skripte/test_faechergeometrie.py # eine Faechergeometrie, nicht zwei (T-0057)
+.venv/bin/python3 skripte/test_score_distanz.py    # Deckung und Luecken in score_distanz (T-0061)
+.venv/bin/python3 skripte/test_erinnerung.py       # Fenster und Nachholen bis Mitternacht (T-0067)
 node   skripte/test_bewertungsseite.js   # Warteschlange und Freilegung
 ```
 
-Stand 23.08.2026: 273 Python-Pruefungen + 42 JS, alle gruen.
+Stand 04.09.2026: **310 Python-Pruefungen + 41 JS, alle gruen**
+(`test_phantomnullen.py` mit ICON-Cache mitgezaehlt).
+
+**Kein Test darf von der Uhrzeit abhaengen.** Zwei taten es bis zum
+02.09.2026 und waren deshalb regelmaessig rot, ohne dass am Code etwas
+falsch war: `test_zustandspflege.py` erwartete eine Zahl fuer den heutigen
+Abend, den `alarm.py` nach Sonnenuntergang aber ueberspringt, und
+`test_bewertungsseite.js` suchte den festen Monatsnamen "August". Beide
+laufen jetzt gegen eine feste Zeit bzw. gegen alle zwoelf Monatsnamen. Ein
+Test, der einmal am Tag oder einmal im Monat von selbst umkippt, wird nicht
+mehr gelesen - und dann faellt auch der echte Fehler nicht mehr auf.
+
+**Kein Test fasst Betriebsdaten an.** `test_abruf.py` lief bis zum
+02.09.2026 gegen das echte `daten/zustand.json`: er startete einen
+vollstaendigen `alarm.main()` ohne `--trocken`, sicherte die Datei vorher
+weg und schrieb sie danach truncierend und ohne Sperre zurueck. Faellt in
+diese Sekunden ein Bewertungsabruf, ist die Note weg. Alle Tests arbeiten
+jetzt in einem eigenen Temp-Verzeichnis (`alarm.BASIS` umgebogen).
 
 `test_zustandsdatei.py` startet Kindprozesse und killt sie mit `SIGKILL`
 mitten im Schreiben &mdash; er dauert deshalb ein paar Sekunden laenger als
@@ -548,6 +661,21 @@ Wichtig gegen ein naheliegendes Missverstaendnis: der Score verlangt **keinen
 freien Blick zum Horizont**. Er prueft, ob das Licht 200-400 km westlich in
 1-2 km Hoehe durchkommt. Die Sonne muss nicht sichtbar sein und darf laengst
 untergegangen sein - Cirrus auf 9,5 km glueht noch rund 28 Minuten weiter.
+
+**Die Advektion tastet STROMAUF ab** (korrigiert 02.09.2026, T-0063). Das
+Modellfeld liegt zu einem nativen 3-h-Schritt vor, der Sonnenuntergang liegt
+daneben. Gesucht ist die Wolke, die zum Sonnenuntergang ueber dem Fanpunkt
+steht — zum frueheren Modellschritt war dieselbe Luft noch stromauf, bei
+Westwind also westlich. Abgetastet wird deshalb **Fanpunkt minus
+Transportversatz**.
+
+Bis zum 02.09.2026 stand dort ein Plus: der Lauf las die Zelle auf der
+falschen Seite, mit dem doppelten Fehler 2·v·|Δt| — bei 100 km/h und
+Δt = 0,5 h also 100 km daneben. Aufgefallen ist es nie, weil ein
+verschobener Faecher genauso plausible Zahlen liefert wie ein richtiger.
+`test_advektion.py` prueft die Richtung jetzt am Verhalten des Laufs: bei
+Wind aus Westen muessen die Zellen aus Pass 2 westlich derer aus Pass 1
+liegen.
 
 Multiplikativ, weil es eine Konjunktion ist: ohne Schirm kein Bild, ohne
 Fenster kein Licht. Der entscheidende Punkt ist die Geometrie — fuer einen

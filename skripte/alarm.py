@@ -185,25 +185,61 @@ def melde(text):
     print("%s %s" % (uhr(), text), flush=True)
 
 
+# Wartezeiten fuer VORUEBERGEHENDE Stoerungen (T-0069).  Kurz genug, dass
+# ein Abendlauf sie sich leisten kann, lang genug, dass ein WLAN nach dem
+# Aufwachen zurueckkommt.
+RUHEPAUSEN = (5, 15, 45)
+
+
 def _hole(u, versuche=4):
     LAST["anfragen"] += 1
     for n in range(versuche):
+        letzter = n >= versuche - 1
         try:
             with urllib.request.urlopen(u, timeout=600) as f:
                 return json.load(f)
         except urllib.error.HTTPError as e:
-            if e.code != 429:
+            if e.code == 429:
+                # Der Rumpf ist die einzige Stelle, an der steht, WELCHES der
+                # drei 429 gemeint ist.  Fehlt er oder ist er kein JSON, darf
+                # das nicht den Abbruch ERSETZEN - vorher warf json.loads hier
+                # einen JSONDecodeError statt der gemeinten Meldung.
+                try:
+                    grund = json.loads(e.read()).get("reason", "429")
+                except Exception:                            # noqa: BLE001
+                    grund = "429 ohne lesbaren Grund"
+                if "inutely" in grund and not letzter:
+                    melde("   Minutenlimit, warte 65 s ... (Anfrage %d)"
+                          % LAST["anfragen"])
+                    time.sleep(65)
+                    continue
+                raise SystemExit("%s Kontingent nach %d Anfragen "
+                                 "(%d Ortsabrufe, %d Variablen, %d Tage): %s"
+                                 % (uhr(), LAST["anfragen"], LAST["orte"],
+                                    LAST["variablen"], LAST["tage"], grund))
+            # 5xx ist die Gegenseite, nicht wir: das lohnt einen zweiten
+            # Versuch.  4xx ist unsere Anfrage und wird beim Wiederholen
+            # nicht besser - durchreichen, damit es auffaellt.
+            if e.code < 500 or letzter:
                 raise
-            grund = json.loads(e.read()).get("reason", "429")
-            if "inutely" in grund and n < versuche - 1:
-                melde("   Minutenlimit, warte 65 s ... (Anfrage %d)"
-                      % LAST["anfragen"])
-                time.sleep(65)
-                continue
-            raise SystemExit("%s Kontingent nach %d Anfragen "
-                             "(%d Ortsabrufe, %d Variablen, %d Tage): %s"
-                             % (uhr(), LAST["anfragen"], LAST["orte"],
-                                LAST["variablen"], LAST["tage"], grund))
+            fehler = "HTTP %d" % e.code
+        except (urllib.error.URLError, TimeoutError, ValueError, OSError) as e:
+            # T-0069.  Bis zum 02.09.2026 stand hier nur der 429-Zweig, alles
+            # andere riss den Lauf mit Traceback ab: ein abgebrochener
+            # Verbindungsaufbau, ein Timeout, eine halbe Antwort.  Der
+            # Abendlauf wird dann zwar vom naechsten stuendlichen Tick
+            # nachgeholt, der Vormittagslauf aber nicht - und jeder
+            # gescheiterte Versuch hat sein Kontingent schon verbraucht.
+            # ValueError faengt die truncierte JSON-Antwort mit ab; sie ist
+            # in der Praxis ein Netzabbruch, kein Formatfehler.
+            if letzter:
+                raise
+            fehler = "%s: %s" % (type(e).__name__, e)
+        warte = RUHEPAUSEN[min(n, len(RUHEPAUSEN) - 1)]
+        melde("   Abruf gestoert (%s), neuer Versuch in %d s (Anfrage %d, "
+              "Versuch %d von %d)" % (fehler, warte, LAST["anfragen"],
+                                      n + 2, versuche))
+        time.sleep(warte)
     raise SystemExit("unerreichbar")
 
 
@@ -267,7 +303,7 @@ def _rund(x, n=5):
 
 
 def verdichte(werte, schwelle):
-    """(Score, Detail) je Member -> Wahrscheinlichkeit, Median, bestes Detail.
+    """(Score, Detail) je Member -> Wahrscheinlichkeit, Median, Mediandetail.
 
     Herausgeloest, weil hier der Fehler sass: score() gibt (0.0, None) zurueck,
     wenn KEINE Faecherzelle Daten hatte, und diese Null lief frueher in den
@@ -275,20 +311,52 @@ def verdichte(werte, schwelle):
     kein Fehler, keine Warnung, nur eine zu kleine Zahl und ein Alarm, der
     nicht ausloest.
 
+    DAS DETAIL GEHOERT ZUM MEDIAN, NICHT ZUM BESTEN MEMBER (T-0064, geaendert
+    02.09.2026).  Bis dahin stand hier `max(gueltig, key=...)`: Median und
+    Wahrscheinlichkeit beschrieben die Mitte der Verteilung, die Begruendung
+    daneben aber ihr optimistisches Ende.  Auf der Seite las sich das jeden
+    Abend als Widerspruch - Beleg vom 01.09.2026 fuer den 11.09.: Median
+    0.03, Wahrscheinlichkeit 2 %, Stufe "unauffaellig", und darunter
+    "Mittelhohe Wolken, Licht kommt von Westen frei durch", weil ein einziger
+    von 51 Membern auf S = 0.88 kam.
+
+    Jetzt kommt alles aus demselben Member: p, Median, Schirm, A, Sicht, Weg
+    und die Segmentliste, aus der der Vertikalschnitt seine Transmission
+    zeichnet.  Beim Push ist das kein Verlust - der geht erst ab p >= 0.5
+    raus, und dann liegt der Medianmember ohnehin ueber s*.
+
+    Die Streuung geht dabei nicht verloren: das Tagesarchiv haelt weiterhin
+    je Member eine eigene Zeile mit S, A, B, Sicht und Weg.
+
     Rueckgabe None, wenn kein einziger Member Daten hatte.
     """
-    gueltig = [x for x in werte if x[1] is not None]
+    # Nach Score sortieren, aber NUR nach ihm: `sorted` auf den Tupeln selbst
+    # wuerde bei gleichem Score die Detail-dicts vergleichen und mit
+    # TypeError abbrechen.
+    gueltig = sorted((x for x in werte if x[1] is not None),
+                     key=lambda x: x[0])
     if not gueltig:
         return None
-    punkte = sorted(x[0] for x in gueltig)
-    return {"p": sum(1 for x in punkte if x >= schwelle) / len(punkte),
-            "median": punkte[len(punkte) // 2],
-            "detail": max(gueltig, key=lambda x: x[0])[1],
+    mitte = gueltig[len(gueltig) // 2]
+    return {"p": sum(1 for x in gueltig if x[0] >= schwelle) / len(gueltig),
+            "median": mitte[0],
+            "detail": mitte[1],
             "n_member": len(gueltig), "n_member_gesamt": len(werte)}
 
 
 def versatz_km(sp_kmh, richtung_grad, stunden):
-    """Meteorologische Windrichtung: Richtung, AUS der es weht."""
+    """TRANSPORTweg der Luft in `stunden`: (dx nach Osten, dy nach Norden), km.
+
+    `richtung_grad` ist meteorologisch, also die Richtung, AUS der es weht -
+    daher die Vorzeichen.  Wind aus 270 Grad traegt die Luft nach OSTEN, die
+    Rueckgabe ist dann (+x, 0).
+
+    ACHTUNG beim Benutzen: das ist der Weg, den ein Luftpaket ZURUECKLEGT,
+    nicht die Stelle, an der man es vorher abtastet.  Wer wissen will, welche
+    Luft spaeter ueber einem Punkt steht, muss STROMAUF schauen, also den
+    Versatz ABZIEHEN.  Siehe die Fundstelle in lauf_ort() - genau dort stand
+    bis zum 02.09.2026 ein Plus (T-0063).
+    """
     ms = sp_kmh / 3.6
     return (-ms * math.sin(math.radians(richtung_grad)) * stunden * 3.6,
             -ms * math.cos(math.radians(richtung_grad)) * stunden * 3.6)
@@ -304,9 +372,18 @@ def naechster_schritt(zeiten, ziel_dt):
     return bi, best / 3600.0
 
 
-def lauf_ort(ort, kfg, zustand, trocken):
+def lauf_ort(ort, kfg, jetzt):
+    """Die Abende dieses Ortes rechnen.  `jetzt` ist der Bezugszeitpunkt.
+
+    `jetzt` statt `datetime.now()` (T-0068, 02.09.2026): `--jetzt` steuerte
+    bisher nur die Fensterpruefung, waehrend hier die echte Uhr lief.  Ein
+    Test konnte den Lauf damit nicht auf eine feste Zeit stellen - und
+    `test_zustandspflege.py` war abends rot, weil der heutige Abend nach
+    Sonnenuntergang wegfaellt.  Die frueheren Parameter `zustand` und
+    `trocken` wurden nie gelesen und sind entfallen.
+    """
     breite, laenge = ort["breite"], ort["laenge"]
-    heute = datetime.now(timezone.utc).date()
+    heute = jetzt.date()
     km_lon = 111.32 * math.cos(math.radians(breite))
 
     abende = {}
@@ -325,7 +402,7 @@ def lauf_ort(ort, kfg, zustand, trocken):
         std, az = sonnenuntergang(t, breite, laenge)
         if std is not None and k == 0:
             su = datetime.combine(t, dtzeit(0), timezone.utc) + timedelta(hours=std)
-            if su <= datetime.now(timezone.utc):
+            if su <= jetzt:
                 melde("   heutiger Abend: Sonnenuntergang vorbei, uebersprungen")
                 continue
         if std is None:
@@ -405,7 +482,21 @@ def lauf_ort(ort, kfg, zustand, trocken):
         for s in SCHICHTEN:
             dx, dy = versatz[(t, s)]
             for schl, (la, lo) in info["punkte"].items():
-                z = zelle(la + dy / 111.32, lo + dx / km_lon)
+                # STROMAUF, nicht stromab (T-0063, korrigiert 02.09.2026).
+                #
+                # Gesucht ist die Wolke, die zum SONNENUNTERGANG ueber dem
+                # Fanpunkt steht.  Das Modellfeld liegt aber zum nativen
+                # Schritt `i` vor, also `stunden` frueher.  Zu diesem
+                # frueheren Zeitpunkt war dieselbe Luft noch STROMAUF - bei
+                # Westwind also westlich.  Abgetastet wird deshalb
+                # Fanpunkt MINUS Transportversatz.
+                #
+                # Bis zum 02.09.2026 stand hier ein Plus.  Der Lauf las damit
+                # die Zelle auf der falschen Seite, mit dem doppelten Fehler
+                # 2*v*|dt| - bei 100 km/h und dt = 0.5 h also 100 km daneben.
+                # Aufgefallen ist es nie, weil ein verschobener Faecher
+                # genauso plausible Zahlen liefert wie ein richtiger.
+                z = zelle(la - dy / 111.32, lo - dx / km_lon)
                 karte[(t, s, schl)] = z
                 versetzt_zellen.add(z)
     neu = versetzt_zellen - fan_zellen
@@ -528,10 +619,9 @@ def lokalzeit(tag, stunde_utc, zone):
     dt = datetime(int(tag[:4]), int(tag[5:7]), int(tag[8:]), tzinfo=timezone.utc) \
         + timedelta(hours=stunde_utc)
     try:
-        from zoneinfo import ZoneInfo
         dt = dt.astimezone(ZoneInfo(zone))
-    except Exception:
-        pass
+    except Exception:                                            # noqa: BLE001
+        pass                      # unbekannte Zone: dann eben UTC anzeigen
     return dt
 
 
@@ -730,6 +820,16 @@ def main():
             if name:
                 fenster[o["name"]] = name
         if not fenster:
+            # T-0065: auch der Leerlauf schreibt den Modelllauf mit.  Er
+            # kommt aus einer STATISCHEN Datei und zaehlt nicht aufs
+            # Kontingent - eine Zeile je Stunde, und nach zwei Wochen ist
+            # belegt, wann der 00z-Lauf tatsaechlich verfuegbar wird.
+            # Bisher stand diese Zahl nur an den zwei Laufzeitpunkten im
+            # Log, und `konfig.json` behauptete daraus "08:44 UTC" - eine
+            # Groesse aus einer einzigen Probe, an der `lauf_morgens_utc`
+            # haengt.
+            melde("   Modelllauf jetzt: %s"
+                  % (modelllauf(kfg["modell"]) or "unbekannt"))
             return
 
     # T-0058: Die Rechnung dauert Minuten - der Zustand wird deshalb NICHT
@@ -739,6 +839,16 @@ def main():
     # Zwischenzeit eingesammelt hat - nachgestellt und belegt.
     neue_abende = {}          # {ort: {tag: (eintrag, verlaufszeile)}}
     neue_alarme = {}          # {ort: {tag: buchung}}
+
+    # Der Modelllauf wird VOR dem Abruf geholt (T-0065, 02.09.2026).  Vorher
+    # stand er hinter der Ortsschleife, also rund vier Minuten spaeter - und
+    # genau dazwischen kann ein neuer Lauf verfuegbar werden.  Dann trugen
+    # Archiv und Standzeile eine Initialisierung, aus der die Zahlen gar
+    # nicht stammten.  Das ist ausgerechnet das Feld, auf dem alle
+    # Verzugsaussagen des Projekts beruhen.
+    init = modelllauf(kfg["modell"])
+    melde("   Modelllauf: %s" % (init or "unbekannt"))
+
     for ort in kfg["orte"]:
         name = ort["name"]
         # T-0056: Beim geplanten Lauf nur die Orte rechnen, deren Fenster
@@ -753,7 +863,7 @@ def main():
         if a.geplant and name not in fenster:
             continue
         print("=== %s" % ort["anzeige"], flush=True)
-        erg = lauf_ort(ort, kfg, zustand, a.trocken)
+        erg = lauf_ort(ort, kfg, jetzt)
         eintrag = zustand.setdefault(name, {"abende": {}, "alarme": {}})
         archiv_abende = archive.setdefault(name, {})
         meine = neue_abende.setdefault(name, {})
@@ -773,7 +883,10 @@ def main():
                  # blaehen die Zustandsdatei, und fuer die Rueckschau
                  # zaehlen die Terme, nicht das Rohfeld.
                  if k not in ("verlauf", "bewertung", "feld", "member")},
-                lauf=str(date.today()))
+                # Der Tag des LAUFS, aus `jetzt` - nicht aus der Systemuhr.
+                # Sonst traegt ein Lauf mit --jetzt eine Verlaufszeile mit
+                # dem echten Datum und ist im Nachhinein nicht zuzuordnen.
+                lauf=str(jetzt.date()))
             archiv_abende[tag] = {
                 k: e[k] for k in ("p", "median", "stunde_utc", "azimut",
                                   "dt_h", "schirm", "A", "sicht", "weg",
@@ -824,10 +937,6 @@ def main():
                         "gesendet": datetime.now(timezone.utc).isoformat(
                             timespec="seconds"), "p": e["p"]}
                     print("     -> Push gesendet")
-
-    # Der Modelllauf wird VOR der Buchung geholt - sie schreibt ihn mit.
-    init = modelllauf(kfg["modell"])
-    melde("   Modelllauf: %s" % (init or "unbekannt"))
 
     # Erst NACH erfolgreichem Durchlauf eintragen: ein am Kontingent
     # gestorbener Lauf darf das Fenster fuer heute nicht verbrauchen.
