@@ -343,7 +343,7 @@ def _hole(u, versuche=4):
                 raise
             fehler = "HTTP %d" % e.code
         except (urllib.error.URLError, TimeoutError, ValueError, OSError) as e:
-            # T-0069.  Bis zum 02.09.2026 stand hier nur der 429-Zweig, alles
+            # T-0069.  Bis zum 04.09.2026 stand hier nur der 429-Zweig, alles
             # andere riss den Lauf mit Traceback ab: ein abgebrochener
             # Verbindungsaufbau, ein Timeout, eine halbe Antwort.  Der
             # Abendlauf wird dann zwar vom naechsten stuendlichen Tick
@@ -573,7 +573,7 @@ def verdichte(werte, schwelle):
     nicht ausloest.
 
     DAS DETAIL GEHOERT ZUM MEDIAN, NICHT ZUM BESTEN MEMBER (T-0064, geaendert
-    02.09.2026).  Bis dahin stand hier `max(gueltig, key=...)`: Median und
+    04.09.2026).  Bis dahin stand hier `max(gueltig, key=...)`: Median und
     Wahrscheinlichkeit beschrieben die Mitte der Verteilung, die Begruendung
     daneben aber ihr optimistisches Ende.  Auf der Seite las sich das jeden
     Abend als Widerspruch - Beleg vom 01.09.2026 fuer den 11.09.: Median
@@ -687,7 +687,7 @@ def deckle_pass2(neu, karte, abende, grenze):
 def lauf_ort(ort, kfg, jetzt):
     """Die Abende dieses Ortes rechnen.  `jetzt` ist der Bezugszeitpunkt.
 
-    `jetzt` statt `datetime.now()` (T-0068, 02.09.2026): `--jetzt` steuerte
+    `jetzt` statt `datetime.now()` (T-0068, 04.09.2026): `--jetzt` steuerte
     bisher nur die Fensterpruefung, waehrend hier die echte Uhr lief.  Ein
     Test konnte den Lauf damit nicht auf eine feste Zeit stellen - und
     `test_zustandspflege.py` war abends rot, weil der heutige Abend nach
@@ -1254,7 +1254,7 @@ def _main():
     # frisch.
     leer = []
 
-    # Der Modelllauf wird VOR dem Abruf geholt (T-0065, 02.09.2026).  Vorher
+    # Der Modelllauf wird VOR dem Abruf geholt (T-0065, 04.09.2026).  Vorher
     # stand er hinter der Ortsschleife, also rund vier Minuten spaeter - und
     # genau dazwischen kann ein neuer Lauf verfuegbar werden.  Dann trugen
     # Archiv und Standzeile eine Initialisierung, aus der die Zahlen gar

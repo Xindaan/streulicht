@@ -38,7 +38,7 @@ def pruefe(bed, text):
 
 
 HEUTE = dt.date.today()
-# FESTE Uhrzeit fuer die Laeufe (T-0068, 02.09.2026).  Abschnitt 4 erwartet,
+# FESTE Uhrzeit fuer die Laeufe (T-0068, 04.09.2026).  Abschnitt 4 erwartet,
 # dass der Lauf fuer HEUTE eine Zahl schreibt - nach Sonnenuntergang faellt
 # der heutige Abend aber heraus (er ist vorbei, alarm.py ueberspringt ihn).
 # Der Test war damit jeden Abend rot, ohne dass am Code etwas falsch war,

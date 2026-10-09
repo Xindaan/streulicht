@@ -184,7 +184,7 @@ async function lauf(opt) {
          "Maschinendaten stecken im Klickziel");
   pruefe(/bewerten-berlin\.html/.test(g._klick || ""),
          "Klickziel oeffnet die Bewertungsseite");
-  // KEIN fester Monatsname (T-0068, 02.09.2026).  Hier stand /August/ -
+  // KEIN fester Monatsname (T-0068, 04.09.2026).  Hier stand /August/ -
   // geprueft wird aber die Seite MIT dem heutigen Datum, also war der Test
   // ab dem 1. September rot, ohne dass sich etwas geaendert haette.  Ein
   // Test, der einmal im Monat von selbst umkippt, wird nicht mehr gelesen.

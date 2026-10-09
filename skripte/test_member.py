@@ -262,7 +262,7 @@ pruefe(dN_teil is not None and dN_teil["weg_deckung"] < 1.0,
 
 print()
 print("=== 4. Das Detail gehoert zum MEDIAN, nicht zum besten Member (T-0064)")
-# Bis zum 02.09.2026 stand in verdichte() `max(gueltig, key=...)`.  Median
+# Bis zum 04.09.2026 stand in verdichte() `max(gueltig, key=...)`.  Median
 # und Wahrscheinlichkeit beschrieben damit die Mitte der Verteilung, die
 # Begruendung daneben ihr optimistisches Ende - auf der Seite jeden Abend
 # ein Widerspruch.  Beleg vom 01.09.2026 fuer den 11.09.: Median 0.03,

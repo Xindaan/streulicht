@@ -32,7 +32,7 @@ def warte_auf_netz(minuten=20, pause=30, name=PROBE, melde=print):
     Wartehelfer, der das Programm beendet, ist ein Wartehelfer, der bei der
     naechsten Aenderung uebersehen wird.
     """
-    # WANDUHR, nicht monotonic (T-0070, 02.09.2026).  `time.monotonic()`
+    # WANDUHR, nicht monotonic (T-0070, 04.09.2026).  `time.monotonic()`
     # steht auf macOS waehrend des Ruhezustands still: schlaeft der Rechner
     # mitten im Warten ein, laeuft die Frist nicht weiter, und aus den
     # zugesagten 20 Minuten werden real Stunden.  Genau das ist am

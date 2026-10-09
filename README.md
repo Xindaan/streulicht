@@ -158,7 +158,7 @@ Die Prognoseseite zeigt je Abend **zwei Zahlen, die nicht dasselbe sind**:
 Die Achse traegt das Perzentil (Schwellen bei 80. und 95.), weil sie danach
 gebaut ist; die Wahrscheinlichkeit steht als Text daneben.
 
-**Die Begruendung daneben gehoert zum MEDIAN-Member** (seit 02.09.2026,
+**Die Begruendung daneben gehoert zum MEDIAN-Member** (seit 04.09.2026,
 T-0064). Bis dahin kamen Schirm, A, Sicht, Weg und die Segmentliste vom
 BESTEN der 51 Member — Stufe und Zahl beschrieben also die Mitte der
 Verteilung, der Satz darunter ihr optimistisches Ende. Auf der Seite las
@@ -239,7 +239,7 @@ JEDES Orts gegen die Berliner Klimatologie
 Berlins s\* gerechnet sind, und eine Prognoseseite, die Berlin zeigt — beide Laeufe
 enden dabei mit Exitcode 0, es faellt nirgends auf.
 
-`ausliefern.py` sagt es seit dem 02.09.2026 wenigstens laut, wenn mehr als
+`ausliefern.py` sagt es seit dem 04.09.2026 wenigstens laut, wenn mehr als
 ein Ort konfiguriert ist. Ein harter Abbruch waere falsch: die
 Mehrortfaehigkeit ist ein erklaertes Ziel aus E0 ("Ort als Parameter, auch
 fuer Freunde"), und der Weg dorthin ist halb gebaut, nicht verworfen.
@@ -253,7 +253,7 @@ sendet sie nie wieder — ist der Mac zwischen Abgabe und Abruf laenger als
 ueber 318 Laeufe 17 Luecken von mehr als 70 Minuten, die laengste 724
 Minuten; das ist knapp unter der Grenze, aber eben knapp.
 
-Der Abruf laeuft seit dem 02.09.2026 **stuendlich** statt alle drei Stunden.
+Der Abruf laeuft seit dem 04.09.2026 **stuendlich** statt alle drei Stunden.
 Das verkleinert das Fenster, schliesst es aber nicht: gegen einen Schlaf von
 mehr als 12 h hilft nur ein geplantes Aufwecken
 (`pmset repeat wakeorpoweron ...`), und das ist eine Systemeinstellung, die
@@ -360,7 +360,7 @@ Der Verzug ist **nicht konstant**, und das ist der Punkt: gemessen an
 ENSEMBLE ist dabei deutlich langsamer als der deterministische Lauf
 desselben Modells (7,2 h in derselben Messung).
 
-**Nachgezaehlt am Tagesarchiv (02.09.2026, 27 Laeufe vom 21.08. bis 04.09.):**
+**Nachgezaehlt am Tagesarchiv (04.09.2026, 27 Laeufe vom 21.08. bis 04.09.):**
 
 | Fenster | n | benutzter Lauf | Verzug (min / Median / max) |
 |---|---|---|---|
@@ -575,7 +575,7 @@ zusaetzlich dorthin.
 die wandert im Jahr um mehr als vier Stunden. Das Skript prueft selbst, ob
 sie gerade im Fenster liegt, und ist je Abend idempotent.
 
-**Und sie wird nachgeholt** (seit 02.09.2026, T-0067). Das Fenster ist 75
+**Und sie wird nachgeholt** (seit 04.09.2026, T-0067). Das Fenster ist 75
 Minuten breit, der Agent tickt stuendlich — schlaeft der Rechner darueber
 hinweg, gab es an diesem Abend gar keine Aufforderung und damit sehr
 wahrscheinlich keine Note. Der Alarmlauf holt seinen verpassten Tick seit
@@ -754,6 +754,7 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 .venv/bin/python3 skripte/test_advektion.py   # semi-Lagrangesche Verschiebung
 .venv/bin/python3 skripte/test_grib2.py       # GRIB2-Leser, Vorzeichen-Betrag, Sektionen
 .venv/bin/python3 skripte/test_seiten.py      # erzeugte Seiten und die neuen Grafiken
+.venv/bin/python3 skripte/test_seiten_atomar.py  # Absturz beim Schreiben laesst die alte Seite stehen
 .venv/bin/python3 skripte/test_lauffenster.py # ein Lauf je Tag, ueber ein ganzes Jahr
 .venv/bin/python3 skripte/test_abruf.py       # Wind nur am Ort, Advektion trotzdem aktiv
 .venv/bin/python3 skripte/test_wn3.py         # WeatherNext-3-Leser, Zeitachse, Negativproben
@@ -785,7 +786,7 @@ Stand 09.10.2026: **809 Python-Pruefungen in 26 Dateien + 64 JS, alle gruen**
 310 + 41.
 
 **Kein Test darf von der Uhrzeit abhaengen.** Zwei taten es bis zum
-02.09.2026 und waren deshalb regelmaessig rot, ohne dass am Code etwas
+04.09.2026 und waren deshalb regelmaessig rot, ohne dass am Code etwas
 falsch war: `test_zustandspflege.py` erwartete eine Zahl fuer den heutigen
 Abend, den `alarm.py` nach Sonnenuntergang aber ueberspringt, und
 `test_bewertungsseite.js` suchte den festen Monatsnamen "August". Beide
@@ -794,7 +795,7 @@ Test, der einmal am Tag oder einmal im Monat von selbst umkippt, wird nicht
 mehr gelesen - und dann faellt auch der echte Fehler nicht mehr auf.
 
 **Kein Test fasst Betriebsdaten an.** `test_abruf.py` lief bis zum
-02.09.2026 gegen das echte `daten/zustand.json`: er startete einen
+04.09.2026 gegen das echte `daten/zustand.json`: er startete einen
 vollstaendigen `alarm.main()` ohne `--trocken`, sicherte die Datei vorher
 weg und schrieb sie danach truncierend und ohne Sperre zurueck. Faellt in
 diese Sekunden ein Bewertungsabruf, ist die Note weg. Alle Tests arbeiten

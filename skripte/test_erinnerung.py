@@ -4,7 +4,7 @@ WARUM DAS EINEN TEST BRAUCHT.  Die Bewertungen sind die einzige Messgroesse
 des Projekts, die sich nicht nachproduzieren laesst: fuer einen Abend ohne
 Note gibt es keinen zweiten Abruf und keine zweite Quelle.  Das Fenster ist
 75 Minuten breit, der Agent tickt stuendlich - schlaeft der Rechner darueber
-hinweg, faellt der ganze Abend aus.  Seit dem 02.09.2026 wird bis zum
+hinweg, faellt der ganze Abend aus.  Seit dem 04.09.2026 wird bis zum
 lokalen Mitternacht nachgeholt.
 
 Die Grenze ist der Punkt: nachgeholt wird der HEUTIGE lokale Abend, nie der
@@ -139,7 +139,7 @@ pruefe(n == 0, "nichts vor Sonnenuntergang (%d)" % n)
 print("\n3. NACH dem Fenster wird nachgeholt - solange es lokal derselbe Tag ist")
 # 21:30 UTC = 23:30 Ortszeit, also fast vier Stunden nach Fensterende und
 # eine halbe Stunde vor dem lokalen Tageswechsel.  Genau der Fall, der
-# bis zum 02.09.2026 ersatzlos ausfiel.
+# bis zum 04.09.2026 ersatzlos ausfiel.
 n, z = lauf("2026-09-02T21:30")
 pruefe(n == 1, "eine nachgeholte Aufforderung (%d)" % n)
 pruefe("2026-09-02" in (z.get("berlin") or {}).get("erinnerungen", {}),

@@ -80,7 +80,7 @@ def main():
     kfg = json.load(open(os.path.join(BASIS, "konfig.json")))
     ort = kfg["orte"][0]
 
-    # EIGENES BASISVERZEICHNIS (T-0068, 02.09.2026).  Bis dahin lief dieser
+    # EIGENES BASISVERZEICHNIS (T-0068, 04.09.2026).  Bis dahin lief dieser
     # Test gegen `daten/zustand.json` des Betriebs: er startete einen echten
     # `alarm.main()` OHNE --trocken, sicherte die Datei vorher weg und schrieb
     # sie danach mit `open(zp, "w")` zurueck - truncierend und ohne Sperre.
@@ -241,7 +241,7 @@ def main():
     shutil.rmtree(pruefbasis, ignore_errors=True)   # der Pruefstand raeumt auf
 
     print("\n=== 7. Voruebergehende Stoerungen kippen den Lauf nicht (T-0069)")
-    # Bis zum 02.09.2026 behandelte _hole() NUR 429.  Ein Timeout, ein
+    # Bis zum 04.09.2026 behandelte _hole() NUR 429.  Ein Timeout, ein
     # abgebrochener Verbindungsaufbau oder ein 502 riss den ganzen Lauf mit
     # Traceback ab - und jeder gescheiterte Versuch hatte sein Kontingent
     # schon verbraucht.  Der Abendlauf wird vom naechsten Tick nachgeholt,

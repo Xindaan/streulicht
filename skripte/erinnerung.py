@@ -72,7 +72,7 @@ def im_fenster(jetzt_utc, tag, breite, laenge):
 def verstrichen(jetzt_utc, tag, breite, laenge):
     """Minuten seit Fensterbeginn - aber nur, wenn das Fenster DURCH ist.
 
-    NACHHOLEN (T-0067, 02.09.2026).  Das Fenster ist 75 Minuten breit und
+    NACHHOLEN (T-0067, 04.09.2026).  Das Fenster ist 75 Minuten breit und
     der Agent tickt stuendlich; schlaeft der Rechner darueber hinweg, gab es
     an diesem Abend gar keine Aufforderung - und damit sehr wahrscheinlich
     keine Note.  Der Alarmlauf holt seinen verpassten Tick seit T-0048 nach,
