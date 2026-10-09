@@ -184,6 +184,24 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
 
 ## Backlog
 
+- T-0084 Perzentil-Zonen gegen die Median-Verteilung neu eichen (Entscheidung
+  Andre 09.10.2026, methodik#F3). Die Seite ordnet den Member-Median heute in
+  die Verteilung einzelner Analysen ein; "auffaellig"/"selten" trifft der
+  Median nur in 10 % bzw. 0,3 %. Zonen aus der Verteilung archivierter
+  Median-Werte ableiten; vorher pruefen, ob genug Archivtage fuer stabile
+  Schwellen da sind (Saison!). Push-Schwelle s* bleibt unberuehrt.
+- T-0085 Vorlauf-Versprechen abschwaechen (Entscheidung Andre 09.10.2026,
+  methodik#F11). README Z. 3 und Seitentexte: "zwei bis zehn Tage im Voraus"
+  auf "ab etwa 1-3 Tagen belastbar, weiter voraus nur Tendenz" umformulieren.
+- T-0086 Sichtfaktor-Gewichtung erst messen (Entscheidung Andre 09.10.2026,
+  physik#4). Im Archiv zaehlen, wie oft tiefe Decke nur am Standort unter hohem
+  Schirm vorkommt; Klimatologie und s* fuer gleich- und raumwinkelgewichteten
+  Sichtfaktor rechnen; Ergebnis Andre zur Entscheidung vorlegen.
+- T-0087 Nachtluecke schliessen (Entscheidung Andre 09.10.2026, alarm#6):
+  blieb ein Tag ohne erfolgreichen Lauf, nach 00 UTC (neues Tageskontingent)
+  einen Nachhol-Lauf fuer die Folgetage zulassen; mit Blockcache und Sperre
+  aus T-0074 zusammenspielen, Verhaltenstest mit Negativprobe.
+
 - T-0001 Fotoarchiv-Gate (aus Doing nach Backlog verschoben 09.10.2026,
   Review architektur#1 / T-0082). Vermerk: Der Doing-Text meldete BLOCKIERT
   (macOS-TCC), der Done-Eintrag vom 14.08.2026 meldet den Abbruchtest als
