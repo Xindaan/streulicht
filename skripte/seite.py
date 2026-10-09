@@ -52,6 +52,7 @@ import json
 import os
 import sys
 from datetime import date, datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -221,19 +222,127 @@ def letztes_laufziel(jetzt, kfg, breite=52.52, laenge=13.405):
     Beiwerk.  Erst wenn der Abendlauf ausgeblieben ist, fehlt wirklich
     etwas.
     """
-    from datetime import time as dtzeit
-    vorlauf = kfg.get("lauf_vorlauf_stunden", 3)
     fenster = timedelta(minutes=kfg.get("lauf_fenster_min", 60))
     for zurueck in (0, 1, 2):
-        tag = jetzt.date() - timedelta(days=zurueck)
-        std, _ = sonnenuntergang(tag, breite, laenge)
-        if std is None:
-            continue
-        ziel = (datetime.combine(tag, dtzeit(0), timezone.utc)
-                + timedelta(hours=std - vorlauf))
-        if ziel + fenster / 2 <= jetzt:
+        ziel = laufziel(jetzt.date() - timedelta(days=zurueck), kfg,
+                        breite, laenge)
+        if ziel is not None and ziel + fenster / 2 <= jetzt:
             return ziel
     return None
+
+
+def laufziel(tag, kfg, breite=52.52, laenge=13.405):
+    """Ziel des Abendlaufs am Tag `tag`: Sonnenuntergang minus Vorlauf, UTC."""
+    from datetime import time as dtzeit
+    std, _ = sonnenuntergang(tag, breite, laenge)
+    if std is None:
+        return None
+    return (datetime.combine(tag, dtzeit(0), timezone.utc)
+            + timedelta(hours=std - kfg.get("lauf_vorlauf_stunden", 3)))
+
+
+def veraltet_streifen(g, jetzt, kfg, zone=None):
+    """HTML des Altersstreifens, oder "" wenn die Zahlen frisch sind.
+
+    `g` ist der Abrufzeitpunkt (aware), `jetzt` die Uhr beim Bauen, `zone`
+    die Zeitzone der Anzeige (None: die des Rechners).  Aus main()
+    herausgezogen (T-0075, Review tests#10): vorher lief die Regel nur in
+    main(), und kein Test fuehrte sie je aus.  Dieselbe Regel steckt im
+    Skript FRISCHE_SKRIPT, das sie im Browser wiederholt.
+    """
+    faellig = letztes_laufziel(jetzt, kfg)
+    # Verglichen wird gegen den ANFANG des Fensters, nicht gegen seine Mitte.
+    # Der Agent tickt zur vollen 20. Minute, das Ziel liegt aber bei
+    # Sonnenuntergang minus drei Stunden - heute also 15:21:58 UTC, waehrend
+    # der Lauf um 15:20:00 begann. Zwei Minuten zu frueh, und die Seite
+    # erklaerte ihre eigenen frischen Zahlen fuer veraltet.
+    fensterbreite = timedelta(minutes=kfg.get("lauf_fenster_min", 60))
+    if not g or not faellig or g >= faellig - fensterbreite / 2:
+        return ""
+    # Tage in DERSELBEN Zone zaehlen (Review tests#10, Nebenbefund): vorher
+    # stand hier date.today() (Ortszeit) minus g.date() (UTC) - bei einem
+    # Abruf zwischen 22 und 24 Uhr UTC um einen Tag daneben.
+    tage = (jetzt.astimezone(zone).date() - g.astimezone(zone).date()).days
+    wann = {0: "von heute frueh", 1: "von gestern",
+            2: "von vorgestern"}.get(tage, "von vor %d Tagen" % tage)
+    return ('<p class="veraltet">Diese Zahlen sind %s '
+            '(%s, %s&nbsp;Uhr). Der Lauf vom %s ist nicht '
+            'durchgekommen.</p>'
+            % (wann, g.astimezone(zone).strftime("%d.%m."),
+               g.astimezone(zone).strftime("%H:%M"),
+               faellig.astimezone(zone).strftime("%d.%m., %H:%M")))
+
+
+# Wie viele kuenftige Laufziele die Seite fuer den Browser mitbringt.  Ist
+# die Seite aelter, nimmt das Skript das letzte - das liegt dann ohnehin
+# nach dem Abruf, die Seite ist also sicher veraltet.
+FRISCHE_TAGE = 14
+
+
+def frische_marken(g, jetzt, kfg, zone_name):
+    """<meta>-Zeilen fuer FRISCHE_SKRIPT und den Waechter (T-0075, seiten#1).
+
+    `streulicht-geholt` ist der Abrufzeitpunkt in UTC - den liest auch
+    .github/workflows/waechter.yml.  `streulicht-laufziele` sind die
+    Abendlaufziele ab vorgestern, auf dem Mac nach DERSELBEN Regel gerechnet
+    wie der Streifen (laufziel()).  Der Browser muss so keinen
+    Sonnenuntergang rechnen und kann die Regel nicht anders auslegen.
+    """
+    if not g:
+        return ""
+    ziele = []
+    for k in range(-2, FRISCHE_TAGE + 1):
+        z = laufziel(jetzt.date() + timedelta(days=k), kfg)
+        if z is not None:
+            ziele.append(z.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
+    return ('<meta name="streulicht-geholt" content="%s">\n'
+            '<meta name="streulicht-laufziele" content="%s">\n'
+            '<meta name="streulicht-fenster-min" content="%d">\n'
+            '<meta name="streulicht-zone" content="%s">\n'
+            % (g.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+               ",".join(ziele), kfg.get("lauf_fenster_min", 60), zone_name))
+
+
+# Der Altersstreifen im BROWSER (T-0075, Review seiten#1).  Beim Bauen
+# entsteht er nur auf dem Mac - genau dem Rechner, dessen Ausfall er melden
+# soll.  Ist der Mac aus, bleibt auf GitHub Pages die letzte, beim Bauen
+# frische Fassung stehen, ohne Streifen.  Dieses Skript wiederholt die
+# Pruefung mit der Uhr der Betrachter:innen: letztes Laufziel, dessen Fenster
+# zu ist, gegen den Abrufzeitpunkt.  Steht der Streifen schon im Markup,
+# tut es nichts; ohne JavaScript bleibt die Seite wie gebaut.  Ohne
+# Laufziele (Polarnacht, alte Seite) gilt: aelter als 30 Stunden.
+FRISCHE_SKRIPT = """<script>
+(function(){try{
+  if(document.querySelector(".veraltet"))return;
+  const m=n=>{const e=document.querySelector('meta[name="streulicht-'+n+'"]');
+    return e?(e.getAttribute("content")||""):"";};
+  const geholt=Date.parse(m("geholt"));
+  if(isNaN(geholt))return;
+  const fb=(parseFloat(m("fenster-min"))||60)*60000, jetzt=Date.now();
+  let faellig=null;
+  for(const z of m("laufziele").split(",").map(Date.parse))
+    if(!isNaN(z)&&z+fb/2<=jetzt&&(faellig===null||z>faellig))faellig=z;
+  const alt=faellig===null?jetzt-geholt>30*3600000:geholt<faellig-fb/2;
+  if(!alt)return;
+  const zone=m("zone")||"Europe/Berlin";
+  const f=(d,o)=>new Intl.DateTimeFormat("de-DE",
+    Object.assign({timeZone:zone},o)).format(new Date(d));
+  const tag=d=>Date.parse(new Intl.DateTimeFormat("en-CA",{timeZone:zone,
+    year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(d)));
+  const tage=Math.round((tag(jetzt)-tag(geholt))/86400000);
+  const wann={0:"von heute frueh",1:"von gestern",2:"von vorgestern"}[tage]
+    ||"von vor "+tage+" Tagen";
+  const dm={day:"2-digit",month:"2-digit"}, hm={hour:"2-digit",minute:"2-digit",hourCycle:"h23"};
+  let text="Diese Zahlen sind "+wann+" ("+f(geholt,dm)+", "+f(geholt,hm)+"\u00a0Uhr).";
+  text+=faellig===null?" Seitdem ist kein Lauf durchgekommen."
+    :" Der Lauf vom "+f(faellig,dm)+", "+f(faellig,hm)+" ist nicht durchgekommen.";
+  const p=document.createElement("p");
+  p.className="veraltet";
+  p.textContent=text;
+  const k=document.querySelector(".korpus");
+  k.parentNode.insertBefore(p,k);
+}catch(e){}})();
+</script>"""
 
 
 def satz(text):
@@ -395,7 +504,7 @@ def rueckschau_eintraege(von, tage, klima, perzentil, s_stern):
 VORLAGE = """<!doctype html><html lang="de"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>Streulicht</title><style>
+__FRISCHE__<title>Streulicht</title><style>
 __TOKENS__
 *{box-sizing:border-box}
 html{color-scheme:dark}
@@ -739,6 +848,7 @@ trennt, nicht dass er unter den guten ordnet.</p>
 
 <a class="weiter" href="bisher.html">Was bisher gemessen ist</a>
 </div></main></div>
+__FRISCHESKRIPT__
 <script>
 const META=__META__, BESTER=__BESTER__;
 const marken=[...document.querySelectorAll(".marke")];
@@ -940,32 +1050,18 @@ def main():
     geholt = (st.get("geholt")
               or (sorted({e["lauf"] for e in eintraege if e.get("lauf")}) or
                   [None])[-1])
-    faellig = letztes_laufziel(datetime.now(timezone.utc), kfg)
     g = None
     if geholt:
         g = datetime.fromisoformat(geholt if len(geholt) > 10
                                    else geholt + "T23:59+00:00")
         if g.tzinfo is None:
             g = g.replace(tzinfo=timezone.utc)
-    # Verglichen wird gegen den ANFANG des Fensters, nicht gegen seine Mitte.
-    # Der Agent tickt zur vollen 20. Minute, das Ziel liegt aber bei
-    # Sonnenuntergang minus drei Stunden - heute also 15:21:58 UTC, waehrend
-    # der Lauf um 15:20:00 begann. Zwei Minuten zu frueh, und die Seite
-    # erklaerte ihre eigenen frischen Zahlen fuer veraltet.
-    fensterbreite = timedelta(minutes=kfg.get("lauf_fenster_min", 60))
-    if (a.rueckschau or not g or not faellig
-            or g >= faellig - fensterbreite / 2):
-        veraltet = ""
-    else:
-        tage = (date.today() - g.date()).days
-        wann = {0: "von heute frueh", 1: "von gestern",
-                2: "von vorgestern"}.get(tage, "von vor %d Tagen" % tage)
-        veraltet = ('<p class="veraltet">Diese Zahlen sind %s '
-                    '(%s, %s&nbsp;Uhr). Der Lauf vom %s ist nicht '
-                    'durchgekommen.</p>'
-                    % (wann, g.astimezone().strftime("%d.%m."),
-                       g.astimezone().strftime("%H:%M"),
-                       faellig.astimezone().strftime("%d.%m., %H:%M")))
+    jetzt = datetime.now(timezone.utc)
+    zone_name = (ort or {}).get("zeitzone", "Europe/Berlin")
+    veraltet = ("" if a.rueckschau
+                else veraltet_streifen(g, jetzt, kfg, ZoneInfo(zone_name)))
+    # Rueckschau: keine Marken, also auch kein Streifen aus dem Browser.
+    frische = "" if a.rueckschau else frische_marken(g, jetzt, kfg, zone_name)
 
     # Push-Auskunft.  Das ist der Absatz, den die alte Seite nirgends hatte -
     # und "kein Push" ist der haeufigste Zustand.  Ohne ihn sieht Schweigen
@@ -998,6 +1094,8 @@ def main():
                        for e in eintraege], ensure_ascii=False)
 
     html = (VORLAGE
+            .replace("__FRISCHE__", frische)
+            .replace("__FRISCHESKRIPT__", FRISCHE_SKRIPT if frische else "")
             .replace("__TOKENS__", tokens.quelltext())
             .replace("__ORT__", anzeige)
             .replace("__KORPUS__", korpus)

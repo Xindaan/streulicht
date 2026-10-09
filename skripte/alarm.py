@@ -463,6 +463,16 @@ def raeume_cache(jetzt, halten_tage=CACHE_HALTEN_TAGE):
     return weg
 
 
+def _hat_daten(d):
+    """Steht in der Antwort `d` (Liste je Zelle) irgendein Wert ausser None?"""
+    for e in d:
+        for k, reihe in (e.get("hourly") or {}).items():
+            if k != "time" and isinstance(reihe, list) \
+                    and any(x is not None for x in reihe):
+                return True
+    return False
+
+
 def abfrage(zellen, variablen, modell, tage, block=25):
     aus = {}
     liste = sorted(zellen)
@@ -489,7 +499,13 @@ def abfrage(zellen, variablen, modell, tage, block=25):
             d = _hole(u)
             if isinstance(d, dict):
                 d = [d]
-            if pfad:
+            if pfad and not _hat_daten(d):
+                # T-0075: ein Block ohne einen einzigen Wert wird NICHT
+                # gecacht.  Sonst laese der Nachhol-Tick dieselben Luecken
+                # aus dem Cache und scheiterte bis zum naechsten Modelllauf
+                # an ihnen, ohne Open-Meteo noch einmal zu fragen.
+                melde("   Block ohne Daten - nicht gecacht")
+            elif pfad:
                 # Ein Cache, der nicht geschrieben werden kann, kostet beim
                 # naechsten Abbruch Kontingent - aber nicht DIESEN Lauf.
                 try:
@@ -756,25 +772,46 @@ def lauf_ort(ort, kfg, jetzt):
         vz = ziel_dt - datetime.fromisoformat(zeiten[i]).replace(tzinfo=timezone.utc)
         stunden = vz.total_seconds() / 3600.0
         for s in SCHICHTEN:
-            sp = [zentrum.get(feldname("wind_speed_%dhPa" % WINDNIVEAU[s], m),
-                              [None])[i] for m in mem]
-            ri = [zentrum.get(feldname("wind_direction_%dhPa" % WINDNIVEAU[s], m),
-                              [None])[i] for m in mem]
-            sp = [x for x in sp if x is not None]
-            ri = [x for x in ri if x is not None]
-            if not sp:
-                versatz[(t, s)] = (0.0, 0.0)
+            # PAARWEISE filtern (T-0075, Review physik#14): nur Member, die
+            # Geschwindigkeit UND Richtung haben.  Bis zum 09.10.2026 liefen
+            # zwei getrennte Filter - bei Teilluecken mittelte der Lauf dann
+            # Tempo und Richtung ueber verschiedene Membermengen, und fehlte
+            # nur die Richtung, riss die Division durch len(ri) den Lauf mit
+            # ZeroDivisionError ab.
+            paare = []
+            for m in mem:
+                v = (zentrum.get(feldname("wind_speed_%dhPa" % WINDNIVEAU[s], m))
+                     or [None] * (i + 1))
+                r = (zentrum.get(feldname("wind_direction_%dhPa" % WINDNIVEAU[s], m))
+                     or [None] * (i + 1))
+                v = v[i] if i < len(v) else None
+                r = r[i] if i < len(r) else None
+                if v is not None and r is not None:
+                    paare.append((v, r))
+            if not paare:
+                # Kein Wind am Ort fuer diese Schicht.  Bis zum 09.10.2026
+                # stand hier still (0, 0): die Advektion war fuer den Abend
+                # aus, und der Lauf meldete trotzdem Erfolg, pushte und
+                # archivierte.  ENTSCHEIDUNG (T-0075): der Abend wird wie
+                # einer ohne Wolkendaten uebersprungen - eine Zahl ohne
+                # Advektion sieht genauso plausibel aus wie eine richtige
+                # (siehe T-0063).  Fehlt der Wind an JEDEM Abend, bleibt
+                # kein Ergebnis, und main() bucht den Lauf als gescheitert.
+                versatz[(t, s)] = None
+                info.setdefault("ohne_wind", []).append(s)
                 continue
             # Richtungsmittel ueber Einheitsvektoren, nicht ueber Grad
-            sx = sum(math.sin(math.radians(x)) for x in ri) / len(ri)
-            cy = sum(math.cos(math.radians(x)) for x in ri) / len(ri)
-            versatz[(t, s)] = versatz_km(sum(sp) / len(sp),
+            sx = sum(math.sin(math.radians(r)) for _, r in paare) / len(paare)
+            cy = sum(math.cos(math.radians(r)) for _, r in paare) / len(paare)
+            versatz[(t, s)] = versatz_km(sum(v for v, _ in paare) / len(paare),
                                          math.degrees(math.atan2(sx, cy)) % 360.0,
                                          stunden)
 
     # Pass 2: versetzte Positionen
     versetzt_zellen, karte = set(), {}
     for t, info in abende.items():
+        if info.get("ohne_wind"):
+            continue                       # wird unten uebersprungen
         for s in SCHICHTEN:
             dx, dy = versatz[(t, s)]
             for schl, (la, lo) in info["punkte"].items():
@@ -805,6 +842,11 @@ def lauf_ort(ort, kfg, jetzt):
 
     ergebnisse = {}
     for t, info in abende.items():
+        if kfg.get("advektion", True) and info.get("ohne_wind"):
+            melde("   %s: KEIN Wind am Ort (%s) - Abend uebersprungen, ohne "
+                  "Advektion waere die Zahl still falsch"
+                  % (t, ", ".join(info["ohne_wind"])))
+            continue
         i = info["schritt"]
         werte = []
         for m in mem:
@@ -1151,6 +1193,13 @@ def _main():
     # Zwischenzeit eingesammelt hat - nachgestellt und belegt.
     neue_abende = {}          # {ort: {tag: (eintrag, verlaufszeile)}}
     neue_alarme = {}          # {ort: {tag: buchung}}
+    # T-0075 (Review alarm#8): Orte, fuer die der Lauf KEINEN einzigen Abend
+    # geliefert hat.  Sie werden nicht gebucht - kein `laeufe`-Eintrag, kein
+    # frisches `stand.geholt` - und der Lauf endet mit Exitcode 1.  Bis zum
+    # 09.10.2026 galt so ein Lauf als Erfolg: das Fenster war verbraucht,
+    # nichts wurde nachgeholt, und die Seite hielt die alten Abende fuer
+    # frisch.
+    leer = []
 
     # Der Modelllauf wird VOR dem Abruf geholt (T-0065, 02.09.2026).  Vorher
     # stand er hinter der Ortsschleife, also rund vier Minuten spaeter - und
@@ -1206,6 +1255,11 @@ def _main():
                 melde("   Kontingentsperre vermerkt bis %s UTC"
                       % k.sperre_bis.strftime("%d.%m. %H:%M"))
             raise
+        if not erg:
+            melde("   %s: KEIN Abend mit Ergebnis - Lauf gescheitert, nichts "
+                  "gebucht, das Fenster bleibt offen" % name)
+            leer.append(name)
+            continue
         eintrag = zustand.setdefault(name, {"abende": {}, "alarme": {}})
         archiv_abende = archive.setdefault(name, {})
         meine = neue_abende.setdefault(name, {})
@@ -1306,6 +1360,8 @@ def _main():
             name = ort["name"]
             if a.geplant and name not in fenster:
                 continue                   # T-0056: nicht gerechnet, nichts zu mergen
+            if name in leer:
+                continue                   # T-0075: gescheitert, nicht buchen
             tag = jetzt.astimezone(ZoneInfo(ort.get("zeitzone", "UTC"))).date()
             eintrag = z.setdefault(name, {"abende": {}, "alarme": {}})
 
@@ -1354,6 +1410,12 @@ def _main():
         # wendet den Merge an und tauscht die Datei per os.replace ein.
         aktualisiere(zpfad, einmerge)
         print("\nZustand: %s" % zpfad)
+    if leer:
+        # Exitcode 1 MIT Grund im Log.  Die Orte mit Ergebnis sind oben
+        # schon gebucht; nur die leeren bleiben offen.
+        raise SystemExit("Kein Ergebnis fuer %s - nicht gebucht, das "
+                         "Fenster bleibt offen"
+                         % ", ".join(leer))
 
 
 if __name__ == "__main__":

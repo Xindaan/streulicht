@@ -1,0 +1,47 @@
+# Waechter AUSSERHALB des Macs (T-0075, Review alarm#5, betrieb#3).
+#
+# Alle 6 Stunden: die ausgelieferte Seite holen und pruefen, ob ihr
+# Abrufzeitpunkt (<meta name="streulicht-geholt">) juenger als 30 h ist.
+# Fehlt er oder ist er aelter, schlaegt der Lauf fehl - und GitHub schickt
+# bei einem fehlgeschlagenen geplanten Lauf eine Mail.
+#
+# Optional zusaetzlich ein ntfy-Push, aber NUR wenn das Repo-Secret
+# NTFY_WAECHTER (der Topic-Name) gesetzt ist.  Das Topic steht nirgends im
+# Klartext; GitHub maskiert es auch im Log.
+#
+# ACHTUNG: GitHub pausiert geplante Workflows in oeffentlichen Repos nach
+# 60 Tagen ohne Aktivitaet im Repo (siehe README, Troubleshooting).
+name: Waechter
+
+on:
+  schedule:
+    - cron: "41 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frische:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      NTFY_WAECHTER: ${{ secrets.NTFY_WAECHTER }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Seite holen
+        run: >
+          curl -fsS --retry 3 --retry-delay 20 --max-time 60
+          -o seite.html "https://xindaan.github.io/streulicht/"
+      - name: Abrufzeitpunkt pruefen
+        run: python3 skripte/waechter.py seite.html --grenze-h 30
+      - name: ntfy (nur mit Secret)
+        if: failure() && env.NTFY_WAECHTER != ''
+        run: >
+          curl -fsS -o /dev/null
+          -H "Title: Streulicht-Waechter"
+          -H "Priority: high"
+          -H "Tags: warning"
+          -H "Click: https://xindaan.github.io/streulicht/"
+          -d "Die Seite ist veraltet oder nicht erreichbar. Laeuft der Mac?"
+          "https://ntfy.sh/${NTFY_WAECHTER}"

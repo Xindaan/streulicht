@@ -259,6 +259,33 @@ selbst auf `seite.py`, `bewertungsseite.py` und `bisher.py`:
 | `de.greatbelow.streulicht.bewertung` | `bewertungen_holen.py` | **stuendlich** zur 5. Minute |
 | `de.greatbelow.streulicht.seite` | `ausliefern.py` | **alle 10 Minuten**, pusht nur bei Aenderung |
 
+### Der Waechter auf GitHub (T-0075)
+
+Ein Waechter auf dem Mac faellt mit dem Mac aus, und `last exit code` der
+Agenten ueberschreibt schon der naechste Leerlauf-Tick mit 0. Deshalb prueft
+`.github/workflows/waechter.yml` **auf GitHub** alle sechs Stunden die
+ausgelieferte Seite: `skripte/waechter.py` liest den Abrufzeitpunkt aus
+`<meta name="streulicht-geholt">` und schlaegt fehl, wenn er fehlt oder
+aelter als 30 Stunden ist. Bei einem fehlgeschlagenen geplanten Lauf schickt
+GitHub eine Mail an das Konto. Von Hand ausloesen: Actions -> Waechter ->
+*Run workflow*.
+
+Zusaetzlich ein ntfy-Push, **nur wenn** das Repo-Secret `NTFY_WAECHTER`
+gesetzt ist (Wert: nur der Topic-Name, ohne `https://ntfy.sh/`). Ohne Secret
+bleibt es bei der Mail. Setzen: Settings -> Secrets and variables ->
+Actions -> *New repository secret*.
+
+Die Seite selbst prueft ihr Alter ausserdem im Browser: ein kleines
+Inline-Skript vergleicht `streulicht-geholt` mit der Uhr der
+Betrachter:innen und blendet denselben Altersstreifen ein, den `seite.py`
+beim Bauen setzt - auch wenn der Mac gar nicht mehr baut. Ohne JavaScript
+bleibt die Seite wie gebaut.
+
+Ein Alarmlauf, der fuer **keinen** Abend ein Ergebnis hat (nur `None` vom
+Abruf, oder kein Wind am Ort), wird nicht mehr als Erfolg gebucht: kein
+`laeufe`-Eintrag, `stand.geholt` bleibt alt, Exitcode 1, Logzeile
+`KEIN Abend mit Ergebnis`. Das Fenster bleibt damit offen.
+
 ### Warum der Alarm sonnenuntergangsrelativ laeuft
 
 Bis zum 18.08.2026 lief er fest um 07:30. Zwei Messungen haben das gekippt:
@@ -587,6 +614,17 @@ er, ist der naechste sinnvolle Zeitpunkt der regulaere Vormittagslauf
 der Zwischenzeit den Hinweisstreifen mit dem Alter der Zahlen; das ist der
 richtige Zustand, kein Defekt.
 
+**Keine Mail vom Waechter, obwohl die Seite alt ist.** GitHub pausiert
+geplante Workflows in oeffentlichen Repos nach **60 Tagen ohne Aktivitaet
+im Repo** (laut GitHub-Doku; ob die Force-Pushs auf `gh-pages` als
+Aktivitaet zaehlen, ist nicht geprueft). Unter Actions -> Waechter steht
+dann ein Hinweis mit *Enable workflow*. Ein Commit auf `main` oder das
+Wiedereinschalten setzt die Frist zurueck.
+
+**Mail vom Waechter.** Zuerst die Seite oeffnen: steht der Altersstreifen
+da, ist der Mac aus, schlaeft oder kommt nicht durch (`daten/alarm.log`).
+Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
+
 ## Entwicklung
 
 | Datei | Zweck |
@@ -636,6 +674,8 @@ richtige Zustand, kein Defekt.
 .venv/bin/python3 skripte/test_score_distanz.py    # Deckung und Luecken in score_distanz (T-0061)
 .venv/bin/python3 skripte/test_erinnerung.py       # Fenster und Nachholen bis Mitternacht (T-0067)
 .venv/bin/python3 skripte/test_kontingent.py       # Blockcache, Kontingentsperre, Pass-2-Deckel (T-0074)
+.venv/bin/python3 skripte/test_ausfall.py          # Lauf ohne Ergebnis wird nicht gebucht (T-0075)
+.venv/bin/python3 skripte/test_frische.py          # Altersstreifen, Clientpruefung, Waechter (T-0075, braucht node)
 node   skripte/test_bewertungsseite.js   # Warteschlange und Freilegung
 ```
 
