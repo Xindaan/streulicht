@@ -47,12 +47,16 @@ ZUSTAND_NACH_LAUF = "{}"
 SCHREIBWEG = {"truncate": 0, "replace": 0}   # T-0051, siehe Abschnitt 6
 MEMBER = [""] + ["%02d" % n for n in range(1, 51)]      # 51 wie ECMWF ENS
 ABRUFE = []                                             # Protokoll der Aufrufe
+# Beginn der erfundenen Zeitachse (UTC-Mitternacht).  None = heutiger Tag nach
+# der Wanduhr (Verhalten dieses Tests); test_ortsfilter.py setzt einen festen
+# Tag, damit seine Zeitachse zu seinem festen "jetzt" passt (T-0079).
+ZEITACHSE_START = None
 
 
 def falscher_abruf(zellen, variablen, modell, tage, block=25):
     """Erfundene, aber formgleiche Antwort - und ein Protokolleintrag."""
     ABRUFE.append({"zellen": set(zellen), "variablen": list(variablen)})
-    start = dt.datetime.now(dt.timezone.utc).replace(
+    start = ZEITACHSE_START or dt.datetime.now(dt.timezone.utc).replace(
         hour=0, minute=0, second=0, microsecond=0)
     zeiten = [(start + dt.timedelta(hours=3 * k)).strftime("%Y-%m-%dT%H:%M")
               for k in range(8 * tage)]

@@ -14,6 +14,15 @@ Sonnenuntergang, und die Frage waere dann irrefuehrend statt hilfreich.
 Kein Netz, kein Zugriff auf Betriebsdaten: eigenes Temp-Verzeichnis, eigener
 Zustand, `sende` durch eine Attrappe ersetzt.
 
+KONFIGURATION (T-0079, Review bewertung#9): der Test liest NICHT die
+Produktiv-`konfig.json`, sondern TESTKONFIG weiter unten.  Vorher uebernahm er
+sie samt `bewertung_tage_pro_woche`; jeder Wert unter 7 (die Wochenstichprobe,
+die Andre jederzeit einstellen darf) machte die Suite rot, obwohl
+erinnerung.py stimmte - bei 2 bis 6 Tagen fielen 2 Pruefungen durch, bei 1 Tag
+sechs.  Wert-Huerde: eine Aenderung an der Betriebskonfiguration (Wochen-
+stichprobe, Vorlauf, Fenster, Topic-Name) darf diesen Test nicht mehr
+beruehren; rot wird er nur noch, wenn erinnerung.py sich aendert.
+
 Lauf:  .venv/bin/python3 skripte/test_erinnerung.py
 """
 import contextlib
@@ -39,6 +48,19 @@ def pruefe(bed, text):
     if not bed:
         fehler.append(text)
 
+
+# Feste Testkonfiguration - dieselben Felder wie die Betriebskonfiguration,
+# soweit erinnerung.py sie liest, aber mit eigenen Werten.  7 = jeden Abend
+# fragen: die Faelle unten setzen genau das voraus.
+TESTKONFIG = {
+    "lauf_vorlauf_stunden": 3,
+    "lauf_fenster_min": 60,
+    "seiten_basis": "https://beispiel.invalid/streulicht",
+    "bewertung_tage_pro_woche": 7,
+    "orte": [{"name": "berlin", "anzeige": "Berlin", "breite": 52.52,
+              "laenge": 13.405, "zeitzone": "Europe/Berlin",
+              "ntfy_bewertung": "test-bewertung-oeffentlich"}],
+}
 
 # Berlin, 02.09.2026: Sonnenuntergang 17:52 UTC (19:52 Ortszeit).
 # Fenster: Start 18:22 UTC, Ende 19:37 UTC.
@@ -74,10 +96,9 @@ def lauf(jetzt_iso, vorzustand=None, geheim=None):
     ENDE[0] = None
     d = tempfile.mkdtemp()
     os.makedirs(os.path.join(d, "daten"), exist_ok=True)
-    kfg = json.load(open(os.path.join(BASIS, "konfig.json")))
     kp = os.path.join(d, "konfig.json")
     with open(kp, "w") as f:
-        json.dump(kfg, f)
+        json.dump(TESTKONFIG, f)
     zp = os.path.join(d, "daten", "zustand.json")
     schreibe(zp, vorzustand or {})
     if geheim is not None:
@@ -174,8 +195,7 @@ print("\n8. Erinnerung geht auf das GEHEIME Topic (T-0077, bewertung#3)")
 # Das oeffentliche Bewertungs-Topic steht im Klartext in der Seite; wer es
 # kennt, kann Pushs mit Klickziel auf Andres Telefon schicken.  Die Erinnerung
 # soll deshalb ueber `ntfy_erinnerung` in konfig_geheim.json laufen.
-oeffentlich = json.load(open(os.path.join(BASIS, "konfig.json")))[
-    "orte"][0]["ntfy_bewertung"]     # steht im Klartext in der Seite
+oeffentlich = TESTKONFIG["orte"][0]["ntfy_bewertung"]   # steht im Klartext in der Seite
 GEHEIM = "sl-erinnerung-testtopic-geheim"
 n, _ = lauf("2026-09-02T18:40", geheim={"ntfy_erinnerung": {"berlin": GEHEIM}})
 pruefe(n == 1 and GESENDET[0]["topic"] == GEHEIM,

@@ -730,6 +730,8 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 .venv/bin/python3 skripte/test_logbuch.py          # Stempel, Rotation unter launchd (T-0081)
 .venv/bin/python3 skripte/test_sicherung.py        # Tageskopie der Zustandsdatei (T-0081)
 .venv/bin/python3 skripte/test_ausliefern.py       # Push-Frist, Fehler stoppen nicht alles (T-0081)
+.venv/bin/python3 skripte/test_netz.py              # Netzwartefrist an der Wanduhr (T-0079)
+.venv/bin/python3 skripte/test_bewertungen_holen.py # ntfy-Parser und vier Eingangswaechter (T-0079)
 node   skripte/test_bewertungsseite.js   # Warteschlange und Freilegung
 ```
 
@@ -762,6 +764,9 @@ haette den Fehler nicht gefunden, gegen den er geschrieben ist.
 `test_seiten.py` braucht `daten/zustand.json` und die erzeugten Seiten (also
 einen Alarmlauf und `skripte/ausliefern.py --trocken` davor); ohne sie endet
 er mit Code 2 statt falsch gruen zu melden.
+Ob die Seite "vergangene Abende" zeigt oder einen Altersstreifen tragen muss,
+beurteilt er gegen den Zeitpunkt, an dem `seite.py` sie geschrieben hat
+(Aenderungszeit der Datei), nicht gegen die Uhr des Testlaufs (T-0079).
 
 Messwerte und Begruendungen: `docs/befunde-e1.md`. Jede Zahl dort ist mit
 ihrem Pruefbefehl belegt, auch die drei, bei denen die erste Annahme falsch war.

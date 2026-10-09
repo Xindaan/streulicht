@@ -22,6 +22,7 @@ Faelle:
 
 Lauf:  python3 skripte/test_seiten.py
 """
+import datetime as _dt
 import json
 import os
 import json as _json
@@ -112,6 +113,18 @@ def main():
         pruefe(False, "web/index.html fehlt - erst skripte/seite.py laufen")
     else:
         html = open(p, encoding="utf-8").read()
+        # BEZUGSZEIT DER SEITE (T-0079, Review tests#5): die Seite ist eine
+        # Momentaufnahme.  Ob sie "vergangene Abende" zeigt oder "veraltet"
+        # sein muss, hing hier an der Wanduhr des Testlaufs - und kippte bei
+        # unveraendertem Code, sobald ein Abendfenster zu war, bevor Alarmlauf
+        # und Seitenbau nachzogen, oder nach Mitternacht vor dem naechsten
+        # Seitenbau.  Gemessen wird deshalb gegen den Moment, in dem seite.py
+        # die Datei geschrieben hat (Aenderungszeit), nicht gegen "jetzt".
+        bau_ts = os.path.getmtime(p)
+        bau_jetzt = _dt.datetime.fromtimestamp(bau_ts, _dt.timezone.utc)
+        # seite.py zaehlt "heute" mit date.today(), also dem Kalendertag des
+        # Rechners zum Bauzeitpunkt.
+        bau_tag = _dt.date.fromtimestamp(bau_ts)
         pruefe(not re.findall(r"__[A-Z_]+__", html),
                "keine uebrigen Platzhalter (%s)"
                % (re.findall(r"__[A-Z_]+__", html) or "-"))
@@ -161,11 +174,10 @@ def main():
                "Bilanzverweis genau zweimal (%d)" % html.count("bisher.html"))
 
         print("\n=== 5b2. Nur kuenftige Abende, und die Korpuszeile stimmt")
-        from datetime import date as _d
         meta = json.loads(re.search(r"const META=(\[.*?\]), BESTER",
                                     html, re.S).group(1))
         tage = [e["tag"] for e in meta]
-        heute = _d.today().isoformat()
+        heute = bau_tag.isoformat()      # Bautag, nicht der Tag des Testlaufs
         vergangen = [t for t in tage if t < heute]
         # Der Zustand sammelt auch vergangene Abende (dort haengen die
         # Bewertungen). Auf eine PROGNOSEseite gehoeren sie nicht - am
@@ -179,7 +191,7 @@ def main():
                "Korpuszeile nennt die gezeigte Anzahl (%d): %s"
                % (len(meta), korpus))
         for t in (tage[0], tage[-1]):
-            d = _d.fromisoformat(t).strftime("%d.%m.")
+            d = _dt.date.fromisoformat(t).strftime("%d.%m.")
             pruefe(d in korpus, "Korpuszeile nennt %s" % d)
 
         print("\n=== 5c. Altersangabe")
@@ -206,11 +218,17 @@ def main():
         # Code als Testfehler getarnt (der Agent tickt zur :20, das
         # Fensterziel lag bei :21:58, die Seite erklaerte ihre eigenen
         # frischen Zahlen fuer veraltet).
-        import datetime as _dt
         kfg_ = json.load(open(os.path.join(BASIS, "konfig.json")))
-        faellig = seite.letztes_laufziel(_dt.datetime.now(_dt.timezone.utc), kfg_)
+        # "jetzt" ist die Bauzeit der Seite (siehe oben), nicht die Uhr des
+        # Testlaufs.  Der Abrufzeitpunkt kommt aus der Seite selbst (Meta
+        # streulicht-geholt, T-0075) - genau das g, aus dem seite.py den
+        # Streifen entschieden hat; ein Zustand, der nach dem Seitenbau
+        # weitergeschrieben wurde, verfaelscht den Vergleich so nicht.
+        faellig = seite.letztes_laufziel(bau_jetzt, kfg_)
         breite = _dt.timedelta(minutes=kfg_.get("lauf_fenster_min", 60))
-        g_ = stand.get("geholt")
+        meta_g = re.search(r'<meta name="streulicht-geholt" content="([^"]*)"',
+                           html)
+        g_ = (meta_g.group(1) if meta_g else None) or stand.get("geholt")
         g_ = _dt.datetime.fromisoformat(g_) if g_ else None
         if g_ is not None and g_.tzinfo is None:
             g_ = g_.replace(tzinfo=_dt.timezone.utc)
