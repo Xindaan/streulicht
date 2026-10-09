@@ -1069,12 +1069,72 @@ def gelaufen(zustand, ort, tag):
     return set(e) if isinstance(e, dict) else set()
 
 
+# T-0087 (Review alarm#6, Entscheidung Andre 09.10.2026, Option A): der
+# NACHTLAUF nach einem Ausfalltag.
+#
+# WARUM.  Scheiterten Vormittags- und Abendlauf, wurde bis zum naechsten
+# Vormittag gar nicht gerechnet - auch nicht fuer die Folgetage.  Seit dem
+# 16.09. gab es zehn solche Tage.  Alle 50 Laeufe ohne Netz seit dem 24.09.
+# lagen zwischen 07 und 22 Uhr, keiner nachts; das Wecken um 02:00 Ortszeit
+# wirkt (betrieb#8).  Die Nacht ist also genau die Zeit, in der ein Lauf nach
+# einem Ausfalltag die besten Aussichten hat.
+#
+# WANN.  Fruehestens um NACHT_AB_LOKAL Ortszeit (Wecken; der Agent tickt um
+# :20, also 02:20) und nicht vor 00 UTC: erst dann gilt das neue
+# Tageskontingent von Open-Meteo.  In Berlin bindet nur die Ortszeit (02:00
+# ist 00:00 UTC im Sommer, 01:00 UTC im Winter).  Spaetestens bis vor das
+# Vormittagsfenster - danach waere er ein nachgeholter Vormittagslauf, und
+# den gibt es bewusst nicht (siehe unten bei NACHHOLEN).
+#
+# WAS ER KOSTET.  Einen vollen Abruf aus dem frischen Tageskontingent: der
+# Blockcache gilt je Modelllauf und UTC-Abruftag.  Bekommt der Vormittagslauf
+# denselben Modelllauf, holt er alles aus dem Cache.  Ob das so ist, sagen
+# die Logzeilen "Modelllauf: ... (Fenster nachts)" und "Bilanz: ... aus dem
+# Blockcache" sowie die Archivdateien <tag>_nachts.json und
+# <tag>_morgens.json (Feld `modelllauf`) - nach zwei Wochen nachzaehlen.
+#
+# BEDINGUNGEN.
+#   * der Vortag (Ortszeit) blieb ohne Lauf.  Ein Nachtlauf des Vortags
+#     zaehlt dabei NICHT als Lauf: in einer Ausfallserie rechnet so jede
+#     Nacht einmal - hoechstens ein voller Abruf mehr je Ausfalltag, wie in
+#     der Entscheidung bepreist;
+#   * heute lief noch nichts, auch kein Nachtlauf (hoechstens einer je
+#     Nacht und Ort; gebucht wird er in `laeufe` wie jedes Fenster);
+#   * `nachtlauf` in konfig.json ist nicht false;
+#   * keine Kontingentsperre (T-0074).  Die prueft _main() vor JEDEM Abruf,
+#     also auch vor diesem - ohne Buchung, das Fenster bleibt offen.  Eine
+#     zweite Pruefung hier waere derselbe Riegel noch einmal.
+#
+# PUSHS sendet er nicht: alarm.py sendet mit Prioritaet "high", und das
+# klingelt um 02:20.  Ein Abend ueber der Schwelle bleibt ungebucht, der
+# naechste Tageslauf rechnet ihn neu und sendet dann (siehe _main).
+NACHT_AB_LOKAL = dtzeit(2, 0)
+
+
+def nachtlauf(jetzt, kfg, ort, zustand, tag, ziele, schon, halb):
+    """Grund fuer einen Nachtlauf JETZT, oder None.  Regeln: siehe oben."""
+    if not kfg.get("nachtlauf", True):
+        return None
+    if schon:
+        return None                    # heute schon gerechnet
+    zone = ZoneInfo(ort.get("zeitzone", "UTC"))
+    ab = max(datetime.combine(tag, NACHT_AB_LOKAL, zone).astimezone(timezone.utc),
+             datetime.combine(tag, dtzeit(0), timezone.utc))
+    if not ab <= jetzt < ziele["morgens"] - halb:
+        return None
+    vortag = tag - timedelta(days=1)
+    if gelaufen(zustand, ort, vortag) - {"nachts"}:
+        return None                    # der Vortag hatte seinen Lauf
+    return "nachts: Vortag %s ohne Lauf, Nachhol-Lauf fuer die Folgetage" % vortag
+
+
 def im_laufenster(jetzt, kfg, ort, zustand):
     """(Fenstername oder None, Grund) - ist JETZT ein geplanter Lauf faellig?
 
     Dasselbe Muster wie in erinnerung.py: der Agent laeuft stuendlich, die
     Entscheidung faellt hier.  Das ist der einzige Weg, der Sommer und
-    Winter mit EINER Regel bedient.
+    Winter mit EINER Regel bedient.  Fenster: "morgens" und "abends" aus
+    laufziele(), dazu "nachts" nur nach einem Ausfalltag (nachtlauf()).
     """
     tag, ziele = laufziele(jetzt, kfg, ort)
     schon = gelaufen(zustand, ort, tag)
@@ -1086,6 +1146,10 @@ def im_laufenster(jetzt, kfg, ort, zustand):
         if ziel - halb <= jetzt <= ziel + halb:
             return name, "im Fenster %s" % name
         offen.append("%s %s" % (name, ziel.strftime("%H:%M")))
+
+    grund = nachtlauf(jetzt, kfg, ort, zustand, tag, dict(ziele), schon, halb)
+    if grund:
+        return "nachts", grund
 
     # NACHHOLEN, aber nur den Abendlauf und nur bis zum Sonnenuntergang.
     #
@@ -1276,7 +1340,11 @@ def _main():
         melde("   Blockcache: %d alte Modelllaeufe geraeumt" % weg)
 
     init = modelllauf(kfg["modell"])
-    melde("   Modelllauf: %s" % (init or "unbekannt"))
+    # Das Fenster steht mit in der Zeile (T-0087): so ist im Log ablesbar, ob
+    # Nacht- und Vormittagslauf denselben Modelllauf bekommen.
+    melde("   Modelllauf: %s (Fenster %s)"
+          % (init or "unbekannt",
+             ", ".join(sorted(set(fenster.values()))) or "vonhand"))
     # Blockcache je Modelllauf (T-0074).  Unbekannter Lauf: kein Cache.
     ABRUF_CACHE["init"] = init
     if not init:
@@ -1353,6 +1421,13 @@ def _main():
                 continue
             if tag in eintrag["alarme"]:
                 continue          # Idempotenz: je Abend hoechstens ein Alarm
+            if fenster.get(name) == "nachts":
+                # T-0087: kein Push um 02:20 - "high" klingelt.  NICHT buchen:
+                # der naechste Tageslauf findet den Abend unbedient, rechnet
+                # ihn mit frischeren Daten neu und sendet dann.
+                melde("     -> Push zurueckgestellt (Nachtlauf), der naechste "
+                      "Tageslauf sendet")
+                continue
             titel = "Streulicht %s" % ort["anzeige"]
             text = push_text(WOCHENTAG[lz.weekday()], lz.strftime("%d.%m."),
                              lz.strftime("%H:%M"), e["p"], e)

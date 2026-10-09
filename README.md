@@ -275,6 +275,7 @@ Andre selbst setzen muss.
 | `lauf_vorlauf_stunden` | der Abendlauf rechnet so viele Stunden vor Sonnenuntergang (Standard 3, siehe "Warum der Alarm sonnenuntergangsrelativ laeuft") |
 | `lauf_fenster_min` | Breite des Fensters um jedes Laufziel, in dem der stuendliche Tick rechnet (Standard 60) |
 | `lauf_morgens_utc` | Zeit des Vormittagslaufs in UTC als `"HH:MM"` (Standard `09:20`); der Lauf schickt keinen zweiten Push, er frischt nur die Seite auf |
+| `nachtlauf` | Nachhol-Lauf ab 02:00 Ortszeit nach einem Tag ganz ohne Lauf (Standard `true`, `false` = aus; siehe "Zwei Laeufe am Tag"); sendet keinen Push |
 | `advektion` | semi-Lagrangesche Zeitinterpolation an/aus (siehe unten) |
 | `pass2_max_zellen` | Obergrenze fuer Pass 2 (Standard 320, `null` = kein Deckel); darueber rechnen die fernen Abende teilweise ohne Advektion, Logzeile `ACHTUNG Pass 2 GEDECKELT` |
 | `seiten_basis` | Basis-URL der ausgelieferten Seiten (Wurzel des `gh-pages`-Zweigs); daraus entstehen die Klickziele der Pushs und der Quittung |
@@ -487,6 +488,19 @@ Ruhezustand) &mdash; damit fiel der ganze Abendlauf aus. Ist das
 Abendfenster verstrichen und noch nicht bedient, laeuft deshalb der naechste
 Tick nach, **bis zum Sonnenuntergang**. Der Vormittagslauf wird nicht
 nachgeholt: zwei Laeufe in einer Stunde traegt das Stundenkontingent nicht.
+
+**Nach einem Ausfalltag rechnet die Nacht nach (T-0087, seit 09.10.2026).**
+Blieb der Vortag ganz ohne Lauf (weder `morgens` noch `abends` noch von
+Hand), gibt es ein drittes Fenster `nachts`: der erste Tick ab 02:00 Ortszeit,
+also nach dem Wecken um 02:20 (Sommerzeit 00:20 UTC, Winterzeit 01:20 UTC), nie
+vor 00 UTC, spaetestens bis vor das Vormittagsfenster. Er rechnet den heutigen
+Abend und die Folgetage, hoechstens einmal je Nacht, und nicht bei aktiver
+Kontingentsperre. Er kostet einen vollen Abruf aus dem neuen Tageskontingent;
+ob der Vormittagslauf ihn aus dem Blockcache wiederverwendet, zeigt die
+Logzeile `Modelllauf: ... (Fenster nachts)` gegen die des Vormittagslaufs.
+**Er sendet keinen Push** &mdash; Alarme klingeln mit Prioritaet "high". Ein
+Abend ueber der Schwelle bleibt ungemeldet, der naechste Tageslauf rechnet ihn
+neu und sendet dann. Abschalten: `"nachtlauf": false`.
 
 Steuergroessen in `konfig.json`: `lauf_vorlauf_stunden` (3),
 `lauf_morgens_utc` (09:20) und `lauf_fenster_min` (60). Das Fenster darf
@@ -759,6 +773,7 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 .venv/bin/python3 skripte/test_seiten.py      # erzeugte Seiten und die neuen Grafiken
 .venv/bin/python3 skripte/test_seiten_atomar.py  # Absturz beim Schreiben laesst die alte Seite stehen
 .venv/bin/python3 skripte/test_lauffenster.py # ein Lauf je Tag, ueber ein ganzes Jahr
+.venv/bin/python3 skripte/test_nachtlauf.py   # Nachtlauf nach Ausfalltag, ohne Push (T-0087)
 .venv/bin/python3 skripte/test_abruf.py       # Wind nur am Ort, Advektion trotzdem aktiv
 .venv/bin/python3 skripte/test_wn3.py         # WeatherNext-3-Leser, Zeitachse, Negativproben
 .venv/bin/python3 skripte/test_zustandsdatei.py    # atomarer Schreibvorgang (T-0051)
@@ -783,7 +798,7 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 node   skripte/test_bewertungsseite.js   # Warteschlange und Freilegung
 ```
 
-Stand 09.10.2026: **821 Python-Pruefungen in 27 Dateien + 64 JS, alle gruen**
+Stand 09.10.2026 (nach T-0087): **856 Python-Pruefungen in 28 Dateien + 64 JS, alle gruen**
 (gezaehlt als Ausgabezeilen `ok` je Datei, ohne Netz; `test_phantomnullen.py`
 mit ICON-Cache, `test_seiten.py` und `test_seiten_atomar.py` mit `daten/`
 mitgezaehlt; `test_advektion.py` zaehlt seine `ok`-Zeilen jetzt mit). Vorher, am 04.09.2026:

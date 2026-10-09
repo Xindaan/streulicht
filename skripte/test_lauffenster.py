@@ -80,10 +80,13 @@ def main():
     minute = sorted(minuten)[0]
     schief, treffer = [], []
     tag = dt.date(2026, 1, 1)
+    # Der Zustand wandert mit: ein bedientes Fenster darf nicht noch einmal
+    # zuschlagen, ein anderes schon.  Und er wandert ueber die Tage: seit
+    # T-0087 haengt der Nachtlauf am Vortag - ein lueckenloses Jahr hat
+    # keinen einzigen (den Nachtlauf prueft test_nachtlauf.py).
+    zustand = {ort["name"]: {"laeufe": {
+        "2025-12-31": {"morgens": "x", "abends": "x"}}}}
     while tag < dt.date(2027, 1, 1):
-        # Der Zustand wandert mit: ein bedientes Fenster darf nicht noch
-        # einmal zuschlagen, ein anderes schon.
-        zustand = {ort["name"]: {"laeufe": {}}}
         heute = []
         for stunde in range(24):
             jetzt = dt.datetime.combine(tag, dt.time(stunde, minute),
