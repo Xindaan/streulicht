@@ -261,6 +261,12 @@ e_tief = {"schirm": "mid", "A": 0.6, "weg": 0.7, "sicht": 0.2}
 b = alarm.begruendung(e_tief)
 pruefe("tiefe Decke \u00fcber der Stadt" in b and "ueber" not in b,
        "begruendung(): echter Umlaut (%s)" % b)
+# sicht=0.0 ist die schlechteste Sicht, nicht "unbekannt" (09.10.2026)
+pruefe("tiefe Decke" in alarm.begruendung(dict(e_tief, sicht=0.0)),
+       "begruendung(): sicht=0.0 wird als tiefe Decke erkannt")
+pruefe("tiefe Decke" not in alarm.begruendung(dict(e_tief, sicht=None))
+       and "tiefe Decke" not in alarm.begruendung(dict(e_tief, sicht=0.5)),
+       "begruendung(): sicht=None und sicht=0.5 sind keine tiefe Decke")
 
 # --- Seiten fuer B5/C bauen ---------------------------------------------------
 

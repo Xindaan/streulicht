@@ -958,7 +958,10 @@ def begruendung(e):
         teile.append("Licht kommt von Westen frei durch")
     elif (e["weg"] or 0) >= 0.3:
         teile.append("Lichtweg nach Westen teils frei")
-    if (e["sicht"] or 1) < 0.5:
+    # `is not None`, nicht `or 1`: sicht=0.0 (vollstaendig zu) ist eine echte
+    # Messung und die schlechteste Sicht, nicht "unbekannt".  `0.0 or 1` ergab
+    # 1 und liess genau den schlimmsten Fall als frei durchgehen.
+    if e["sicht"] is not None and e["sicht"] < 0.5:
         # Echter Umlaut: der Satz landet unveraendert im Push UND im Hero der
         # Seite (Review uiux#11); die Seite schreibt sonst durchgehend richtig.
         teile.append("aber tiefe Decke \u00fcber der Stadt")
