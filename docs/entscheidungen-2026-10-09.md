@@ -125,7 +125,8 @@ liegen am naechsten an den 20 % der Definition (18/51 ergaeben 21,4 %, 20/51
 *Vorbehalte.* (1) Duenne Basis: 44 Zielabende zwischen September und Oktober,
 nur Spaetsommer/Herbst; Vorhersagen desselben Abends aus verschiedenen Laeufen
 sind keine unabhaengigen Stichproben (nimmt man je Zielabend nur die letzte
-Vorhersage, sind es bei 19/51 sogar 27,3 % von 44). Die Grenze ist eine
+Vorhersage, sind es bei 19/51 sogar 29,5 % = 13 von 44; korrigiert vom Gate, die erste
+Zaehlung sortierte "_abends" vor "_morgens" desselben Tages). Die Grenze ist eine
 Setzung und gehoert nach Winter und Fruehjahr neu gemessen. (2) Die Rate
 haengt stark am Vorlauf: gesamt 19 %, aber 27,5 % bei Vorlauf 0-1 und nur
 10 % ab Vorlauf 5. Weit voraus streuen die Member ueber die Klimatologie, ein

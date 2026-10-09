@@ -1,7 +1,8 @@
 # TASK
 
-Sonnenuntergangs-Alarm Berlin. Zwei bis zehn Tage im Voraus eine
-Wahrscheinlichkeit fuer einen aussergewoehnlichen Sonnenuntergang melden.
+Sonnenuntergangs-Alarm Berlin. Bis zu zehn Abende voraus eine Wahrscheinlichkeit
+fuer einen aussergewoehnlichen Sonnenuntergang melden - belastbar ab etwa ein
+bis drei Tagen, weiter voraus nur Tendenz (T-0085).
 
 Etappen: E0 Score-Design (fertig) · E1 Backfill und Kalibrierung (laeuft) ·
 E2 Alarm · E3 Oberflaeche.

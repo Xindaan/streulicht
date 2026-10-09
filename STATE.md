@@ -1,5 +1,14 @@
 # STATE
 
+**Stand 09.10.2026 abends: Entscheidungen T-0084 bis T-0087 umgesetzt**
+(`docs/entscheidungen-2026-10-09.md`). Die Stufen "auffaellig"/"selten"
+kommen jetzt aus dem Anteil der Modelllaeufe ("selten" = Push-Bedingung,
+"auffaellig" ab 19 von 51 Membern im obersten Fuenftel; skripte/stufen.py);
+nach einem Ausfalltag rechnet ein Nachtlauf um 02:20 die Folgetage nach,
+ohne nachts zu pushen; das Vorlauf-Versprechen ist abgeschwaecht. Die
+Sichtfaktor-Messung (T-0086) liegt vor und stuetzt "gleich gewichtet lassen"
+- Andres Entscheidung steht aus. Tests: 856 Python-Pruefungen + 64 JS gruen.
+
 **Stand 09.10.2026 nachmittags: Review umgesetzt** (`docs/review-2026-10-09.md`).
 T-0074 bis T-0083 sind gebaut, je mit Gate und Negativproben, und laufen live:
 Blockcache und Sperre nach 429 (T-0074), ein Lauf ohne Ergebnis gilt nicht
@@ -42,8 +51,9 @@ nicht. Der Score bleibt, wie er ist.
 
 ## Ziel
 
-Zwei bis zehn Tage im Voraus eine Wahrscheinlichkeit fuer einen
-aussergewoehnlichen Sonnenuntergang in Berlin melden — und den Abend danach
+Bis zu zehn Abende voraus eine Wahrscheinlichkeit fuer einen
+aussergewoehnlichen Sonnenuntergang in Berlin melden (belastbar ab etwa ein
+bis drei Tagen, weiter voraus nur Tendenz; T-0085) — und den Abend danach
 zeigen.
 
 ## Status
