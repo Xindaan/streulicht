@@ -80,8 +80,8 @@ stehen im Backlog-Block T-0072.
       Klimatologie. Der Ausweg (Quantilabbildung) steht schon oben und bleibt
       richtig; falsch war nur die Begruendung. Fuer 2026 enthaelt die
       Klimatologie nur 40 Abende; der Kontingentbedarf zum Nachholen ist
-      UNBELEGT. (Gleiche Begruendung in STATE.md:185-186; STATE.md wird
-      hier nicht angefasst.)
+      UNBELEGT. (Gleiche Begruendung in STATE.md:205 "Album (2014-2022)"; STATE.md
+      wird hier nicht angefasst.)
 - [ ] Ab sofort je Lauf das WN3-Medianfeld mitschreiben (kostenlos), damit
       die Ueberlappung waechst statt zu warten. Dieselbe Lehre wie in
       Befund E1: "jeder Tag Wartezeit ist ein verlorener Kalibrierungstag".
@@ -291,8 +291,12 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   Andre (fachlich): F3 Seite zeigt Median-Rang gegen Einzelanalyse-Verteilung,
   physik#4 Sichtfaktor-Gewichtung, F11 Versprechen "2-10 Tage", F10
   Verankerung durch Prognoseseite und Push. STATE.md bewusst nicht angefasst;
-  dort stehen noch 'Album 2014 bis 2022' (Z. 185-186) und die zu breite
-  Belastungsaussage (Z. 7-8, F6) sowie die Zahlen in Z. 55-58 (F5).
+  offen sind dort nur die Album-Begruendung "Album (2014-2022)" (Z. 205) und
+  die F5-Zahlen (Z. 64-67: 18,5 Ausloesungen/Jahr, Januar, r(A,B)). Die zu
+  breite Belastungsaussage (F6) ist dort seit e5a2480 korrigiert (Z. 12-16).
+  (Zeilenangaben Stand 09.10.2026 nach e5a2480; die ersten Fassungen dieser
+  Zeile nannten veraltete Zeilen und die Belastungsaussage faelschlich als
+  offen.)
 - T-0079 Testluecken (Review 09.10.2026): ausliefern.py ungetestet
   (Allow-Liste, Zweigriegel; tests#9); netz.warte_auf_netz (tests#8);
   bewertungen_holen.hole() und vier Eingangswaechter (bewertung#8, tests#7);
