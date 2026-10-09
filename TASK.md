@@ -194,6 +194,14 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   Median nur in 10 % bzw. 0,3 %. Zonen aus der Verteilung archivierter
   Median-Werte ableiten; vorher pruefen, ob genug Archivtage fuer stabile
   Schwellen da sind (Saison!). Push-Schwelle s* bleibt unberuehrt.
+  Stand 09.10.2026: umgesetzt - Commit 261cb54. "selten" = p >= p* (dieselbe
+  Funktion wie die Push-Bedingung im Alarm), "auffaellig" = mindestens 37 % der
+  Member im obersten Fuenftel (19,3 % von 440 Vorhersagen ab dem Advektionsfix
+  statt 9,5 %; Tabelle und Vorbehalte in `docs/entscheidungen-2026-10-09.md`
+  Abschnitt 1). Regel in `skripte/stufen.py`; der Alarm speichert
+  `anteil_auffaellig` je Abend, aeltere Zeilen zeigt die Bilanz mit alter Stufe
+  und Vermerk. Offen: Q nach Winter/Fruehjahr neu messen (nah dran 27,5 %,
+  ab Vorlauf 5 Tage nur 10 %).
 - T-0085 Vorlauf-Versprechen abschwaechen (Entscheidung Andre 09.10.2026,
   methodik#F11). README Z. 3 und Seitentexte: "zwei bis zehn Tage im Voraus"
   auf "ab etwa 1-3 Tagen belastbar, weiter voraus nur Tendenz" umformulieren.
