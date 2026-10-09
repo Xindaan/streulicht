@@ -173,6 +173,18 @@ Befunde alarm#1, #2, #3, #4, #10, #12, tests#6 in `docs/review-2026-10-09.md`.
   Messung bringen.
 - Akzeptanz: Verhaltenstest "429 mitten in Pass 2, Folge-Tick holt nur die
   fehlenden Bloecke", mit Negativprobe je Waechter.
+- Stand 09.10.2026: umgesetzt - Blockcache je Modelllauf
+  (`daten/cache/abruf/`), Kontingentsperre im Zustand (`_kontingent`),
+  Pass-2-Deckel `pass2_max_zellen` = 320, eigenes Wartebudget fuer
+  Minutenlimit/concurrent; Test `skripte/test_kontingent.py` mit 18
+  Negativproben (Commit c493481).
+- OFFEN: STATE.md (Abschnitt Kontingent) sagt noch "Die Memberzahl
+  multipliziert NICHT" - widerspricht README/alarm.py und dem Log (alarm#3);
+  STATE war in diesem Schritt ausgenommen, Satz beim naechsten STATE-Pass
+  korrigieren. Der Done-Block "Kontingent vollstaendig vermessen" ("210.000
+  im Monat - es passt") beruht auf 216 Ortsabrufen; er bleibt als
+  Zeitdokument stehen, gueltig ist README "Was die Grenze kostet". Die
+  Gewichtung selbst bleibt ungemessen (alarm#4).
 
 ### T-0075 Ausfall sichtbar machen (ergaenzt T-0040) - aus Review 09.10.2026
 Kein Melder; `last exit code` wird vom naechsten Leerlauf-Tick mit 0
