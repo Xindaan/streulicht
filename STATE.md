@@ -72,6 +72,12 @@ Die Memberzahl multipliziert NICHT.  Gemessen: 10x3, 25x3 und 10x9 Variablen
 liefen nacheinander durch - unter der Member-Hypothese waeren das kumulativ
 9945 gewichtete Calls gewesen und der zweite Test haette scheitern muessen.
 
+**Stand 09.10.2026:** Dieser Satz ist nicht mehr gesichert. README ("Was die
+Grenze kostet") und `alarm.py` (Zeile 128) rechnen mit Variablen x Member / 10
+je Ort, und das Log folgt dem meist; die offizielle Formel von Open-Meteo ist
+ungeklaert (Review alarm#3/#4). Die Messung vom 14.08. bleibt als Messung
+stehen; "multipliziert nicht" ist als Schluss daraus nicht gesichert.
+
 **KORREKTUR 14.08.2026 nachmittags: die Limits gelten NICHT
 endpunktuebergreifend.**  Hier stand das Gegenteil.  Zweimal in
 entgegengesetzter Richtung gemessen, was Zufall ausschliesst:
@@ -193,8 +199,8 @@ betrieb#8).
    angebunden, Zuschnitt (a) - nur die Faecherextraktion zieht um, der Mac
    liest eine kleine JSON-Datei, `ecmwf_ifs025` bleibt Rueckfall. Der Leser
    `skripte/wn3.py` steht und ist gegen echte Daten gefahren
-   (`skripte/test_wn3.py`, 18 Pruefungen + 5 Negativproben gruen). Offen
-   sind e2-micro gegen Cloud Run, der Uebergabeweg und die echte Messung
+   (`skripte/test_wn3.py`, 55 Pruefungen + 14 Negativproben gruen, Stand
+   09.10.2026). Offen sind e2-micro gegen Cloud Run, der Uebergabeweg und die echte Messung
    des Zeitbudgets auf der Instanz - meine 1,5 bis 2,5 h je Lauf sind vom
    Mac hochgerechnet, nicht gemessen.
    **Stand 08.09.2026 abends:** Der kostenlose Vergleich ist gerechnet
@@ -202,8 +208,11 @@ betrieb#8).
    Abende aehnlich (r = 0,868), WN3 liegt aber systematisch hoeher und
    wuerde s* dreimal reissen, wo ECMWF es keinmal tut - einmal an einem
    Abend mit Note 0. Damit steht ein Blocker VOR der Betriebsfrage: s*
-   waere fuer WN3 neu zu bestimmen, und das Album (2014-2022) ist fuer
-   WN3 unerreichbar, weil dessen Archiv erst am 01.01.2026 beginnt.
+   waere fuer WN3 neu zu bestimmen. (Die Begruendung "Album 2014 bis 2022"
+   war falsch: das Album reicht bis 2026-06-28, 81 Fotos an 80 Abenden;
+   korrigiert 09.10.2026, Review methodik#F8. Blocker bleibt nur, dass s*
+   fuer WN3 neu zu bestimmen ist - s* ist das 95. Perzentil der
+   Klimatologie, und WN3s Archiv beginnt erst am 01.01.2026.)
 
 2. **Morgen frueh einmal nachsehen, ob das Wecken traegt.** Der
    Notenverlust ist seit dem 04.09.2026 geschlossen (T-0066): Abruf

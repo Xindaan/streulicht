@@ -74,14 +74,14 @@ stehen im Backlog-Block T-0072.
       fuer GFS->ECMWF vorgesehen hat, ueber eine Ueberlappungsperiode.
       Das ist zu klaeren, BEVOR ueber eine Instanz geredet wird.
       **Nachtrag 09.10.2026 (Review methodik#F8):** Die Begruendung "Album
-      2014 bis 2022" ist falsch. Das Album umfasst 81 Abende von 2014-10-07
-      bis 2026-06-28 (2023: 14, 2024: 11, 2025: 7, 2026: 6). s* stammt
+      2014 bis 2022" ist falsch. Das Album umfasst 81 Fotos an 80 Abenden
+      von 2014-10-07 bis 2026-06-28 (2023: 14, 2024: 11, 2025: 7, 2026: 6). s* stammt
       ohnehin nicht aus dem Album, sondern ist das 95. Perzentil der
       Klimatologie. Der Ausweg (Quantilabbildung) steht schon oben und bleibt
       richtig; falsch war nur die Begruendung. Fuer 2026 enthaelt die
       Klimatologie nur 40 Abende; der Kontingentbedarf zum Nachholen ist
-      UNBELEGT. (Gleiche Begruendung in STATE.md:205 "Album (2014-2022)"; STATE.md
-      wird hier nicht angefasst.)
+      UNBELEGT. (Gleiche Begruendung in STATE.md "Album (2014-2022)"; dort am 09.10.2026
+      nachgezogen.)
 - [ ] Ab sofort je Lauf das WN3-Medianfeld mitschreiben (kostenlos), damit
       die Ueberlappung waechst statt zu warten. Dieselbe Lehre wie in
       Befund E1: "jeder Tag Wartezeit ist ein verlorener Kalibrierungstag".
@@ -151,10 +151,9 @@ Befunde alarm#1, #2, #3, #4, #10, #12, tests#6 in `docs/review-2026-10-09.md`.
   weil Open-Meteo die Zeitachse ohne Startdatum am Abruftag beginnt; derselbe
   Modelllauf nach Mitternacht UTC haette sonst den Windblock vom Vortag
   bekommen. Test h) in `test_kontingent.py` (Folgecommit zu c493481).
-- OFFEN: STATE.md (Abschnitt Kontingent) sagt noch "Die Memberzahl
-  multipliziert NICHT" - widerspricht README/alarm.py und dem Log (alarm#3);
-  STATE war in diesem Schritt ausgenommen, Satz beim naechsten STATE-Pass
-  korrigieren. Der Done-Block "Kontingent vollstaendig vermessen" ("210.000
+- STATE.md (Abschnitt Kontingent) sagte "Die Memberzahl multipliziert NICHT" -
+  widerspricht README/alarm.py und dem Log (alarm#3); am 09.10.2026 mit einem
+  datierten Hinweis versehen (Formel ungeklaert). Der Done-Block "Kontingent vollstaendig vermessen" ("210.000
   im Monat - es passt") beruht auf 216 Ortsabrufen; er bleibt als
   Zeitdokument stehen, gueltig ist README "Was die Grenze kostet". Die
   Gewichtung selbst bleibt ungemessen (alarm#4).
@@ -232,12 +231,18 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   Andre (fachlich): F3 Seite zeigt Median-Rang gegen Einzelanalyse-Verteilung,
   physik#4 Sichtfaktor-Gewichtung, F11 Versprechen "2-10 Tage", F10
   Verankerung durch Prognoseseite und Push. STATE.md bewusst nicht angefasst;
-  offen sind dort nur die Album-Begruendung "Album (2014-2022)" (Z. 205) und
-  die F5-Zahlen (Z. 64-67: 18,5 Ausloesungen/Jahr, Januar, r(A,B)). Die zu
+  offen sind dort nur die F5-Zahlen (Z. 64-67: 18,5 Ausloesungen/Jahr, Januar,
+  r(A,B)); die Album-Begruendung ist am 09.10.2026 nachgezogen. Die zu
   breite Belastungsaussage (F6) ist dort seit e5a2480 korrigiert (Z. 12-16).
   (Zeilenangaben Stand 09.10.2026 nach e5a2480; die ersten Fassungen dieser
   Zeile nannten veraltete Zeilen und die Belastungsaussage faelschlich als
   offen.)
+  Ebenfalls OFFEN bleiben methodik#F2 (Quantilbruecke s*/p* per Schwanzzaehlung
+  nicht messbar), F7 (WN3-Vergleich: ECMWF-Seite ein 0,5-Grad-Medianfeld, teils
+  vor T-0063), F12 (Gitter: s* stammt vom 0,5-Grad-Gitter der Klimatologie, der
+  Betrieb rechnet auf 0,25; Effekt ungemessen - nur der konfig.json-Kommentar
+  ist am 09.10.2026 korrigiert) und F13 (Albumanreicherung: rho 0,40-0,50 nicht
+  identifiziert).
 - T-0079 Testluecken (Review 09.10.2026): ausliefern.py ungetestet
   (Allow-Liste, Zweigriegel; tests#9); netz.warte_auf_netz (tests#8);
   bewertungen_holen.hole() und vier Eingangswaechter (bewertung#8, tests#7);

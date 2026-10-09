@@ -27,5 +27,5 @@
    "ntfy_bewertung": "sl-bew-2m65326hwe64"
   }
  ],
- "_hinweis_schwelle": "s* gilt fuer GEWICHTUNG='raumwinkel', Faecher 5x8, Gitter 0.5 Grad, 3-Schicht-Variante. Aendert sich eines davon, ist s* ungueltig."
+ "_hinweis_schwelle": "s* gilt fuer GEWICHTUNG='raumwinkel', Faecher 5x8, 3-Schicht-Variante. Aendert sich eines davon, ist s* ungueltig. GITTER: s* stammt vom 0,5-Grad-Gitter der Klimatologie (klimatologie.py), der Betrieb rechnet auf 0,25 Grad (alarm.py GITTER). Das ist eine Dauereigenschaft der Quantilbruecke, ihr Effekt ist ungemessen (Review 09.10.2026, methodik#F12)."
 }

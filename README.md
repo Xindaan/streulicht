@@ -780,9 +780,10 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 node   skripte/test_bewertungsseite.js   # Warteschlange und Freilegung
 ```
 
-Stand 09.10.2026: **809 Python-Pruefungen in 26 Dateien + 64 JS, alle gruen**
-(gezaehlt als Ausgabezeilen `ok`; `test_phantomnullen.py` mit ICON-Cache,
-`test_seiten.py` mit `daten/zustand.json` mitgezaehlt). Vorher, am 04.09.2026:
+Stand 09.10.2026: **821 Python-Pruefungen in 27 Dateien + 64 JS, alle gruen**
+(gezaehlt als Ausgabezeilen `ok` je Datei, ohne Netz; `test_phantomnullen.py`
+mit ICON-Cache, `test_seiten.py` und `test_seiten_atomar.py` mit `daten/`
+mitgezaehlt; `test_advektion.py` zaehlt seine `ok`-Zeilen jetzt mit). Vorher, am 04.09.2026:
 310 + 41.
 
 **Kein Test darf von der Uhrzeit abhaengen.** Zwei taten es bis zum
