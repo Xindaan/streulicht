@@ -20,6 +20,7 @@ import json
 import os
 import sys
 import tempfile
+import urllib.error
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(BASIS, "skripte"))
@@ -40,15 +41,29 @@ def pruefe(bed, text):
 # Berlin, 02.09.2026: Sonnenuntergang 17:52 UTC (19:52 Ortszeit).
 # Fenster: Start 18:22 UTC, Ende 19:37 UTC.
 GESENDET = []
+EREIGNISSE = []        # Reihenfolge: "netz" (Warten) und "sende" (Versand)
+ENDE = [None]          # wie der letzte Lauf endete: None oder SystemExit
+WIRFT = [False]        # soll der Versand scheitern?
 
 
 def falscher_versand(topic, titel, text, klick=None):
+    EREIGNISSE.append("sende")
+    if WIRFT[0]:
+        raise urllib.error.URLError("ntfy weg (Test)")
     GESENDET.append({"topic": topic, "titel": titel, "klick": klick})
+
+
+def falsches_warten(*a, **k):
+    # Kein DNS im Test (und die Netzsperre der Pruefumgebung wirft hier).
+    EREIGNISSE.append("netz")
+    return True
 
 
 def lauf(jetzt_iso, vorzustand=None):
     """Einen Erinnerungslauf fahren.  Rueckgabe: (Zahl Sendungen, Zustand)."""
     GESENDET.clear()
+    EREIGNISSE.clear()
+    ENDE[0] = None
     d = tempfile.mkdtemp()
     os.makedirs(os.path.join(d, "daten"), exist_ok=True)
     kfg = json.load(open(os.path.join(BASIS, "konfig.json")))
@@ -59,15 +74,20 @@ def lauf(jetzt_iso, vorzustand=None):
     schreibe(zp, vorzustand or {})
 
     alt_basis, alt_sende = erinnerung.BASIS, erinnerung.sende
+    alt_netz = erinnerung.warte_auf_netz
     erinnerung.BASIS = d
     erinnerung.sende = falscher_versand
+    erinnerung.warte_auf_netz = falsches_warten
     sicher, sys.argv = sys.argv, ["erinnerung.py", "--konfig", kp,
                                   "--jetzt", jetzt_iso]
     try:
         erinnerung.main()
+    except SystemExit as ex:
+        ENDE[0] = ex
     finally:
         sys.argv = sicher
         erinnerung.BASIS, erinnerung.sende = alt_basis, alt_sende
+        erinnerung.warte_auf_netz = alt_netz
     return len(GESENDET), lade(zp)
 
 
@@ -111,6 +131,30 @@ n, z = lauf("2026-12-21T22:00")
 pruefe(n == 1, "auch im Dezember nachgeholt (%d)" % n)
 pruefe("2026-12-21" in (z.get("berlin") or {}).get("erinnerungen", {}),
        "und fuer den richtigen Abend gebucht")
+
+print("\n7. Netz abwarten VOR dem Versand, Exitcode bei Versandfehler (T-0081)")
+# Review 09.10.2026, bewertung#5: der Agent wartete nie aufs Netz (26
+# Fehlversuche an 13 Abenden, einmal ging ein Abend ganz verloren) und endete
+# bei jedem Versandfehler mit Exitcode 0 - launchd zeigte "last exit code = 0".
+n, z = lauf("2026-09-02T18:40")
+pruefe(EREIGNISSE == ["netz", "sende"],
+       "erst aufs Netz warten, dann senden (%s)" % EREIGNISSE)
+pruefe(ENDE[0] is None, "gelungener Versand: Exitcode 0")
+n, _ = lauf("2026-09-02T16:00")
+pruefe(EREIGNISSE == [],
+       "nichts zu senden: auch kein Warten auf das Netz (%s) - 23 von 24 "
+       "Ticks haben nichts zu tun" % EREIGNISSE)
+WIRFT[0] = True
+n, z = lauf("2026-09-02T18:40")
+pruefe(n == 0 and not (z.get("berlin") or {}).get("erinnerungen"),
+       "Versandfehler: nichts gebucht, der naechste Tick holt nach")
+pruefe(isinstance(ENDE[0], SystemExit) and ENDE[0].code not in (None, 0),
+       "Versandfehler: Exitcode != 0, mit Grund (%s)"
+       % (ENDE[0].code if ENDE[0] else "-"))
+WIRFT[0] = False
+n, z = lauf("2026-09-02T18:55", z)
+pruefe(n == 1 and ENDE[0] is None,
+       "der naechste Tick sendet nach, wenn das Netz da ist (%d)" % n)
 
 print("")
 if fehler:

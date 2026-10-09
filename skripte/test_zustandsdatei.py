@@ -188,6 +188,7 @@ with tempfile.TemporaryDirectory() as d:
 
     # erinnerung.py: Versand stubben, Zustandspfad umbiegen, main() fahren.
     erinnerung.sende = lambda *a, **k: 200
+    erinnerung.warte_auf_netz = lambda *a, **k: True      # kein DNS im Test
     erinnerung.BASIS = d
     os.makedirs(os.path.join(d, "daten"), exist_ok=True)
     schreibe(os.path.join(d, "daten", "zustand.json"),

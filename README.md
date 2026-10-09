@@ -223,6 +223,7 @@ Andre selbst setzen muss.
 | `pass2_max_zellen` | Obergrenze fuer Pass 2 (Standard 320, `null` = kein Deckel); darueber rechnen die fernen Abende teilweise ohne Advektion, Logzeile `ACHTUNG Pass 2 GEDECKELT` |
 | `orte[]` | Name, Koordinaten, Zeitzone, Bewertungs-Topic |
 | `faecher` | optional: reduzierte Abfragegeometrie |
+| `sicherung_ordner` | optional: Pfad (z. B. ein iCloud-Ordner), in den die Tagessicherung der Zustandsdatei ZUSAETZLICH kopiert wird (T-0081); der Ordner selbst wird angelegt, sein Elternordner muss existieren |
 
 **Zwei Fallen in dieser Datei.**
 
@@ -469,6 +470,28 @@ launchctl kickstart -k gui/$UID/de.greatbelow.streulicht.erinnerung
 Der zweite Befehl stoesst einen Agenten sofort an — der Funktionstest, ohne
 auf die naechste Kalenderzeit zu warten. Logs liegen unter `daten/*.log`.
 
+**Logs (T-0081).** Jede Zeile der vier Agenten beginnt mit
+`JJJJ-MM-TT HH:MM:SS` (auch stderr und Tracebacks). Ein Log ueber rund 1 MB
+wird beim naechsten Start der Reihe nach in `<name>.log.1` verschoben (eine
+Generation, die vorige wird ueberschrieben); der Lauf schreibt danach in die
+frische Datei. Die Datei, die ein Agent dreht, ist die, die seine plist als
+`StandardOutPath` setzt (`skripte/logbuch.py`, `test_logbuch.py` prueft die
+Uebereinstimmung).
+
+**Exitcodes (T-0081).** `erinnerung.py` und `ausliefern.py` enden bei einem
+Fehler mit Exitcode != 0 (`launchctl print gui/$UID/de.greatbelow.streulicht.seite`
+zeigt `last exit code`). `ausliefern.py` baut jede Seite fuer sich: scheitert
+`seite.py`, werden Bewertungs- und Bilanzseite trotzdem gebaut und
+veroeffentlicht, der Lauf endet am Ende mit Exitcode 1 und dem Grund im Log.
+Der `git push` hat eine Zeitgrenze (3 Versuche a 120 s).
+
+**Sicherung der Noten (T-0081).** `ausliefern.py` legt bei jedem Lauf (also
+alle 10 Minuten, ohne Netz) eine Kopie von `daten/zustand.json` nach
+`daten/sicherung/zustand-JJJJ-MM-TT.json` (der letzte Stand des Tages; die
+letzten 14 Tage bleiben). Eine Zustandsdatei, die kein gueltiges JSON ist,
+wird nicht kopiert. Mit `sicherung_ordner` in `konfig.json` geht jede Kopie
+zusaetzlich dorthin.
+
 > **EINE GEAENDERTE PLIST WIRD NICHT VON SELBST GELESEN**, und `kickstart`
 > hilft dabei nicht. Am 18.08.2026 hat `cp` plus `kickstart -k` einen Lauf
 > gestartet — aber mit der ALTEN, noch in launchd geladenen Definition:
@@ -676,6 +699,9 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 .venv/bin/python3 skripte/test_kontingent.py       # Blockcache, Kontingentsperre, Pass-2-Deckel (T-0074)
 .venv/bin/python3 skripte/test_ausfall.py          # Lauf ohne Ergebnis wird nicht gebucht (T-0075)
 .venv/bin/python3 skripte/test_frische.py          # Altersstreifen, Clientpruefung, Waechter (T-0075, braucht node)
+.venv/bin/python3 skripte/test_logbuch.py          # Stempel, Rotation unter launchd (T-0081)
+.venv/bin/python3 skripte/test_sicherung.py        # Tageskopie der Zustandsdatei (T-0081)
+.venv/bin/python3 skripte/test_ausliefern.py       # Push-Frist, Fehler stoppen nicht alles (T-0081)
 node   skripte/test_bewertungsseite.js   # Warteschlange und Freilegung
 ```
 

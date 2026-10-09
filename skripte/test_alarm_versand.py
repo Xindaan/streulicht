@@ -161,22 +161,30 @@ def lauf_erinnerung(wirft_bei):
     jetzt = (_dt.datetime.combine(heute, _dt.time(0), _dt.timezone.utc)
              + _dt.timedelta(hours=std + 0.75))
     alt_b, alt_s = erinnerung.BASIS, erinnerung.sende
+    alt_n = erinnerung.warte_auf_netz
     erinnerung.BASIS, erinnerung.sende = d, sende
+    erinnerung.warte_auf_netz = lambda *a, **k: True      # kein DNS im Test
+    ende = [None]
     sicher, sys.argv = sys.argv, ["erinnerung.py", "--konfig", kp,
                                   "--jetzt", jetzt.isoformat()]
     try:
         erinnerung.main()
+    except SystemExit as ex:
+        ende[0] = ex                  # seit T-0081: Versandfehler -> Exitcode
     except Exception as ex:
         print("      (main() ist gestorben: %s)" % type(ex).__name__)
     finally:
         sys.argv = sicher
         erinnerung.BASIS, erinnerung.sende = alt_b, alt_s
+        erinnerung.warte_auf_netz = alt_n
     z = json.load(open(zpfad))
     shutil.rmtree(d, ignore_errors=True)
-    return z, reihe
+    return z, reihe, ende[0]
 
 
-z2, reihe = lauf_erinnerung(wirft_bei="t-b")
+z2, reihe, ende = lauf_erinnerung(wirft_bei="t-b")
+pruefe(isinstance(ende, SystemExit) and ende.code not in (None, 0),
+       "der Lauf endet mit Exitcode != 0, weil ein Ort nicht rausging")
 pruefe(len(reihe) == 2, "beide Orte wurden versucht (%d)" % len(reihe))
 pruefe(bool(z2.get("berlin", {}).get("erinnerungen")),
        "der ERSTE Ort bleibt gebucht, obwohl der zweite scheiterte")

@@ -22,10 +22,14 @@ from datetime import date, datetime, time, timedelta, timezone
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))))
+import logbuch  # noqa: E402
 from netz import warte_auf_netz  # noqa: E402
 from zustandsdatei import aktualisiere  # noqa: E402
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Die Datei, die betrieb/de.greatbelow.streulicht.bewertung.plist als
+# StandardOutPath setzt (T-0081: Stempel + Rotation).
+LOGDATEI = os.path.join(BASIS, "daten", "bewertung.log")
 
 
 def hole(topic, seit="12h"):
@@ -285,4 +289,5 @@ def main():
 
 
 if __name__ == "__main__":
+    logbuch.einrichten(LOGDATEI)      # T-0081: Datum+Uhrzeit, Rotation
     main()

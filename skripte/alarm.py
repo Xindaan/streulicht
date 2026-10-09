@@ -48,10 +48,14 @@ from sonnen.geometrie import sonnenuntergang, zielpunkt  # noqa: E402
 import sonnen.score as sc  # noqa: E402
 from sonnen.score import score  # noqa: E402
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import logbuch  # noqa: E402
 from netz import warte_auf_netz  # noqa: E402
 from zustandsdatei import aktualisiere, schreibe  # noqa: E402
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Die Datei, die betrieb/de.greatbelow.streulicht.alarm.plist als
+# StandardOutPath setzt (T-0081: Stempel + Rotation).
+LOGDATEI = os.path.join(BASIS, "daten", "alarm.log")
 GITTER = 0.25
 SCHICHTEN = ("low", "mid", "high")
 # Repraesentatives Windniveau je Schicht (Schichtmitte)
@@ -194,7 +198,9 @@ def uhr():
 
 
 def melde(text):
-    print("%s %s" % (uhr(), text), flush=True)
+    # Datum+Uhrzeit setzt seit T-0081 der gemeinsame Helfer: im Betrieb
+    # stempelt der Ausgabekanal (logbuch.einrichten), sonst diese Zeile selbst.
+    logbuch.melde(text)
 
 
 # Wartezeiten fuer VORUEBERGEHENDE Stoerungen (T-0069).  Kurz genug, dass
@@ -1419,4 +1425,5 @@ def _main():
 
 
 if __name__ == "__main__":
+    logbuch.einrichten(LOGDATEI)      # T-0081: Datum+Uhrzeit, Rotation
     main()

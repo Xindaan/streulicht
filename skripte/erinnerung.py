@@ -40,9 +40,14 @@ from zoneinfo import ZoneInfo
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sonnen.geometrie import sonnenuntergang  # noqa: E402
+import logbuch  # noqa: E402
+from netz import warte_auf_netz  # noqa: E402
 from zustandsdatei import aktualisiere, lade  # noqa: E402
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Die Datei, die betrieb/de.greatbelow.streulicht.erinnerung.plist als
+# StandardOutPath setzt (T-0081: Stempel + Rotation).
+LOGDATEI = os.path.join(BASIS, "daten", "erinnerung.log")
 NTFY = "https://ntfy.sh"
 # Fenster nach Sonnenuntergang, in dem gefragt wird.  Frueher waere zu frueh
 # (das Farbenspiel kommt erst nach dem Untergang - Cirrus glueht rund 28 min
@@ -134,6 +139,8 @@ def main():
     basis_url = (kfg.get("seiten_basis") or "").rstrip("/")
     gesendet = 0
     gebucht = []                  # [(ort, tag)] - was wirklich rausging
+    fehlversuche = []             # was nicht rausging (T-0081: Exitcode)
+    netz_geprueft = False
 
     for ort in kfg["orte"]:
         topic = ort.get("ntfy_bewertung")
@@ -199,11 +206,21 @@ def main():
         # dem zweiten geht die Buchung des ERSTEN verloren, und der bekommt
         # seine Aufforderung ein zweites Mal.  Gebucht wird weiterhin nur,
         # was wirklich rausging.
+        #
+        # T-0081 (Review bewertung#5, architektur#13): VOR dem ersten Versand
+        # aufs Netz warten, wie alarm.py und bewertungen_holen.py.  Erst hier
+        # und nicht am Anfang: der Agent tickt stuendlich, und 23 von 24
+        # Ticks haben nichts zu senden - sie sollen nicht je bis zu 20
+        # Minuten auf ein Netz warten, das sie gar nicht brauchen.
+        if not netz_geprueft:
+            warte_auf_netz()
+            netz_geprueft = True
         try:
             sende(topic, titel, text, klick)
         except Exception as ex:
             print("   %s %s: Versand fehlgeschlagen (%s: %s) - nicht gebucht"
                   % (ort["name"], tag, type(ex).__name__, ex))
+            fehlversuche.append("%s %s" % (ort["name"], tag))
             continue
         erinnert[str(tag)] = jetzt.isoformat(timespec="seconds")
         gebucht.append((ort["name"], str(tag)))
@@ -222,7 +239,15 @@ def main():
                 e.setdefault("erinnerungen", {})[tag] = zeit
         aktualisiere(zpfad, buchen)   # T-0051 atomar, T-0058 unter Sperre
     print("Aufforderungen gesendet: %d" % gesendet)
+    if fehlversuche:
+        # Erst NACH dem Buchen der erfolgreichen: der Fehlercode betrifft nur
+        # die nicht gesendeten.  Die bleiben ungebucht, der naechste Tick
+        # holt sie nach (T-0067) - launchd zeigt mit "last exit code" aber
+        # nicht mehr 0, wenn der Versand scheitert (bewertung#5: 26
+        # Fehlversuche an 13 Abenden, last exit code = 0).
+        raise SystemExit("Versand fehlgeschlagen: %s" % ", ".join(fehlversuche))
 
 
 if __name__ == "__main__":
+    logbuch.einrichten(LOGDATEI)      # T-0081: Datum+Uhrzeit, Rotation
     main()
