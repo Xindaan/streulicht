@@ -285,6 +285,14 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   entschieden, T-0014 laengst gebaut (architektur#1); README-Drift: "Ein Cron",
   Henyey-Greenstein im Betriebsscore, `faecher` optional, "E3 offen",
   Mehrortliste (architektur#3, #4, #11, #16); Kommentare mit 3-h-Takt (#17).
+  Stand 09.10.2026: umgesetzt - ecf72e1 (ohne STATE.md, architektur#2 macht
+  der Orchestrator). Doing hat zwei Eintraege (T-0072, T-0001b); T-0006,
+  T-0003-alt und T-0014 liegen unter Done 09.10.2026, T-0001 im Backlog mit
+  Vermerk. README: launchd, Henyey-Greenstein nur in score_distanz, `faecher`
+  abgeschafft, Konfigtabelle und Entwicklungstabelle vollstaendig, Testzahl
+  809 Python + 64 JS gemessen. OFFEN: STATE nennt T-0001b "aufgeloest
+  14.08.2026" - in TASK.md steht es noch in Doing; ueber_nacht.sh Z. 12 ruft
+  weiter blankes python3 (Code, kein Docstring, nicht angefasst).
 - T-0083 WN3-Befunde aus dem Review 09.10.2026 (zu T-0072): Windfeld in m/s
   statt km/h (physik#1); Zielzeit per Gleichheit, echte Sonnenuntergaenge
   fallen durch (wn3#F4); der Zuschnitt (a) kennt die ~300 Pass-2-Zellen nicht
