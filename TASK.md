@@ -16,7 +16,10 @@ stehen im Backlog-Block T-0072.
 - [x] Zeitzuordnung `lead_subtime` = [-5..0] relativ zum Blockende, gegen
       das `datetime`-Array gegengeprueft (nicht geraten)
 - [x] `skripte/wn3.py` - Leser mit austauschbarem Speicher
-- [x] `skripte/test_wn3.py` - 18 Pruefungen, 5 Negativproben, alle gruen
+- [x] `skripte/test_wn3.py` - Stand 09.10.2026: 55 Pruefungen, 14
+      Negativproben, alle gruen und netzfrei (vorher stand hier "18 + 5";
+      gezaehlt waren schon vor dem Review 35 + 8, wn3#F10). Einheit km/h
+      und Zielzeiten mit Minuten sind seit T-0083 abgedeckt.
 - [x] Gegen echte Daten gefahren: Lauf 20260908_00hr, drei Schichten,
       stuendliche Zeitachse, plausible Werte
 - [x] **Kostenriegel** (08.09.2026, auf Ansage "keine Kostenrisiken"):
@@ -82,6 +85,20 @@ stehen im Backlog-Block T-0072.
 - [ ] `alarm.py`: zweiter Weg neben `abfrage()`, gesteuert ueber `modell`
 - [ ] Zeitbudget echt messen statt hochrechnen (meine 1,5-2,5 h je Lauf
       sind eine Schaetzung vom Mac aus, keine Messung auf der Instanz)
+
+- [ ] **Review 09.10.2026, bewusst NICHT umgebaut (T-0083), erst bei der
+      Verdrahtung bzw. vor einer Entscheidung auf Basis der Zahlen:**
+      - wn3#F6: Der Zuschnitt (a) kennt die ~300 stromauf versetzten
+        Pass-2-Zellen von `alarm.py` nicht; fehlende Zellen fallen in
+        `score()` still heraus (Gewichte werden renormiert). Die Zahl
+        "68 Zellen" in `wn3.py` ist veraltet (Log: 72).
+      - wn3#F1: Der Vergleich misst den Score des Medianfeldes, nicht den
+        Median der Memberscores; "reisst s*" ist nur eine Naeherung.
+      - wn3#F2: ECMWF-Seite des Vergleichs liegt auf dem vergroeberten
+        0,5-Grad-Faecher, WN3 auf echten 0,1-Grad-Punkten; die Differenz
+        +0,135 enthaelt ungemessene Anteile aus Vergroeberung und Advektion.
+      - wn3#F3: r = 0,868 bei n = 11 (95-%-Intervall 0,56 bis 0,97) und
+        "8 von 11" (einseitig p = 0,11) tragen "systematisch hoeher" nicht.
 
 ### T-0001b Absichtssignal fuer den Abbruchtest
 Der Presence-Only-Test scheiterte an einem konfundierten Label (siehe STATE).

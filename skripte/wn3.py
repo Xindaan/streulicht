@@ -50,6 +50,15 @@ WINDNIVEAU = {"low": 925, "mid": 600, "high": 300}
 
 GITTER = 0.25                       # Zellraster von alarm.py, nicht von WN3
 
+# Wie weit eine Zielzeit von der naechsten WN3-Stunde entfernt sein darf, in
+# Stunden.  Die Achse ist stuendlich, ein echter Sonnenuntergang (18:47) liegt
+# also nie genau drauf; mehr als eine halbe Stunde Abstand heisst, dass die
+# Zeit VOR dem ersten oder HINTER dem letzten Schritt liegt (T-0083, wn3#F4).
+ZEIT_TOLERANZ_H = 0.5
+
+# WN3 liefert Wind in m/s, Open-Meteo (und damit alarm.py) in km/h.
+MS_ZU_KMH = 3.6
+
 # Region, in der die Buckets liegen.  Innerhalb kostet der Verkehr nichts.
 REGION = "us-east1"
 
@@ -256,11 +265,20 @@ class Quelle(_Basis):
         return [ende + _dt.timedelta(hours=int(s)) for s in self.sub]
 
     def block(self, ziel):
-        """Index des Zeitblocks, der `ziel` enthaelt - oder None."""
+        """Index des Zeitblocks mit der naechsten Stunde zu `ziel` - oder None.
+
+        Nicht per Gleichheit: ein Sonnenuntergang hat Minuten, die Achse nur
+        volle Stunden (T-0083, wn3#F4).  Gilt der Abstand zur naechsten
+        Stunde als zu gross (`ZEIT_TOLERANZ_H`), liegt `ziel` ausserhalb des
+        Vorlaufs und es kommt None.
+        """
+        beste = None
         for i in range(len(self.lead)):
-            if ziel in self.zeiten(i):
-                return i
-        return None
+            for t in self.zeiten(i):
+                d = abs((t - ziel).total_seconds()) / 3600.0
+                if d <= ZEIT_TOLERANZ_H and (beste is None or d < beste[0]):
+                    beste = (d, i)
+        return None if beste is None else beste[1]
 
     # -- Felder
 
@@ -274,12 +292,16 @@ class Quelle(_Basis):
         return np.frombuffer(b, dtype="<f4").reshape(n_sub, n_lat, n_lon)
 
     def wind(self, richtung, hpa, member, i):
-        """Ein Windchunk: (6, len(lat025), len(lon025)), m/s.
+        """Ein Windchunk: (len(lat025), len(lon025)), m/s.
 
         ACHTUNG, andere Chunk-Form als bei den Wolken: Wind ist nach
         Druckflaeche gechunkt (`[1,1,1,lat,lon]`), Wolken nach Zeitblock
-        (`[1,1,6,lat,lon]`).  Der Wind-Chunk traegt also nur EINE Stunde
-        je Datei - die sechs Stunden liegen in sechs Objekten.
+        (`[1,1,6,lat,lon]`).  Der Wind-Chunk hat also KEINE Zeitachse: je
+        Block und Druckflaeche gibt es genau EIN Objekt, einen Wert je
+        Gitterpunkt.  Welche der sechs Stunden er meint, ist nicht gemessen
+        (der Windpfad lief nie gegen echte Daten); `abfrage()` kopiert ihn
+        auf alle sechs.  Einheit hier noch m/s - km/h macht erst
+        `geschwindigkeit()`.
         """
         import numpy as np
         var = "%s_component_of_wind" % richtung
@@ -328,11 +350,18 @@ class Statistik(_Basis):
         return [self.init + _dt.timedelta(hours=int(h)) for h in self.lead]
 
     def schritt(self, ziel):
-        """Index der Stunde `ziel` - oder None, wenn sie nicht drin ist."""
+        """Index der Stunde, die `ziel` am naechsten liegt - oder None.
+
+        Mit Toleranz wie `Quelle.block` (T-0083, wn3#F4): ein
+        Sonnenuntergang mit Minuten findet seine Stunde, nur was mehr als
+        `ZEIT_TOLERANZ_H` neben dem Vorlauf liegt, ist "nicht drin".
+        """
+        beste = None
         for i, t in enumerate(self.zeiten()):
-            if t == ziel:
-                return i
-        return None
+            d = abs((t - ziel).total_seconds()) / 3600.0
+            if d <= ZEIT_TOLERANZ_H and (beste is None or d < beste[0]):
+                beste = (d, i)
+        return None if beste is None else beste[1]
 
     def feld(self, schicht, statistik, i):
         """Ein Stundenfeld: (len(lat01), len(lon01)), Werte 0..1."""
@@ -406,7 +435,14 @@ def prozent(x):
 
 
 def geschwindigkeit(u, v):
-    return round(math.hypot(float(u), float(v)), 2)
+    """Betrag des Windes in km/h - aus u und v in m/s.
+
+    WN3 fuehrt m/s, die Form, die `alarm.py` von Open-Meteo kennt
+    (`wind_speed_*hPa`), ist km/h; `alarm.versatz_km` rechnet damit.  Ohne
+    den Faktor waere jeder Advektionsversatz um 3,6 zu klein (T-0083,
+    physik#1).
+    """
+    return round(math.hypot(float(u), float(v)) * MS_ZU_KMH, 2)
 
 
 def richtung(u, v):
@@ -488,10 +524,12 @@ def abfrage(quelle, zellen, ziele, schichten=("low", "mid", "high"),
                     u = quelle.wind("u", hpa, m, b)
                     v = quelle.wind("v", hpa, m, b)
                     n += 2
-                    # Ein Windchunk traegt EINE Stunde, der Wolkenchunk
-                    # sechs.  Damit die Reihen gleich lang bleiben, wird
-                    # der Wert ueber den Block wiederholt - der
-                    # Advektionsversatz ist ohnehin ein Blockmittel.
+                    # Je Block gibt es EIN Windfeld (ohne Zeitachse), der
+                    # Wolkenchunk hat sechs Stunden.  Damit die Reihen
+                    # gleich lang bleiben, wird der eine Wert auf alle
+                    # sechs kopiert - ein Wert je Block, KEIN Blockmittel.
+                    # Der Fehler bleibt klein: alarm.py braucht ihn nur
+                    # fuer |dt| <= 0,5 h.
                     su, sv = float(u[wi]), float(v[wi])
                     sp += [geschwindigkeit(su, sv)] * len(quelle.sub)
                     ri += [richtung(su, sv)] * len(quelle.sub)

@@ -12,6 +12,13 @@ Fuenf Dinge, die still falsch sein koennen:
   3. Bedeckung 0..1 gegen Open-Meteos 0..100
   4. Windrichtung meteorologisch gegen mathematisch
   5. Wind-Chunks haben eine ANDERE Form als Wolken-Chunks
+  6. Windbetrag in km/h (alarm.py), nicht in m/s (WN3) - T-0083, physik#1
+  7. Zielzeiten mit Minuten (echte Sonnenuntergaenge) - T-0083, wn3#F4
+
+Der Test ist NETZFREI: `in_region()` ist gestubbt, und `urlopen` sowie
+`subprocess` (gcloud, zstd) werfen eine `NetzVerboten`, die kein
+`except Exception` verschluckt.  Vorher rief `quelle()` ohne Budget das
+echte `in_region()` und damit metadata.google.internal an (wn3#F10).
 
 Zu jedem Punkt gehoert unten eine eigene Negativprobe: der Fehler wird
 absichtlich eingebaut und es wird nachgewiesen, dass GENAU diese Pruefung
@@ -21,18 +28,57 @@ Lauf:  .venv/bin/python3 skripte/test_wn3.py
 """
 import importlib.util
 import json
+import math
 import os
 import sys
 from datetime import datetime, timedelta, timezone
 
 import numpy as np
 
-_p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "wn3.py")
+_hier = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, _hier)
+sys.path.insert(0, os.path.dirname(_hier))
+import alarm  # noqa: E402  (nur fuer den Einheitenvertrag, keine Netzzugriffe)
+
+_p = os.path.join(_hier, "wn3.py")
 _s = importlib.util.spec_from_file_location("wn3", _p)
 wn3 = importlib.util.module_from_spec(_s)
 _s.loader.exec_module(wn3)
 
 fehler = 0
+
+
+# --- Netzsperre --------------------------------------------------------
+#
+# BaseException, nicht Exception: `in_region()` faengt Exception und
+# wuerde einen verbotenen Netzzugriff als "nicht in der Region" schlucken -
+# der Test bliebe gruen und haette trotzdem das Netz angefasst.
+
+class NetzVerboten(BaseException):
+    pass
+
+
+def _verboten(*a, **k):
+    raise NetzVerboten("Netz-/Prozesszugriff im netzfreien Test")
+
+
+import urllib.request  # noqa: E402
+urllib.request.urlopen = _verboten
+wn3.subprocess.run = _verboten
+wn3.subprocess.Popen = _verboten
+
+# Das ECHTE in_region bleibt fuer Abschnitt 6 erhalten (dort mit eigener
+# `_holen`-Funktion, also ohne Netz); alles andere sieht den Stub.
+_echt_in_region = wn3.in_region
+_ir_aufrufe = []
+
+
+def _ir_stub(*a):
+    _ir_aufrufe.append(a)
+    return False
+
+
+wn3.in_region = _ir_stub
 
 
 def pruefe(bedingung, text):
@@ -152,6 +198,52 @@ pruefe(q.block(INIT + timedelta(hours=19)) is None,
 pruefe(q.block(INIT) is None,
        "block() meldet None vor dem ersten Block")
 
+# Echte Sonnenuntergaenge haben Minuten (T-0083, wn3#F4): die Achse ist
+# stuendlich, also muss die NAECHSTE Stunde gelten, nicht die gleiche.
+H = timedelta(hours=1)
+M = timedelta(minutes=1)
+pruefe(q.block(INIT + 9 * H + 20 * M) == 1,
+       "block() nimmt fuer 09:20 die Stunde 09 (Block 1), nicht None")
+pruefe(q.block(INIT + 12 * H + 20 * M) == 1,
+       "12:20 rundet auf 12 und bleibt im Block 1")
+pruefe(q.block(INIT + 12 * H + 40 * M) == 2,
+       "12:40 rundet auf 13 und landet im Block 2 (Blockgrenze)")
+pruefe(q.block(INIT + 18 * H + 20 * M) == 2,
+       "18:20 hinter dem letzten Schritt, aber in der Toleranz: Block 2")
+pruefe(q.block(INIT + 18 * H + 40 * M) is None,
+       "18:40 liegt zu weit hinter dem Vorlauf: None")
+pruefe(q.block(INIT + 40 * M) == 0 and q.block(INIT + 20 * M) is None,
+       "vor dem ersten Schritt gilt dieselbe Toleranz (00:40 ja, 00:20 nein)")
+
+meldungen = []
+d_min = wn3.abfrage(quelle(), [ZELLE], [INIT + 9 * H + 20 * M],
+                    schichten=("high",), member=[0],
+                    melde=lambda t: meldungen.append(t))
+d_voll = wn3.abfrage(quelle(), [ZELLE], [INIT + 9 * H],
+                     schichten=("high",), member=[0], melde=lambda *a: None)
+pruefe(d_min[ZELLE] == d_voll[ZELLE] and len(d_min[ZELLE]["time"]) == 6,
+       "abfrage() mit 09:20 liefert denselben Block wie mit 09:00")
+pruefe(not any("Ausserhalb" in m for m in meldungen),
+       "und meldet 09:20 nicht als 'Ausserhalb des Vorlaufs'")
+meldungen = []
+d_aus = wn3.abfrage(quelle(), [ZELLE], [INIT + 19 * H],
+                    schichten=("high",), member=[0],
+                    melde=lambda t: meldungen.append(t))
+pruefe(d_aus[ZELLE]["time"] == [] and any("Ausserhalb" in m for m in meldungen),
+       "was wirklich hinter dem Vorlauf liegt, wird weiter gemeldet")
+
+# Bei groesserer Toleranz gewinnt die NAECHSTE Stunde, nicht die erste im
+# Toleranzfenster.  Bei 0,5 h gibt es nie zwei Kandidaten; erst eine weite
+# Toleranz macht den Unterschied sichtbar.
+_alt_tol = wn3.ZEIT_TOLERANZ_H
+wn3.ZEIT_TOLERANZ_H = 3.0
+try:
+    pruefe(q.block(INIT + 12 * H + 40 * M) == 2,
+           "mit weiter Toleranz gewinnt die naechste Stunde (13:00, Block 2)"
+           " statt der ersten im Fenster")
+finally:
+    wn3.ZEIT_TOLERANZ_H = _alt_tol
+
 
 # --- 2  Gitter und Laenge ---------------------------------------------
 
@@ -186,7 +278,32 @@ pruefe(len(reihe) == len(d[ZELLE]["time"]) == 6,
 print("\n4  Wind: meteorologische Richtung, aus der es weht")
 pruefe(wn3.richtung(1.0, 0.0) == 270.0, "Wind nach Osten kommt aus West (270)")
 pruefe(wn3.richtung(0.0, 1.0) == 180.0, "Wind nach Norden kommt aus Sued (180)")
-pruefe(wn3.geschwindigkeit(3.0, 4.0) == 5.0, "Betrag ist die Hypotenuse")
+pruefe(wn3.geschwindigkeit(3.0, 4.0) == 18.0,
+       "Betrag ist die Hypotenuse in km/h (5 m/s = 18 km/h)")
+
+
+# --- 4b  Einheit: km/h wie bei Open-Meteo ------------------------------
+
+print("\n4b Wind: die Reihe in der Open-Meteo-Form ist km/h")
+# Erwartung aus der Physik, nicht aus wn3: Schicht mid = 600 hPa = Index 1
+# im Test-Speicher -> u = 2 m/s (nach Osten), v = 1 m/s (nach Norden).
+# Eine Stunde Wind traegt die Luft 7,2 km nach Osten und 3,6 km nach Norden.
+# Das Ergebnis geht durch alarm.versatz_km - den Verbraucher, der km/h
+# erwartet - und nicht durch einen Vergleich mit wn3s eigener Formel.
+d = wn3.abfrage(quelle(), [ZELLE], [INIT + timedelta(hours=9)],
+                schichten=("mid",), member=[0], wind_zelle=ZELLE,
+                melde=lambda *a: None)
+sp = d[ZELLE]["wind_speed_600hPa_member00"][2]
+ri = d[ZELLE]["wind_direction_600hPa_member00"][2]
+
+
+dx, dy = alarm.versatz_km(sp, ri, 1.0)
+pruefe(abs(sp - math.hypot(2.0, 1.0) * 3.6) < 0.01,
+       "wind_speed ist %.2f km/h (erwartet %.2f)"
+       % (sp, math.hypot(2.0, 1.0) * 3.6))
+pruefe(abs(dx - 7.2) < 0.05 and abs(dy - 3.6) < 0.05,
+       "alarm.versatz_km: 1 h Wind traegt die Luft (%.2f, %.2f) km, "
+       "erwartet (7,2 / 3,6)" % (dx, dy))
 
 
 # --- 5  Wind-Chunks haben eine andere Form ----------------------------
@@ -225,11 +342,11 @@ pruefe(not any(k.startswith("wind_") for k in d2[ZELLE]),
 
 print("\n6  Kostenriegel: Massenabruf nur in der Region")
 
-pruefe(wn3.in_region(lambda: "projects/1/zones/us-east1-b") is True,
+pruefe(_echt_in_region(lambda: "projects/1/zones/us-east1-b") is True,
        "Zone in us-east1 wird als Region erkannt")
-pruefe(wn3.in_region(lambda: "projects/1/zones/europe-west3-a") is False,
+pruefe(_echt_in_region(lambda: "projects/1/zones/europe-west3-a") is False,
        "Zone anderswo gilt nicht als Region")
-pruefe(wn3.in_region(lambda: "projects/1/zones/us-east1000-a") is False,
+pruefe(_echt_in_region(lambda: "projects/1/zones/us-east1000-a") is False,
        "Praefixtreffer allein genuegt nicht (us-east1000 ist nicht us-east1)")
 
 
@@ -237,7 +354,7 @@ def _wirft():
     raise OSError("kein Metadatendienst")
 
 
-pruefe(wn3.in_region(_wirft) is False,
+pruefe(_echt_in_region(_wirft) is False,
        "kein Metadatendienst -> False, nicht Absturz")
 
 eng = wn3.Budget(frei=False, grenze_mb=0)
@@ -278,14 +395,37 @@ pruefe(geholt == [],
        "und zwar OHNE zu uebertragen (%d Chunks geholt, erwartet 0)"
        % len(geholt))
 
+# Ohne uebergebenes Budget fragt Quelle selbst, wo sie laeuft.  Beide
+# Antworten werden eingespielt (gestubbt, ohne Netz), damit das Ergebnis
+# wirklich aus der Frage kommt und nicht aus einem festen Wert.
 _alt_ir = wn3.in_region
-wn3.in_region = lambda *a: False
 try:
-    q_auto = wn3.Quelle("20260908_00hr", lies=leser)
-    pruefe(q_auto.budget.frei is False,
-           "ohne uebergebenes Budget stellt Quelle selbst fest, wo sie laeuft")
+    wn3.in_region = lambda *a: False
+    q_aus = wn3.Quelle("20260908_00hr", lies=leser)
+    wn3.in_region = lambda *a: True
+    q_drin = wn3.Quelle("20260908_00hr", lies=leser)
 finally:
     wn3.in_region = _alt_ir
+pruefe(q_aus.budget.frei is False and q_drin.budget.frei is True,
+       "ohne uebergebenes Budget stellt Quelle selbst fest, wo sie laeuft")
+
+# Die Netzsperre dieses Tests muss selbst halten.  Das echte in_region()
+# MIT Netzpfad (ohne `_holen`) wuerde urlopen aufrufen - hier verboten.
+try:
+    _echt_in_region()
+    ok = False
+except NetzVerboten:
+    ok = True
+pruefe(ok, "Netzsperre: das echte in_region() erreicht urlopen nicht")
+try:
+    wn3.Quelle("20260908_00hr", budget=wn3.Budget(frei=False))
+    ok = False
+except NetzVerboten:
+    ok = True
+pruefe(ok, "Netzsperre: ohne gestubbtes `lies` startet kein gcloud-Prozess")
+pruefe(len(_ir_aufrufe) > 0,
+       "und die Tests oben liefen ueber den Stub (%d Aufrufe), nicht ueber "
+       "das Netz" % len(_ir_aufrufe))
 
 # --- 7  Statistik-Quelle ----------------------------------------------
 
@@ -330,6 +470,22 @@ pruefe(sq.zeiten()[0] == INIT + timedelta(hours=1),
 pruefe(sq.schritt(INIT + timedelta(hours=2)) == 1, "schritt() trifft")
 pruefe(sq.schritt(INIT + timedelta(hours=9)) is None,
        "schritt() meldet None ausserhalb des Vorlaufs")
+pruefe(sq.schritt(INIT + 2 * H + 25 * M) == 1
+       and sq.schritt(INIT + 2 * H + 35 * M) == 2,
+       "schritt() nimmt die naechste Stunde (02:25 -> 02, 02:35 -> 03)")
+pruefe(sq.schritt(INIT + 3 * H + 25 * M) == 2
+       and sq.schritt(INIT + 3 * H + 35 * M) is None,
+       "hinter dem letzten Schritt gilt die Toleranz (03:25 ja, 03:35 nein)")
+pruefe(sq.schritt(INIT + 40 * M) == 0 and sq.schritt(INIT + 20 * M) is None,
+       "vor dem ersten Schritt ebenso (00:40 ja, 00:20 nein)")
+_alt_tol = wn3.ZEIT_TOLERANZ_H
+wn3.ZEIT_TOLERANZ_H = 3.0
+try:
+    pruefe(sq.schritt(INIT + 2 * H + 25 * M) == 1
+           and sq.schritt(INIT + 2 * H + 35 * M) == 2,
+           "mit weiter Toleranz gewinnt die naechste Stunde, nicht die erste")
+finally:
+    wn3.ZEIT_TOLERANZ_H = _alt_tol
 
 d = sq.punkte([ZELLE], [INIT + timedelta(hours=2)], schichten=("mid",),
               statistik="p50", melde=lambda *a: None)
@@ -340,6 +496,12 @@ pruefe(not any("_member" in k for k in d[ZELLE]),
 pruefe(d[ZELLE]["cloud_cover_mid"][0] == wn3.prozent((1 * 100 + 1 * 10 + 1)
                                                      / 1000.0),
        "Wert an der richtigen Zelle und Stunde")
+
+d_min = sq.punkte([ZELLE], [INIT + 2 * H + 20 * M], schichten=("mid",),
+                  statistik="p50", melde=lambda *a: None)
+pruefe(d_min[ZELLE]["cloud_cover_mid"] == d[ZELLE]["cloud_cover_mid"]
+       and len(d_min[ZELLE]["time"]) == 1,
+       "punkte() mit 02:20 liefert dieselbe Stunde wie mit 02:00")
 
 try:
     sq.punkte([ZELLE], [INIT + timedelta(hours=2)], statistik="p42",
@@ -361,7 +523,7 @@ def negativ(text, kaputt, pruefung):
     sicher = kaputt()
     try:
         ok = pruefung()
-    except Exception:
+    except (Exception, NetzVerboten):
         ok = False
     finally:
         sicher()
@@ -498,6 +660,114 @@ def _statistikprobe():
 
 negativ("8 Pruefung der Statistikwahl", _statistik_ungeprueft,
         _statistikprobe)
+
+
+def _kmh_ohne_faktor():
+    alt = wn3.geschwindigkeit
+    wn3.geschwindigkeit = lambda u, v: round(math.hypot(float(u), float(v)), 2)
+    return lambda: setattr(wn3, "geschwindigkeit", alt)
+
+
+def _kmhprobe():
+    d = wn3.abfrage(quelle(), [ZELLE], [INIT + 9 * H], schichten=("mid",),
+                    member=[0], wind_zelle=ZELLE, melde=lambda *a: None)
+    dx, dy = alarm.versatz_km(d[ZELLE]["wind_speed_600hPa_member00"][2],
+                              d[ZELLE]["wind_direction_600hPa_member00"][2],
+                              1.0)
+    return abs(dx - 7.2) < 0.05 and abs(dy - 3.6) < 0.05
+
+
+negativ("9 Einheit km/h (Faktor 3,6)", _kmh_ohne_faktor, _kmhprobe)
+
+
+def _block_gleichheit():
+    alt = wn3.Quelle.block
+
+    def falsch(self, ziel):                       # der alte Stand
+        for i in range(len(self.lead)):
+            if ziel in self.zeiten(i):
+                return i
+        return None
+    wn3.Quelle.block = falsch
+    return lambda: setattr(wn3.Quelle, "block", alt)
+
+
+negativ("10 Toleranz in block()", _block_gleichheit,
+        lambda: quelle().block(INIT + 9 * H + 20 * M) == 1)
+
+
+def _schritt_gleichheit():
+    alt = wn3.Statistik.schritt
+
+    def falsch(self, ziel):                       # der alte Stand
+        for i, t in enumerate(self.zeiten()):
+            if t == ziel:
+                return i
+        return None
+    wn3.Statistik.schritt = falsch
+    return lambda: setattr(wn3.Statistik, "schritt", alt)
+
+
+negativ("11 Toleranz in schritt()", _schritt_gleichheit,
+        lambda: statquelle().schritt(INIT + 2 * H + 25 * M) == 1)
+
+
+def _toleranz_unbegrenzt():
+    alt = wn3.ZEIT_TOLERANZ_H
+    wn3.ZEIT_TOLERANZ_H = 1e6
+    return lambda: setattr(wn3, "ZEIT_TOLERANZ_H", alt)
+
+
+negativ("12 Toleranzgrenze (hinter dem Vorlauf bleibt None)",
+        _toleranz_unbegrenzt,
+        lambda: quelle().block(INIT + 18 * H + 40 * M) is None
+        and statquelle().schritt(INIT + 3 * H + 35 * M) is None)
+
+
+def _erste_im_fenster():
+    alt_b, alt_s = wn3.Quelle.block, wn3.Statistik.schritt
+
+    def block(self, ziel):                  # erste Stunde im Fenster, nicht naechste
+        for i in range(len(self.lead)):
+            for t in self.zeiten(i):
+                if abs((t - ziel).total_seconds()) / 3600.0 <= wn3.ZEIT_TOLERANZ_H:
+                    return i
+        return None
+
+    def schritt(self, ziel):
+        for i, t in enumerate(self.zeiten()):
+            if abs((t - ziel).total_seconds()) / 3600.0 <= wn3.ZEIT_TOLERANZ_H:
+                return i
+        return None
+    wn3.Quelle.block, wn3.Statistik.schritt = block, schritt
+
+    def zurueck():
+        wn3.Quelle.block, wn3.Statistik.schritt = alt_b, alt_s
+    return zurueck
+
+
+def _naechsteprobe():
+    alt = wn3.ZEIT_TOLERANZ_H
+    wn3.ZEIT_TOLERANZ_H = 3.0
+    try:
+        return (quelle().block(INIT + 12 * H + 40 * M) == 2
+                and statquelle().schritt(INIT + 2 * H + 35 * M) == 2)
+    finally:
+        wn3.ZEIT_TOLERANZ_H = alt
+
+
+negativ("13 naechste statt erste Stunde im Toleranzfenster",
+        _erste_im_fenster, _naechsteprobe)
+
+
+def _stub_weg():
+    alt = wn3.in_region
+    wn3.in_region = _echt_in_region
+    return lambda: setattr(wn3, "in_region", alt)
+
+
+negativ("14 Netzfreiheit (in_region ohne Stub wuerde urlopen rufen)",
+        _stub_weg, lambda: quelle() is not None)
 
 
 print("\n%s" % ("Alles gruen." if fehler == 0 else "%d Fehler." % fehler))
