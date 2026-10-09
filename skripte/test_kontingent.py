@@ -18,7 +18,9 @@ Gemessen wird die Zahl der Netzaufrufe, nicht der Quelltext:
   e) Pass-2-Deckel greift und behaelt die naechsten Abende;
   f) Minutenlimit und "concurrent" verbrauchen keine Netzversuche (alarm#10);
   g) alte Cacheordner werden beim Start geraeumt, ein kaputter Block wird
-     neu geholt statt still zu fehlen.
+     neu geholt statt still zu fehlen;
+  h) derselbe Modelllauf an einem neuen UTC-Tag bekommt keinen Block vom
+     Vortag (die Zeitachse beginnt bei Open-Meteo am Abruftag).
 
 Alles laeuft in einem eigenen Temp-Verzeichnis (alarm.BASIS umgebogen),
 ohne echte Wartezeiten und ohne Netz.
@@ -118,6 +120,55 @@ class Netz:
         return Antwort()
 
 
+class NetzAbruftag(Netz):
+    """Wie Open-Meteo ohne `timezone`: die Zeitachse beginnt am UTC-Tag des
+    ABRUFS (`tag`), und Wind wie Bedeckung haengen an der absoluten Zeit,
+    nicht am Index.  Ein Block vom Vortag hat dann andere Werte am selben
+    Index - bei konstantem Wind (wie in `Netz`) waere das unsichtbar.
+    """
+
+    def __init__(self, tag, **k):
+        super().__init__(**k)
+        self.tag = tag
+
+    def __call__(self, u, timeout=None):
+        self.urls.append(u)
+        if self.fehler_bei is not None and len(self.urls) == self.fehler_bei:
+            raise urllib.error.HTTPError(
+                u, 429, "x", {},
+                io.BytesIO(json.dumps({"reason": self.grund}).encode()))
+        q = urllib.parse.parse_qs(urllib.parse.urlparse(u).query)
+        las = [float(x) for x in q["latitude"][0].split(",")]
+        los = [float(x) for x in q["longitude"][0].split(",")]
+        variablen = q["hourly"][0].split(",")
+        tage = int(q["forecast_days"][0])
+        start = utc(self.tag)
+        zt = [start + timedelta(hours=3 * k) for k in range(8 * tage)]
+        schritt = [int(t.timestamp() // 10800) for t in zt]
+        aus = []
+        for la, lo in zip(las, los):
+            h = {"time": [t.strftime("%Y-%m-%dT%H:%M") for t in zt]}
+            for v in variablen:
+                for m in MEMBER:
+                    if v.startswith("wind_speed"):
+                        w = [20.0 + (k % 7) * 15.0 for k in schritt]
+                    elif v.startswith("wind_direction"):
+                        w = [250.0] * len(zt)
+                    else:
+                        w = [wert(la, lo, v, m, k) for k in schritt]
+                    h[alarm.feldname(v, m)] = w
+            aus.append({"latitude": la, "longitude": lo, "hourly": h})
+        rumpf = json.dumps(aus[0] if len(aus) == 1 else aus).encode()
+
+        class Antwort:
+            def __enter__(self_):
+                return io.BytesIO(rumpf)
+
+            def __exit__(self_, *x):
+                return False
+        return Antwort()
+
+
 def neue_basis(**konfig):
     d = tempfile.mkdtemp(prefix="kontingent_")
     os.makedirs(os.path.join(d, "daten"))
@@ -134,8 +185,12 @@ def zustand(basis):
     return json.load(open(p)) if os.path.exists(p) else {}
 
 
-def lauf(basis, uhr, init, netz):
-    """alarm.main() einmal fahren.  Rueckgabe: (Ausnahme oder None, Log)."""
+def lauf(basis, uhr, init, netz, jetzt=None):
+    """alarm.main() einmal fahren.  Rueckgabe: (Ausnahme oder None, Log).
+
+    `uhr` ist die echte Uhr (_jetzt_utc), `jetzt` das --jetzt des Laufs
+    (Default JETZT).
+    """
     alt = (alarm.BASIS, alarm.modelllauf, alarm.warte_auf_netz, alarm.sende,
            alarm._jetzt_utc, alarm.urllib.request.urlopen, alarm.time.sleep,
            sys.argv)
@@ -152,7 +207,7 @@ def lauf(basis, uhr, init, netz):
     alarm.urllib.request.urlopen = netz
     alarm.time.sleep = lambda s: None
     sys.argv = ["alarm.py", "--konfig", os.path.join(basis, "konfig.json"),
-                "--jetzt", JETZT]
+                "--jetzt", jetzt or JETZT]
     for k in alarm.LAST:
         alarm.LAST[k] = 0
     puffer = io.StringIO()
@@ -418,7 +473,7 @@ def main():
            "Modelllauf von vor drei Tagen ist geraeumt")
     pruefe(os.path.exists(os.path.join(wurzel, "20261008T1800Z")),
            "Modelllauf von gestern bleibt")
-    ordner = os.path.join(wurzel, "20261009T0000Z")
+    ordner = os.path.join(wurzel, "20261009T0000Z", "20261009")
     bloecke = sorted(os.listdir(ordner)) if os.path.isdir(ordner) else []
     pruefe(len(bloecke) == n_ref,
            "je Block eine Cachedatei (%d von %d)" % (len(bloecke), n_ref))
@@ -430,6 +485,45 @@ def main():
         pruefe(ex is None and len(netz_g.urls) == 1,
                "ein leerer Cacheblock wird neu geholt, nicht still "
                "uebernommen (%d Aufruf)" % len(netz_g.urls))
+
+    print("\n=== h) Derselbe Modelllauf am naechsten UTC-Tag: kein Block "
+          "vom Vortag")
+    # Gate 09.10.2026: Hourly-429 um 23:50 mitten in Pass 2, Folgelauf um
+    # 00:10 auf demselben Modelllauf.  Ohne den Abruftag im Schluessel kam
+    # vor allem der Windblock (URL nur an der Heimatzelle) aus dem Cache -
+    # mit der Zeitachse des Vortags; die Advektion rechnete still falsch.
+    init_h = "2026-10-09T06:00+00:00"
+    nach = "2026-10-10T00:10"
+    ref_h = neue_basis()
+    aufzuraeumen.append(ref_h)
+    netz_hr = NetzAbruftag("2026-10-10T00:00")
+    ex, _ = lauf(ref_h, nach, init_h, netz_hr, jetzt=nach)
+    z_hr = zahlen(zustand(ref_h))
+    w_h = next(i for i, u in enumerate(netz_hr.urls) if ist_wind(u))
+    pruefe(ex is None and len(z_hr) >= 3,
+           "Referenz ohne Cache am 10.10. rechnet %d Abende" % len(z_hr))
+    h = neue_basis()
+    aufzuraeumen.append(h)
+    netz_h1 = NetzAbruftag("2026-10-09T00:00", fehler_bei=w_h + 3,
+                           grund="Hourly API request limit exceeded.")
+    ex, _ = lauf(h, "2026-10-09T23:50", init_h, netz_h1,
+                 jetzt="2026-10-09T23:50")
+    pruefe(isinstance(ex, alarm.Kontingent),
+           "Lauf um 23:50 bricht in Pass 2 am Stundenlimit ab")
+    netz_h2 = NetzAbruftag("2026-10-10T00:00")
+    ex, log_h2 = lauf(h, nach, init_h, netz_h2, jetzt=nach)
+    pruefe(ex is None and sorted(netz_h2.urls) == sorted(netz_hr.urls),
+           "Folgelauf um 00:10 holt genau die Bloecke des ungecachten Laufs "
+           "neu, den Windblock eingeschlossen (%d von %d, Wind: %s)"
+           % (len(netz_h2.urls), len(netz_hr.urls),
+              any(ist_wind(u) for u in netz_h2.urls)))
+    pruefe(zahlen(zustand(h)) == z_hr,
+           "und rechnet dieselben Zahlen wie der ungecachte Lauf")
+    netz_h3 = NetzAbruftag("2026-10-10T00:00")
+    lauf(h, "2026-10-10T00:20", init_h, netz_h3, jetzt="2026-10-10T00:20")
+    pruefe(len(netz_h3.urls) == 0,
+           "am selben UTC-Tag greift der Cache wieder (%d Aufrufe)"
+           % len(netz_h3.urls))
 
     for d in aufzuraeumen:
         shutil.rmtree(d, ignore_errors=True)

@@ -370,6 +370,16 @@ def _hole(u, versuche=4):
 # deshalb die Initialisierung aus modelllauf(), und die Datei den SHA-1 der
 # vollstaendigen Anfrage-URL (Zellen, Variablen, Modell, Tage).
 #
+# DAZU DER UTC-ABRUFTAG (Gate 09.10.2026).  Die URL nennt forecast_days, aber
+# kein Startdatum; die Zeitachse beginnt dann am Abruftag um 00:00 UTC.
+# Derselbe Modelllauf an zwei UTC-Tagen (Handlauf um Mitternacht, Hourly-
+# Sperre von 23:xx bis 00:02, Modelllauf mit mehr als 27 h Verzug) haette
+# vor allem den Windblock aus dem Cache bekommen - seine URL haengt nur an
+# der Heimatzelle - mit einer um 24 h verschobenen Zeitachse, und die
+# Advektion waere still mit dem Wind des Vortags gerechnet worden.  Deshalb
+# liegt unter dem Modelllauf je Abruftag ein Unterordner (_cache_pfad), und
+# ein Block wird nur am Tag gelesen, an dem er geholt wurde.
+#
 # Ist der Modelllauf UNBEKANNT (meta.json nicht erreichbar), gibt es keinen
 # Cache - weder lesen noch schreiben.  Lieber einmal voll bezahlen als Daten
 # eines anderen Laufs unter falschem Namen rechnen.
@@ -395,6 +405,18 @@ def _cache_ordner(init=None):
         t = t.replace(tzinfo=timezone.utc)
     return os.path.join(BASIS, "daten", "cache", "abruf",
                         t.astimezone(timezone.utc).strftime("%Y%m%dT%H%MZ"))
+
+
+def _cache_pfad(ordner, u):
+    """Cachedatei fuer die Anfrage `u`: <Modelllauf>/<UTC-Abruftag>/<SHA-1>.
+
+    Der Tag kommt von der echten Uhr, nicht aus --jetzt: die Zeitachse der
+    Antwort richtet sich danach, WANN Open-Meteo gefragt wurde.
+    """
+    if not ordner:
+        return None
+    return os.path.join(ordner, _jetzt_utc().strftime("%Y%m%d"),
+                        hashlib.sha1(u.encode()).hexdigest() + ".json")
 
 
 def _aus_cache(pfad, n):
@@ -457,8 +479,7 @@ def abfrage(zellen, variablen, modell, tage, block=25):
              % (",".join("%.4f" % mitte(z)[0] for z in teil),
                 ",".join("%.4f" % mitte(z)[1] for z in teil),
                 modell, ",".join(variablen), tage))
-        pfad = (os.path.join(ordner, hashlib.sha1(u.encode()).hexdigest()
-                             + ".json") if ordner else None)
+        pfad = _cache_pfad(ordner, u)
         d = _aus_cache(pfad, len(teil))
         if d is not None:
             treffer += 1

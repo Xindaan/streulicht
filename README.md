@@ -341,9 +341,11 @@ Stundenlimit bei der vorletzten Anfrage. Es gibt also keinen zweiten Lauf
 spaet wie moeglich.
 
 **Abbruch am Kontingent (seit 09.10.2026, T-0074).** Jeder erfolgreich
-geholte Block liegt in `daten/cache/abruf/<Modelllauf>/`; ein
-Wiederholungslauf auf **demselben** Modelllauf holt nur, was fehlt, ein
-neuer Modelllauf bekommt nie alte Bloecke. Ist der Modelllauf unbekannt
+geholte Block liegt in `daten/cache/abruf/<Modelllauf>/<UTC-Abruftag>/`;
+ein Wiederholungslauf auf **demselben** Modelllauf am **selben** UTC-Tag
+holt nur, was fehlt. Ein neuer Modelllauf bekommt nie alte Bloecke, und
+nach Mitternacht UTC wird neu geholt, weil Open-Meteo die Zeitachse am
+Abruftag beginnen laesst. Ist der Modelllauf unbekannt
 (`meta.json` nicht erreichbar), laeuft der Abruf ohne Cache. Cacheordner,
 deren Modelllauf aelter als zwei Tage ist, raeumt der naechste Lauf. Nach
 `Hourly ... exceeded` vermerkt der Lauf in `daten/zustand.json` unter

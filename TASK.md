@@ -178,6 +178,11 @@ Befunde alarm#1, #2, #3, #4, #10, #12, tests#6 in `docs/review-2026-10-09.md`.
   Pass-2-Deckel `pass2_max_zellen` = 320, eigenes Wartebudget fuer
   Minutenlimit/concurrent; Test `skripte/test_kontingent.py` mit 18
   Negativproben (Commit c493481).
+- Stand 09.10.2026: umgesetzt - Gate-Nachbesserung: Cacheschluessel traegt
+  jetzt auch den UTC-Abruftag (`daten/cache/abruf/<Modelllauf>/<JJJJMMTT>/`),
+  weil Open-Meteo die Zeitachse ohne Startdatum am Abruftag beginnt; derselbe
+  Modelllauf nach Mitternacht UTC haette sonst den Windblock vom Vortag
+  bekommen. Test h) in `test_kontingent.py` (Folgecommit zu c493481).
 - OFFEN: STATE.md (Abschnitt Kontingent) sagt noch "Die Memberzahl
   multipliziert NICHT" - widerspricht README/alarm.py und dem Log (alarm#3);
   STATE war in diesem Schritt ausgenommen, Satz beim naechsten STATE-Pass
