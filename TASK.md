@@ -282,6 +282,14 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   Push-Text und fehlender Deep-Link (uiux#9, #10); Tippziele 31 px, Markenfarbe
   (uiux#13); Tastatur schluckt Cmd/Alt+Pfeil (uiux#12); SVG-Style ueberschreibt
   die Hervorhebung (seiten#8); Faecherkarte schneidet den Faecher ab (physik#5).
+  Stand 09.10.2026: umgesetzt - d11b71b. Bilanz mit Nenner, Alarmabenden ohne
+  Note, Laufdatum und Advektionsvermerk; Vorauswahl nach Sonnenuntergang
+  (Bauzeit und Browser), Hash `index.html#TAG` im Push-Klickziel und auf der
+  Seite, Modifikatortasten, Markenfarbe, SVG-Style, "< 6 %", Push-Auskunft bei
+  veraltetem Stand, Umlaute, Push-Text; Faecherkarte richtet den Ausschnitt am
+  Azimut aus. Tests: `test_ui_paket.py` (80). OFFEN: 44-px-Tippziele der
+  Abendachse (31 px bei 11 Abenden, nicht erzwungen) und der Bedienhinweis,
+  der auf dem Telefon fehlt (uiux#13 Teil 1 und 3).
 - T-0081 Betriebsrobustheit (Review 09.10.2026): die 27 Noten liegen nur in
   `daten/zustand.json`, Time-Machine-Netzziel seit 29.05.2026 ohne Sicherung
   (betrieb#6); Logs ohne Datum und ohne Rotation (architektur#14);
