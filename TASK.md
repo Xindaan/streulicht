@@ -298,6 +298,11 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   (wn3#F6); Vergleich misst Medianfeld gegen eine Schwelle fuer Memberscores,
   ECMWF-Seite auf 0,5 Grad vergroebert (wn3#F1, #F2); r = 0,868 bei n = 11
   traegt "systematisch hoeher" nicht (wn3#F3); Testzahlen veraltet (wn3#F10).
+  Stand 09.10.2026: umgesetzt - 189ad36 (physik#1, wn3#F4, #F5, #F10).
+  geschwindigkeit() liefert km/h (Faktor 3,6, gegen alarm.versatz_km
+  gerechnet), block()/schritt() nehmen die naechste Stunde innerhalb 0,5 h,
+  test_wn3.py ist netzfrei (55 Pruefungen + 14 Negativproben). wn3#F6 und
+  F1-F3 stehen als offene Punkte in T-0072, nicht umgebaut.
 
 - T-0009 Eigene Bewertungsseite und ntfy-Rueckkanal (E2)
 - T-0015 Seiten ausliefern. **ERLEDIGT 15.08.2026.** Repo oeffentlich,
