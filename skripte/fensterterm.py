@@ -47,8 +47,8 @@ Daemmerung entscheidet mit, wie viel die Maske entscheiden kann).
 
 KOSTEN.  0 EUR, alles offline bzw. gebuehrenfrei (Meteosat ab 1 h Latenz).
 
-Pruefbefehl:  python3 skripte/fensterterm.py            (Albumabende + Referenz)
-              python3 skripte/fensterterm.py --nur-cache (ohne Nachladen)
+Pruefbefehl:  .venv/bin/python3 skripte/fensterterm.py            (Albumabende + Referenz)
+              .venv/bin/python3 skripte/fensterterm.py --nur-cache (ohne Nachladen)
 """
 import argparse
 import json

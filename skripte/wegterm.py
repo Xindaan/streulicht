@@ -43,8 +43,8 @@ aussehen als sie ist.  Deshalb steht die Referenz mit auf dem Tisch.
 
 Kosten: 0 EUR, alles aus dem Rohcache.
 
-Pruefbefehl:  python3 skripte/wegterm.py            (rechnet, cacht, berichtet)
-              python3 skripte/wegterm.py --bericht  (nur Bericht aus dem Cache)
+Pruefbefehl:  .venv/bin/python3 skripte/wegterm.py            (rechnet, cacht, berichtet)
+              .venv/bin/python3 skripte/wegterm.py --bericht  (nur Bericht aus dem Cache)
 """
 import argparse
 import json

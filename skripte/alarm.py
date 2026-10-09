@@ -1,4 +1,5 @@
-"""E2: der taegliche Alarmlauf.
+"""E2: der Alarmlauf - ein stuendlicher launchd-Tick, gerechnet wird zweimal
+am Tag (Vormittag und rund 3 h vor Sonnenuntergang, siehe `laufziele`).
 
 Ablauf je Ort:
   1. Fanpunkte fuer jeden Vorlaufabend aus dem Sonnenuntergangsazimut.
@@ -1037,9 +1038,10 @@ def laufziele(jetzt, kfg, ort):
                feste Uhrzeit, weil der Sonnenuntergang in Berlin ueber das
                Jahr um mehr als fuenfeinhalb Stunden wandert - ein Termin um
                17:00 laege im Dezember HINTER dem Ereignis (SU 15:53).
-    "morgens"  feste UTC-Zeit, kurz nachdem der 00z-Lauf verfuegbar wird
-               (08:44 UTC, gemessen).  Damit stehen vormittags schon
-               aktuelle Zahlen auf der Seite.
+    "morgens"  feste UTC-Zeit (`lauf_morgens_utc`, Standard 09:20).  Das ist
+               zu frueh fuer den 00z-Lauf: gemessen sieht der Vormittagslauf
+               den 18z des Vortags (T-0065, README).  Damit stehen
+               vormittags schon aktuelle Zahlen auf der Seite.
     """
     tag = jetzt.astimezone(ZoneInfo(ort.get("zeitzone", "UTC"))).date()
     aus = []

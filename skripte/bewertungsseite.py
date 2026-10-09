@@ -16,7 +16,7 @@ nicht im sichtbaren Dokument: vor der Abgabe ist nichts davon auf dem Schirm,
 und geladen wird auch nichts nach.  Wer den Quelltext oeffnet, findet ihn -
 bewusst in Kauf genommen (siehe Kommentar in der Vorlage).
 
-Lauf:  python3 skripte/bewertungsseite.py
+Lauf:  .venv/bin/python3 skripte/bewertungsseite.py
 """
 import argparse
 import json

@@ -249,7 +249,7 @@ const nachsendeKnoepfe = [document.getElementById("nachsenden"),
                           document.getElementById("nachsenden2")];
 
 // --- Lokale Warteschlange -------------------------------------------------
-// ntfy.sh haelt Nachrichten rund 12 h vor, der Einsammel-Cron laeuft alle 3 h.
+// ntfy.sh haelt Nachrichten rund 12 h vor, der Einsammel-Agent (launchd) laeuft stuendlich.
 // Steht das NAS still, ist das Netz weg oder das Kontingent leer, verschwindet
 // die Bewertung OHNE Fehlermeldung - es stehen hinterher einfach weniger
 // Zeilen da.  Das ist der stille Ausfall des Livegangs schlechthin.

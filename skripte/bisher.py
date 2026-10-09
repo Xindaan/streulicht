@@ -15,7 +15,7 @@ mit Platzhaltern waere eine Behauptung ueber die Zukunft; ein Absatz, der
 sagt "die Alarmrate ist unbekannt, nicht 18,5 pro Jahr", ist eine Messung
 ueber die Gegenwart.
 
-Lauf:  python3 skripte/bisher.py
+Lauf:  .venv/bin/python3 skripte/bisher.py
 """
 import argparse
 import json

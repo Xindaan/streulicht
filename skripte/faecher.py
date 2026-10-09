@@ -9,7 +9,7 @@ nicht, wenn die Sonne dort nicht untergeht.
 Gezeichnet wird das FELD (ein Bild), beziffert wird nichts - jede Zahl auf
 der Seite kommt aus dem Zustand, nicht aus dieser Datei.
 
-Lauf einzeln:  python3 skripte/faecher.py --tag 2026-08-25
+Lauf einzeln:  .venv/bin/python3 skripte/faecher.py --tag 2026-08-25
 """
 import argparse
 import json

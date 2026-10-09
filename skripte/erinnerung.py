@@ -11,13 +11,13 @@ Rechnung dazu: bei rund 9-18 Ausloesungen im Jahr liefert ein alarmgebundener
 Rueckkanal einstellig viele bewertete Abende pro Saison.  Taegliche
 Aufforderung liefert rund 245.  Derselbe Aufwand, Faktor 15.
 
-TAKTUNG.  Der Cron laeuft stuendlich; das Skript prueft selbst, ob der
+TAKTUNG.  Der launchd-Agent laeuft stuendlich; das Skript prueft selbst, ob der
 Sonnenuntergang gerade im Fenster liegt.  Grund: die Sonnenuntergangszeit
-wandert ueber das Jahr um mehr als vier Stunden, eine feste Cron-Zeit passt
+wandert ueber das Jahr um mehr als vier Stunden, eine feste Uhrzeit passt
 hoechstens im Fruehling.
 
 IDEMPOTENZ.  Je (Ort, Abend) hoechstens eine Aufforderung, vermerkt in
-daten/zustand.json.  Ein stuendlicher Cron darf also gefahrlos mehrfach ins
+daten/zustand.json.  Ein stuendlicher Tick darf also gefahrlos mehrfach ins
 Fenster fallen.
 
 STICHPROBE STATT TAEGLICH.  Wer nicht jeden Abend gefragt werden will, setzt
@@ -52,7 +52,7 @@ NTFY = "https://ntfy.sh"
 # Fenster nach Sonnenuntergang, in dem gefragt wird.  Frueher waere zu frueh
 # (das Farbenspiel kommt erst nach dem Untergang - Cirrus glueht rund 28 min
 # weiter), spaeter verliert man Leute an den Abend.
-VERSATZ_MIN, FENSTER_MIN = 30, 75   # 75 statt 60: ein verspaeteter Cron
+VERSATZ_MIN, FENSTER_MIN = 30, 75   # 75 statt 60: ein verspaeteter Tick
 #                                     trifft sonst knapp daneben; Doppelte
 #                                     faengt die Idempotenz ab.
 

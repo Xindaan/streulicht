@@ -5,12 +5,16 @@ Berlin ein aussergewoehnlicher Sonnenuntergang stattfindet — und schickt einen
 Push aufs Telefon, wenn sie hoch genug ist.
 
 **Zum Namen.** In der Optik ist Streulicht der Parasit: das, was man aus einem
-Instrument herauskonstruiert. Hier ist es das Produkt. Der Score integriert
-eine Henyey-Greenstein-Phasenfunktion ueber den Vorwaertspeak — es geht
-ausschliesslich um Licht, das gestreut wird, statt geradeaus zu laufen.
+Instrument herauskonstruiert. Hier ist es das Produkt. Der Betriebsscore
+(`sonnen/score.py`) prueft, ob unter einem hohen Wolkenschirm Licht aus
+Westen durch die tiefere Bewoelkung kommt (siehe "Architektur") — es geht
+ausschliesslich um Licht, das gestreut wird, statt geradeaus zu laufen. Eine
+Henyey-Greenstein-Phasenfunktion ueber den Vorwaertspeak gibt es nur in der
+Forschungsvariante `sonnen/score_distanz.py` (benutzt von
+`skripte/test_score_distanz.py`), nicht im Betriebsscore.
 
-Kein Produkt: keine Nutzerverwaltung, keine Datenbank, kein Docker. Ein Cron,
-ein paar Skripte, eine JSON-Datei.
+Kein Produkt: keine Nutzerverwaltung, keine Datenbank, kein Docker. Vier
+launchd-Agenten (siehe "Betrieb"), ein paar Skripte, eine JSON-Datei.
 
 ## Quickstart
 
@@ -221,13 +225,18 @@ bewertet, meint den Sonnenuntergang von gestern.
 
 ### Bekannte Grenze: die Seiten koennen nur EINEN Ort
 
-`konfig.json` fuehrt `orte[]` als Liste, und Alarm, Erinnerung und
-Bewertungsseite arbeiten sie auch wirklich durch. Die **Prognoseseite, die
-Bilanz, der Vertikalschnitt und die Faecherkarte nicht**: Berlins
-Koordinaten und die Berliner Klimatologie stehen dort fest im Quelltext
-(`skripte/seite.py`, `skripte/bisher.py`, `skripte/schnitt.py`,
-`skripte/faecher.py`). Ein zweiter Ort bekaeme also Pushs, die gegen Berlins
-s\* gerechnet sind, und eine Prognoseseite, die Berlin zeigt — beide Laeufe
+`konfig.json` fuehrt `orte[]` als Liste, und Alarm und Erinnerung arbeiten
+sie auch wirklich durch; die Bewertungsseite erzeugt eine Seite je Ort. Die
+**Prognoseseite, die Bilanz, der Vertikalschnitt und die Faecherkarte nicht**:
+Berlins Koordinaten und die Berliner Klimatologie stehen dort fest im
+Quelltext (`skripte/seite.py`, `skripte/bisher.py`, `skripte/schnitt.py`,
+`skripte/faecher.py`). **Auch die Bewertungsseite ist teilweise
+Berlin-gebunden:** `bewertungsseite.prognosestand()` rangiert den Prognosestand
+JEDES Orts gegen die Berliner Klimatologie
+(`daten/score_berlin_g0.5_2022_2025.json`), mit dem einen s\* aus
+`konfig.json`. Bewusst so entschieden (T-0071), heute folgenlos, weil nur
+`berlin` konfiguriert ist. Ein zweiter Ort bekaeme also Pushs, die gegen
+Berlins s\* gerechnet sind, und eine Prognoseseite, die Berlin zeigt — beide Laeufe
 enden dabei mit Exitcode 0, es faellt nirgends auf.
 
 `ausliefern.py` sagt es seit dem 02.09.2026 wenigstens laut, wenn mehr als
@@ -256,21 +265,33 @@ Andre selbst setzen muss.
 
 | Schluessel | Bedeutung |
 |---|---|
+| `modell` | Open-Meteo-Ensemblemodell fuer alle Abrufe und die Abfrage des Modelllaufs (Pflicht, derzeit `ecmwf_ifs025`); steht auch im Kopf jedes Tagesarchivs |
 | `schwelle_score` | s\* — ab diesem Score gilt ein Abend als Ereignis |
 | `schwelle_wahrscheinlichkeit` | p\* — ab diesem Memberanteil wird gepusht |
 | `vorlauf_tage` | wie weit voraus gerechnet wird |
+| `lauf_vorlauf_stunden` | der Abendlauf rechnet so viele Stunden vor Sonnenuntergang (Standard 3, siehe "Warum der Alarm sonnenuntergangsrelativ laeuft") |
+| `lauf_fenster_min` | Breite des Fensters um jedes Laufziel, in dem der stuendliche Tick rechnet (Standard 60) |
+| `lauf_morgens_utc` | Zeit des Vormittagslaufs in UTC als `"HH:MM"` (Standard `09:20`); der Lauf schickt keinen zweiten Push, er frischt nur die Seite auf |
 | `advektion` | semi-Lagrangesche Zeitinterpolation an/aus (siehe unten) |
 | `pass2_max_zellen` | Obergrenze fuer Pass 2 (Standard 320, `null` = kein Deckel); darueber rechnen die fernen Abende teilweise ohne Advektion, Logzeile `ACHTUNG Pass 2 GEDECKELT` |
-| `orte[]` | Name, Koordinaten, Zeitzone, Bewertungs-Topic (oeffentlich, nur Eingang; die Erinnerung nutzt `ntfy_erinnerung` aus `konfig_geheim.json`) |
-| `faecher` | optional: reduzierte Abfragegeometrie |
+| `seiten_basis` | Basis-URL der ausgelieferten Seiten (Wurzel des `gh-pages`-Zweigs); daraus entstehen die Klickziele der Pushs und der Quittung |
+| `bewertung_tage_pro_woche` | an wie vielen Tagen je Woche die Erinnerung fragt (1 bis 7; 7, `0` oder fehlend = jeden Abend). Die Auswahl ist eine deterministische Wochenstichprobe (gleiche Woche, gleiche Tage); unter 7 sinkt die Zahl auswertbarer Abende proportional |
+| `orte[]` | Name, Anzeigename, Koordinaten, Zeitzone, Bewertungs-Topic (oeffentlich, nur Eingang; Alarm- und Erinnerungs-Topic stehen als `ntfy_alarm` und `ntfy_erinnerung` je Ortsname in `konfig_geheim.json`) |
+| `faecher` | **abgeschafft** (T-0057, 23.08.2026): steht der Schluessel in `konfig.json`, bricht `alarm.py` mit einer Erklaerung ab, es warnt nicht nur |
 | `sicherung_ordner` | optional: Pfad (z. B. ein iCloud-Ordner), in den die Tagessicherung der Zustandsdatei ZUSAETZLICH kopiert wird (T-0081); der Ordner selbst wird angelegt, sein Elternordner muss existieren |
+
+Schluessel mit Unterstrich am Anfang (`_hinweis*`) sind Kommentare und werden
+nicht gelesen. `sicherung_ordner` steht in der Datei nur, wenn er gesetzt ist
+(Standard: kein Zusatzordner).
 
 **Zwei Fallen in dieser Datei.**
 
 `schwelle_score` gehoert zur **Faechergeometrie**, mit der die Klimatologie
-gerechnet wurde (5 Azimute, 8 Distanzen, 0.5-Grad-Gitter). Wer `faecher`
-setzt, macht s\* ungueltig und muss `skripte/klimatologie.py` mit demselben
-Faecher neu laufen lassen. Das Skript warnt beim Start.
+gerechnet wurde (5 Azimute, 8 Distanzen, 0.5-Grad-Gitter). Einen anderen
+Faecher macht s\* ungueltig; seit T-0057 gibt es dafuer keinen Schalter in
+`konfig.json` mehr, `alarm.py` bricht beim Schluessel `faecher` ab. Wer ihn
+wirklich braucht, aendert die Konstanten in `sonnen/score.py` und rechnet mit
+`skripte/klimatologie.py` die Klimatologie mit demselben Faecher neu.
 
 `schwelle_score` gehoert ausserdem zur **3-Schicht-Variante** des Scores. Der
 Betrieb laeuft deshalb auf `sonnen/score.py`, nicht auf der niveauaufgeloesten
@@ -696,12 +717,14 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 | `sonnen/feuchte.py` | Wolkendiagnostik (kalibriert, siehe Modulkopf) |
 | `sonnen/score.py` | Score, 3-Schicht-Variante (Betrieb) |
 | `sonnen/score_niveaus.py` | Score, niveauaufgeloest (kuenftig) |
+| `sonnen/score_distanz.py` | Score mit Schirm in Entfernung, enthaelt die Henyey-Greenstein-Phasenfunktion (Forschung, nicht im Betrieb) |
 | `skripte/alarm.py` | taeglicher Alarmlauf |
 | `skripte/zustandsdatei.py` | atomarer Schreibvorgang fuer Zustand, Archiv und Klimatologie (T-0051) |
 | `skripte/klimatologie.py` | Score ueber Jahre → Verteilung |
 | `skripte/auswertung.py` | Verteilung → s\*, Plot |
 | `skripte/abbruchtest.py` | Validierung gegen Fotoarchiv |
 | `skripte/erinnerung.py` | taegliche Bewertungsaufforderung (T-0021) |
+| `skripte/bewertungen_holen.py` | holt die Noten vom ntfy-Topic in die Zustandsdatei (stuendlich) |
 | `skripte/bewertungsseite.py` | erzeugt `web/bewerten-<ort>.html` je Ort |
 | `skripte/seite.py` | erzeugt die Prognoseseite `web/index.html` |
 | `skripte/bisher.py` | erzeugt die Bilanzseite `web/bisher.html` |
@@ -710,6 +733,13 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 | `skripte/band.py` | Himmelsband: Lichteindruck als Farbverlauf |
 | `skripte/satellit.py` | MSG-Wolkenmaske als Beobachtungswahrheit |
 | `skripte/netz.py` | wartet auf Namensaufloesung, bevor ein Lauf beginnt |
+| `skripte/logbuch.py` | Logzeilen mit Datum und Uhrzeit, Rotation unter launchd (T-0081) |
+| `skripte/sicherung.py` | Tageskopie der Zustandsdatei, optional zusaetzlich in `sicherung_ordner` (T-0081) |
+| `skripte/waechter.py` | prueft auf GitHub, ob die ausgelieferte Seite frisch ist (T-0075) |
+| `skripte/wn3.py` | WeatherNext-3-Leser, laeuft in us-east1, nicht im Betrieb (T-0072) |
+| `skripte/wn3_vergleich.py` | Vorfrage: weicht WN3 ueberhaupt von ECMWF ab? Nur Auswertung, nicht im Betrieb |
+| `skripte/icond2.py` | ICON-D2-Abruf fuer den Aufloesungstest (`test_phantomnullen.py` braucht seinen Cache) |
+| `skripte/interpolation.py` | T-0005: Messung, ob lineare Zeitinterpolation taugt oder Advektion noetig ist |
 | `skripte/ausliefern.py` | baut die Seiten und pusht nach `gh-pages` |
 | `skripte/fensterterm.py` | Fensterterm gegen die Maske: Phantom oder bestaetigt (T-0027) |
 | `skripte/wegterm.py` | Wegterm anders aggregiert, fuenf Varianten gegen Album/Referenz (T-0029) |
@@ -749,8 +779,10 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 node   skripte/test_bewertungsseite.js   # Warteschlange und Freilegung
 ```
 
-Stand 04.09.2026: **310 Python-Pruefungen + 41 JS, alle gruen**
-(`test_phantomnullen.py` mit ICON-Cache mitgezaehlt).
+Stand 09.10.2026: **809 Python-Pruefungen in 26 Dateien + 64 JS, alle gruen**
+(gezaehlt als Ausgabezeilen `ok`; `test_phantomnullen.py` mit ICON-Cache,
+`test_seiten.py` mit `daten/zustand.json` mitgezaehlt). Vorher, am 04.09.2026:
+310 + 41.
 
 **Kein Test darf von der Uhrzeit abhaengen.** Zwei taten es bis zum
 02.09.2026 und waren deshalb regelmaessig rot, ohne dass am Code etwas
@@ -836,5 +868,9 @@ ohne Fenster, hinter der Kaltfront Fenster mit Restbewoelkung.
 
 ## Stand
 
-E1 (Kalibrierung) weitgehend abgeschlossen, E2 (Alarm) gebaut, E3
-(Oberflaeche) offen. Was fehlt und warum: `STATE.md`.
+Stand 09.10.2026. E1 (Kalibrierung) weitgehend abgeschlossen, E2 (Alarm)
+gebaut und im Betrieb (vier launchd-Agenten, dazu der Waechter auf GitHub),
+E3 (Oberflaeche) gestalterisch fertig &mdash; offen sind dort die
+44-px-Tippziele der Abendachse (T-0080). Das Gesamtreview vom 09.10.2026
+(`docs/review-2026-10-09.md`) wird in T-0074 bis T-0083 abgearbeitet. Was
+fehlt und warum: `STATE.md` und `TASK.md`.

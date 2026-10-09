@@ -116,79 +116,7 @@ vergleichen statt gegen alle Abende.
 - [ ] `skripte/fotos_detail.py` aus Terminal.app
 - [ ] Test: Favoritenabende gegen Nicht-Favoritenabende, beide "draussen"
 
-### T-0001 Fotoarchiv-Gate
-Zaehlen, wie viele geotaggte Abendfotos (SU ±30 min) in der Mediathek liegen.
-Entscheidet, ob der Presence-Only-Abbruchtest aus E0 existiert.
-**BLOCKIERT:** macOS-TCC verweigert den Zugriff. Braucht Festplattenvollzugriff
-fuer die Terminal-App in den Systemeinstellungen.
-- [ ] n >= 40 komfortabel, n >= 20 grenzwertig, darunter faellt der Test aus
-- Skript: `skripte/fotos_zaehlen.py`
-
-### T-0006 Ablation 3-Schicht gegen niveauaufgeloest
-**GERECHNET 14.08.2026, Antwort: NEIN (Befund 31).** rho = +0.697
-[0.499, 0.826], Top-15-%-Ueberlappung 4 von 6, Verteilungen verschoben.
-s\* muss bei einem Wechsel neu hergeleitet werden. **Sommerfenster am selben
-Abend nachgeholt** (01.06.-12.07.2023, 8 Ereignisse): dort rho = +0.504 und
-nur 1 von 6 Spitzenabenden gemeinsam. Mit s\* = 0.7065 loest die 3-Schicht
-dreimal aus, die niveauaufgeloeste kein einziges Mal - ihr Maximum (0.488)
-liegt unter der Schwelle. Fuer gleiche Rate braeuchte es dort s\* ~ 0.4224.
-Historisch: `historical-forecast-api` war frei.
-**Vorher war das Skript verzerrt** — es zaehlte Abende ohne Daten als 0.0,
-wo BEIDE Verfahren uebereinstimmen, was rho nach oben trieb und damit genau
-auf 'die Rangfolgen fallen zusammen' zeigte. Behoben, siehe Befunde 27b.
-Load-bearing: s\* UND der Betrieb laufen beide auf der 3-Schicht-Variante
-(`alarm.py` importiert `sonnen.score`, siehe Modulkopf dort). Hier stand bis
-zum 23.08.2026 "der Betrieb laeuft niveauaufgeloest" - das war falsch und hat
-die Dringlichkeit dieses Tasks ueberzeichnet. Richtig ist: die Rangfolgen
-entscheiden, ob s\* beim geplanten WECHSEL uebertragbar waere, nicht ob der
-laufende Betrieb einen falschen Schwellwert benutzt.
-
-**VERMERK 23.08.2026 zur Lueckenbehandlung (Entscheidung: NICHT neu
-rechnen).** Die Zahlen oben sind unter ASYMMETRISCHER Lueckenbehandlung
-entstanden: `ablation.py:173` verwarf schon immer Abende, bei denen eine der
-beiden Varianten `detail is None` lieferte - aber `score_niveaus` gab bei
-einer TEILluecke (Daten nur im Nahbereich) noch ein Detail zurueck, wo
-`score` verwarf. Solche Abende blieben also in der Stichprobe, mit einem
-ueberhoehten Niveaus-Wert. Seit T-0054 verwerfen beide gleich.
-
-Wie viele Abende das in den ERA5-Daten 2022-2025 betrifft, ist **nicht
-gemessen** - der historische Abruf kostet Kontingent. Nicht neu gerechnet,
-weil die Richtung des Fehlers gegen die Antwort spricht, nicht fuer sie: ein
-ueberhoehter Niveaus-Wert bei Teilluecken konnte zufaellig mit der
-3-Schicht-Variante uebereinstimmen und rho damit nach OBEN ziehen. Das
-gemessene rho ist also eher eine Obergrenze, und mit +0.697 bzw. +0.504 im
-Sommerfenster liegt schon die Obergrenze weit unter jeder Wechselschwelle.
-Die Antwort "NEIN" wird durch den Fix fester, nicht wackliger.
-
-Wer den Wechsel doch ernsthaft erwaegt, rechnet vorher neu - dann aber mit
-der heutigen Fassung beider Scorer, und der Vermerk hier faellt weg.
-- [ ] Spearman rho und Top-15-%-Ueberlappung ueber 42 Abende
-
-**NACHTRAG 09.10.2026 (Review physik#13 / methodik#F1; Original oben
-unveraendert):** `sonnen/score_niveaus.py` mittelt Term A UNGEWICHTET ueber
-die Nahpunkte (= GEWICHTUNG "punkt"), `sonnen/score.py` rechnet seit dem
-14.08.2026 raumwinkelgewichtet. Die Ablation verglich damit zwei verschieden
-gewichtete Scores. Neu gerechnet im Review mit raumwinkelgewichtetem Term A:
-Sommer rho +0.690 (statt +0.504), Niveau-Maximum im Sommer 0.808 (statt 0.488,
-also ein Abend >= s*, 3-Schicht loest 2-mal aus, nicht 3-mal), Herbst rho
-+0.651 (statt +0.697), Top-6 bleibt 4/6 bzw. 1/6. "Kein einziger Abend",
-"zwei Massstaebe" und "s* ~ 0.4224" tragen bezueglich der Gewichtung nicht
-(0.4224 ist der dritthoechste Niveau-Wert; fuer gleiche Rate ergibt sich
-0.511). Die **Kernaussage NEIN haelt**. Auch "rho eher Obergrenze / NEIN wird
-fester" (Vermerk 23.08.) gilt nur mit dieser Einschraenkung. Auf den
-Live-Betrieb ohne Einfluss; `icond2_test.py` erbt dieselbe Mittelung.
-
-### T-0003 Taegliche Ensemble-Archivierung
-Das Ensemble-Archiv reicht nur 93 Tage zurueck und wandert. Ein Cron, der
-nichts tut ausser den Tagesabzug wegschreiben. Haengt an keiner Entscheidung.
-- [ ] ECMWF ENS, native 3-h-Schritte, Fanpunkte, taeglich nach dem 00z-Lauf
-
 ## Next
-
-### T-0014 Score pro Member und Zwei-Pass-Advektion verdrahten
-Die Score-Formeln stehen (`sonnen/score_niveaus.py`), es fehlt die
-Betriebsschleife: pro Member rechnen (nie aus Mittelfeldern, Jensen), Felder
-semi-Lagrangesch auf die Sonnenuntergangszeit advehieren.
 
 ### T-0007 Gelaende in den Fensterterm
 DEM-Freigaengigkeit des Strahls. Ab freier Ortswahl zwingend, nicht optional
@@ -256,6 +184,19 @@ E-Mail-Adresse aus dem Messblock von T-0072 entfernen (wn3#F8). Entscheidung
 Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
 
 ## Backlog
+
+- T-0001 Fotoarchiv-Gate (aus Doing nach Backlog verschoben 09.10.2026,
+  Review architektur#1 / T-0082). Vermerk: Der Doing-Text meldete BLOCKIERT
+  (macOS-TCC), der Done-Eintrag vom 14.08.2026 meldet den Abbruchtest als
+  gelaufen (Ergebnis unentschieden wegen konfundiertem Label). Ob der
+  Zugriffsblock heute noch besteht, ist nicht gemessen; die Fortfuehrung
+  laeuft ueber T-0001b in Doing. Urspruenglicher Text:
+  Zaehlen, wie viele geotaggte Abendfotos (SU ±30 min) in der Mediathek liegen.
+  Entscheidet, ob der Presence-Only-Abbruchtest aus E0 existiert.
+  **BLOCKIERT:** macOS-TCC verweigert den Zugriff. Braucht Festplattenvollzugriff
+  fuer die Terminal-App in den Systemeinstellungen.
+  - [ ] n >= 40 komfortabel, n >= 20 grenzwertig, darunter faellt der Test aus
+  - Skript: `skripte/fotos_zaehlen.py`
 
 - T-0077 Bewertungskanal haerten (Review 09.10.2026). Das oeffentliche
   Bewertungs-Topic ist zugleich das abonnierte Erinnerungs-Topic: jede:r kann
@@ -622,6 +563,78 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   (`skripte/interpolation.py` misst genau diesen Fall).
 
 ## Done
+
+### 09.10.2026 &mdash; Aus Doing und Next hierher verschoben (Review architektur#1, T-0082)
+
+Inhalt unveraendert, nur die Ueberschriftsebene ist tiefer. T-0006 war
+entschieden (Antwort NEIN), T-0003 steht oben als erledigt (20.08.2026) und
+der Doing-Entwurf ist ueberholt, T-0014 laeuft laut `skripte/alarm.py`
+(`member_liste`, Zwei-Pass-Advektion) und laut Done-Bullet "E2 gebaut".
+
+#### T-0006 Ablation 3-Schicht gegen niveauaufgeloest
+**GERECHNET 14.08.2026, Antwort: NEIN (Befund 31).** rho = +0.697
+[0.499, 0.826], Top-15-%-Ueberlappung 4 von 6, Verteilungen verschoben.
+s\* muss bei einem Wechsel neu hergeleitet werden. **Sommerfenster am selben
+Abend nachgeholt** (01.06.-12.07.2023, 8 Ereignisse): dort rho = +0.504 und
+nur 1 von 6 Spitzenabenden gemeinsam. Mit s\* = 0.7065 loest die 3-Schicht
+dreimal aus, die niveauaufgeloeste kein einziges Mal - ihr Maximum (0.488)
+liegt unter der Schwelle. Fuer gleiche Rate braeuchte es dort s\* ~ 0.4224.
+Historisch: `historical-forecast-api` war frei.
+**Vorher war das Skript verzerrt** — es zaehlte Abende ohne Daten als 0.0,
+wo BEIDE Verfahren uebereinstimmen, was rho nach oben trieb und damit genau
+auf 'die Rangfolgen fallen zusammen' zeigte. Behoben, siehe Befunde 27b.
+Load-bearing: s\* UND der Betrieb laufen beide auf der 3-Schicht-Variante
+(`alarm.py` importiert `sonnen.score`, siehe Modulkopf dort). Hier stand bis
+zum 23.08.2026 "der Betrieb laeuft niveauaufgeloest" - das war falsch und hat
+die Dringlichkeit dieses Tasks ueberzeichnet. Richtig ist: die Rangfolgen
+entscheiden, ob s\* beim geplanten WECHSEL uebertragbar waere, nicht ob der
+laufende Betrieb einen falschen Schwellwert benutzt.
+
+**VERMERK 23.08.2026 zur Lueckenbehandlung (Entscheidung: NICHT neu
+rechnen).** Die Zahlen oben sind unter ASYMMETRISCHER Lueckenbehandlung
+entstanden: `ablation.py:173` verwarf schon immer Abende, bei denen eine der
+beiden Varianten `detail is None` lieferte - aber `score_niveaus` gab bei
+einer TEILluecke (Daten nur im Nahbereich) noch ein Detail zurueck, wo
+`score` verwarf. Solche Abende blieben also in der Stichprobe, mit einem
+ueberhoehten Niveaus-Wert. Seit T-0054 verwerfen beide gleich.
+
+Wie viele Abende das in den ERA5-Daten 2022-2025 betrifft, ist **nicht
+gemessen** - der historische Abruf kostet Kontingent. Nicht neu gerechnet,
+weil die Richtung des Fehlers gegen die Antwort spricht, nicht fuer sie: ein
+ueberhoehter Niveaus-Wert bei Teilluecken konnte zufaellig mit der
+3-Schicht-Variante uebereinstimmen und rho damit nach OBEN ziehen. Das
+gemessene rho ist also eher eine Obergrenze, und mit +0.697 bzw. +0.504 im
+Sommerfenster liegt schon die Obergrenze weit unter jeder Wechselschwelle.
+Die Antwort "NEIN" wird durch den Fix fester, nicht wackliger.
+
+Wer den Wechsel doch ernsthaft erwaegt, rechnet vorher neu - dann aber mit
+der heutigen Fassung beider Scorer, und der Vermerk hier faellt weg.
+- [ ] Spearman rho und Top-15-%-Ueberlappung ueber 42 Abende
+
+**NACHTRAG 09.10.2026 (Review physik#13 / methodik#F1; Original oben
+unveraendert):** `sonnen/score_niveaus.py` mittelt Term A UNGEWICHTET ueber
+die Nahpunkte (= GEWICHTUNG "punkt"), `sonnen/score.py` rechnet seit dem
+14.08.2026 raumwinkelgewichtet. Die Ablation verglich damit zwei verschieden
+gewichtete Scores. Neu gerechnet im Review mit raumwinkelgewichtetem Term A:
+Sommer rho +0.690 (statt +0.504), Niveau-Maximum im Sommer 0.808 (statt 0.488,
+also ein Abend >= s*, 3-Schicht loest 2-mal aus, nicht 3-mal), Herbst rho
++0.651 (statt +0.697), Top-6 bleibt 4/6 bzw. 1/6. "Kein einziger Abend",
+"zwei Massstaebe" und "s* ~ 0.4224" tragen bezueglich der Gewichtung nicht
+(0.4224 ist der dritthoechste Niveau-Wert; fuer gleiche Rate ergibt sich
+0.511). Die **Kernaussage NEIN haelt**. Auch "rho eher Obergrenze / NEIN wird
+fester" (Vermerk 23.08.) gilt nur mit dieser Einschraenkung. Auf den
+Live-Betrieb ohne Einfluss; `icond2_test.py` erbt dieselbe Mittelung.
+
+#### T-0003-alt (ueberholt) Taegliche Ensemble-Archivierung &mdash; Entwurf aus Doing
+Das Ensemble-Archiv reicht nur 93 Tage zurueck und wandert. Ein Cron, der
+nichts tut ausser den Tagesabzug wegschreiben. Haengt an keiner Entscheidung.
+- [ ] ECMWF ENS, native 3-h-Schritte, Fanpunkte, taeglich nach dem 00z-Lauf
+
+#### T-0014 Score pro Member und Zwei-Pass-Advektion verdrahten
+Die Score-Formeln stehen (`sonnen/score_niveaus.py`), es fehlt die
+Betriebsschleife: pro Member rechnen (nie aus Mittelfeldern, Jensen), Felder
+semi-Lagrangesch auf die Sonnenuntergangszeit advehieren.
+
 
 ### 04.09.2026 &mdash; Fremdreview umgesetzt (T-0063 bis T-0071)
 

@@ -21,7 +21,7 @@ ganzen Projekt.  Sie ist hier an einen fest verdrahteten Zweignamen gebunden
 und prueft vorher, dass er nicht der Hauptzweig ist - ein vertippter
 Parameter darf `main` nicht treffen koennen.
 
-Lauf:  python3 skripte/ausliefern.py [--trocken]
+Lauf:  .venv/bin/python3 skripte/ausliefern.py [--trocken]
 """
 import argparse
 import os
@@ -265,11 +265,13 @@ def ein_ort_pruefen():
     """Warnt, wenn mehr als ein Ort konfiguriert ist (T-0071).
 
     DIE SEITEN KOENNEN NUR EINEN ORT.  `konfig.json` fuehrt `orte[]` als
-    Liste, und Alarm, Erinnerung und Bewertungsseite arbeiten sie auch
-    wirklich durch - die Prognoseseite, die Bilanz, der Vertikalschnitt und
-    die Faecherkarte nicht: Berlins Koordinaten und die Berliner
-    Klimatologie stehen dort fest im Quelltext (`skripte/seite.py`,
-    `skripte/bisher.py`, `skripte/schnitt.py`, `skripte/faecher.py`).
+    Liste, und Alarm und Erinnerung arbeiten sie auch wirklich durch (die
+    Bewertungsseite erzeugt eine Seite je Ort, rangiert deren Prognosestand
+    aber gegen die Berliner Klimatologie, `bewertungsseite.prognosestand()`)
+    - die Prognoseseite, die Bilanz, der Vertikalschnitt und die Faecherkarte
+    nicht: Berlins Koordinaten und die Berliner Klimatologie stehen dort fest
+    im Quelltext (`skripte/seite.py`, `skripte/bisher.py`,
+    `skripte/schnitt.py`, `skripte/faecher.py`).
 
     Ein zweiter Ort bekaeme deshalb Pushs, die gegen Berlins s* gerechnet
     sind, und eine Prognoseseite, die Berlin zeigt.  Das faellt nirgends

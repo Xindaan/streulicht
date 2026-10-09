@@ -2,8 +2,8 @@
 
 WICHTIG zur Taktung: ntfy.sh haelt Nachrichten nur begrenzt vor (Standard
 12 Stunden).  Ein taeglicher Lauf verliert also Bewertungen, die mehr als
-einen halben Tag alt sind.  Dieses Skript gehoert deshalb alle 3 Stunden in
-den Cron, nicht einmal taeglich.
+einen halben Tag alt sind.  Dieses Skript laeuft deshalb stuendlich (launchd-
+Agent de.greatbelow.streulicht.bewertung, 5. Minute), nicht einmal taeglich.
 
 Der Rueckkanal ist bewusst blind: die Bewertungsseite zeigt keine Prognose.
 Wer vorher auf die Prognoseseite schaut, ist geankert - dagegen hilft nur
