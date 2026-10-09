@@ -283,6 +283,16 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   falsch: das Album reicht bis 2026 (F8). Beide Alarme kamen erst bei Lead 0
   (F11). Noten bisher ohne Zusammenhang, Abgabe selektiv (F9, F10). Datum des
   Advektionsfixes in README/alarm.py: 04.09., nicht 02.09. (F6).
+  Stand 09.10.2026: umgesetzt - 59b1773, NUR Doku und Kommentare. Datum des
+  Advektionsfixes (04.09.) in README/alarm.py; datierte Nachtraege zu
+  Album-Trefferquote (befunde-e1), T-0006 (Gewichtung) und T-0072-Blocker;
+  R_eff-Kommentar in geometrie.py; Escape-Sequenz in score_niveaus.py behoben,
+  neu `test_syntax.py`. Score, Schwellen und Anzeige unveraendert. OFFEN bei
+  Andre (fachlich): F3 Seite zeigt Median-Rang gegen Einzelanalyse-Verteilung,
+  physik#4 Sichtfaktor-Gewichtung, F11 Versprechen "2-10 Tage", F10
+  Verankerung durch Prognoseseite und Push. STATE.md bewusst nicht angefasst;
+  dort stehen noch 'Album 2014 bis 2022' (Z. 185-186) und die zu breite
+  Belastungsaussage (Z. 7-8, F6) sowie die Zahlen in Z. 55-58 (F5).
 - T-0079 Testluecken (Review 09.10.2026): ausliefern.py ungetestet
   (Allow-Liste, Zweigriegel; tests#9); netz.warte_auf_netz (tests#8);
   bewertungen_holen.hole() und vier Eingangswaechter (bewertung#8, tests#7);
