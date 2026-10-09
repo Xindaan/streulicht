@@ -69,7 +69,7 @@ pruefe('class="veraltet"' in s and "von vorgestern" in s
 # 22:30 UTC am 08.10. ist in Berlin schon der 09.10., 00:30.  Vorher zaehlte
 # der Streifen hier "von gestern" (Ortsdatum minus UTC-Datum).
 s = seite.veraltet_streifen(utc("2026-10-08T22:30"), JETZT, KFG, BERLIN)
-pruefe("von heute frueh" in s and "(09.10., 00:30" in s,
+pruefe("von heute fr\u00fch" in s and "(09.10., 00:30" in s,
        "Abruf 22:30 UTC: Tage in derselben Zone gezaehlt: %r" % s[:60])
 
 # --- b) seite.main() in einem Temp-Verzeichnis ------------------------------

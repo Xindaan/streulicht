@@ -472,7 +472,10 @@ def schnitt_neu(tag, feld, segmente=None, breite=BREITE, laenge=LAENGE,
 
     o = ['<svg viewBox="0 0 %d %d" xmlns="http://www.w3.org/2000/svg" '
          'role="img" aria-label="Vertikalschnitt nach Westen">' % (VBW, VBH),
-         '<style>text{font-family:%s;fill:%s}</style>'
+         # `text:not([fill])`: eine Regel `text{fill}` schlaegt als Stylesheet
+         # das fill-Attribut und machte die hervorgehobene Ortsmarke "Berlin"
+         # grau (Review seiten#8).
+         '<style>text{font-family:%s}text:not([fill]){fill:%s}</style>'
          % (_tok("--schrift"), farbe("--gedaempft")),
          '<defs>',
          '<linearGradient id="himmel" x1="0" x2="0" y1="0" y2="1">'

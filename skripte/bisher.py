@@ -21,7 +21,7 @@ import argparse
 import json
 import os
 import sys
-from datetime import date
+from datetime import date, datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -39,35 +39,144 @@ BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ANLASS_TEXT = {"aufgefordert": "Auf Nachfrage bewertet",
                "alarm": "Nach Alarm bewertet"}
 
+# Ab diesem Zeitpunkt rechnet der Alarmlauf die Advektion richtig (T-0063,
+# Vorzeichen des Windversatzes): 04.09.2026, 16:50 Ortszeit (MESZ) = 14:50
+# UTC.  Jede Zahl davor beschreibt einen verschobenen Faecher - die Bilanz
+# nennt sie, statt sie wie die anderen zu zeigen (Review uiux#5).
+ADVEKTIONSFIX = datetime(2026, 9, 4, 14, 50, tzinfo=timezone.utc)
 
-def eintraege(ort_name, alle_scores):
-    """Bewertete Abende, neueste zuerst - mit dem, was dazu prognostiziert war."""
+
+def lauf_zeitpunkt(ort_zustand, lauf_tag):
+    """Letzter Zeitpunkt (UTC), zu dem am Tag `lauf_tag` gerechnet wurde, oder None.
+
+    `laeufe[tag]` ist je nach Alter eine Zeichenkette oder {morgens, abends}.
+    """
+    e = ((ort_zustand or {}).get("laeufe") or {}).get(lauf_tag)
+    roh = list(e.values()) if isinstance(e, dict) else [e]
+    zeiten = []
+    for w in roh:
+        try:
+            z = datetime.fromisoformat(w)
+        except (TypeError, ValueError):
+            continue
+        zeiten.append(z if z.tzinfo else z.replace(tzinfo=timezone.utc))
+    return max(zeiten) if zeiten else None
+
+
+def vor_advektionsfix(lauf_tag, zeit):
+    """True, wenn der Lauf vor der Advektionskorrektur gerechnet wurde.
+
+    Mit Zeitpunkt exakt; ohne (aeltere Zustaende) nur der Tag - am Tag der
+    Korrektur selbst ohne Zeit "nicht belegt", also False statt geraten.
+    """
+    if zeit is not None:
+        return zeit < ADVEKTIONSFIX
+    return lauf_tag < ADVEKTIONSFIX.date().isoformat()
+
+
+def vorhersage_zeile(e, tag, ort_zustand, alle_scores):
+    """Der Satzteil "vorhergesagt: ..." samt Laufdatum und Korrekturvermerk.
+
+    Das Laufdatum steht nur, wenn der Lauf nicht am Abend selbst war: bei
+    6 von 26 Karten stammte die Prognose aus einem 1-3 Tage aelteren Lauf, am
+    Abend selbst lief keiner (Review uiux#5).
+    """
+    rang = (sum(1 for x in alle_scores if x < e["median"])
+            / len(alle_scores))
+    name, _ = stufe(rang)
+    lauf = ((e.get("verlauf") or [{}])[-1]).get("lauf")
+    wann = ""
+    if lauf and lauf != tag:
+        d = date.fromisoformat(lauf)
+        wann = " (Lauf vom %02d.%02d.)" % (d.day, d.month)
+    text = "vorhergesagt%s: %s, %d. Perzentil" % (wann, name, round(rang * 100))
+    if lauf and vor_advektionsfix(lauf, lauf_zeitpunkt(ort_zustand, lauf)):
+        text += (" &#183; vor der Korrektur der Windverschiebung (Advektion) vom "
+                 "04.09.2026 gerechnet, die Zahl ist belastet")
+    return text
+
+
+def ort_zustand_laden(ort_name):
+    """Der Zustandseintrag des Ortes aus daten/zustand.json, oder {}."""
     zp = os.path.join(BASIS, "daten", "zustand.json")
     if not os.path.exists(zp):
-        return []
+        return {}
     with open(zp) as f:
-        zustand = json.load(f)
-    abende = (zustand.get(ort_name) or {}).get("abende", {})
+        return json.load(f).get(ort_name) or {}
+
+
+def eintraege(ort_name, alle_scores, ort_zustand=None, heute=None):
+    """Abende mit Bewertung ODER Alarm, neueste zuerst - mit der Prognose dazu.
+
+    Ein Alarmabend ohne Note gehoert auf die Bilanz (Review uiux#6): beide
+    bisherigen Alarme (26.09., 30.09.) fehlten, weil der Abend ohne Note
+    uebersprungen wurde - dabei sind sie die Faelle, an denen die Alarmrate
+    haengt.  Sie tragen `ohne_note`.
+    """
+    z = ort_zustand if ort_zustand is not None else ort_zustand_laden(ort_name)
+    heute = heute or date.today()
+    abende = z.get("abende") or {}
+    alarme = z.get("alarme") or {}
     aus = []
-    for t in sorted(abende, reverse=True):
-        e = abende[t]
-        if e.get("bewertung") is None:
+    for t in sorted(set(abende) | set(alarme), reverse=True):
+        e = abende.get(t) or {}
+        hat_note = e.get("bewertung") is not None
+        if not hat_note and t not in alarme:
             continue
         d = date.fromisoformat(t)
-        zeile = [ANLASS_TEXT.get(e.get("bewertung_anlass"), "Spontan bewertet")]
+        zeile = []
+        if hat_note:
+            zeile.append(ANLASS_TEXT.get(e.get("bewertung_anlass"),
+                                         "Spontan bewertet"))
+            if t in alarme and e.get("bewertung_anlass") != "alarm":
+                zeile.append("Alarm gesendet")
+        else:
+            wahr = (alarme[t] or {}).get("p")
+            zeile.append("Alarm gesendet%s" % (
+                "" if wahr is None
+                else " (%d %% der Modelll&auml;ufe &uuml;ber der Schwelle)"
+                % round(wahr * 100)))
         if e.get("median") is None:
             zeile.append("keine Prognose f&uuml;r diesen Abend gerechnet")
         else:
-            rang = (sum(1 for x in alle_scores if x < e["median"])
-                    / len(alle_scores))
-            name, _ = stufe(rang)
-            zeile.append("vorhergesagt: %s, %d. Perzentil"
-                         % (name, round(rang * 100)))
-        aus.append({"tag": t, "note": e["bewertung"],
+            zeile.append(vorhersage_zeile(e, t, z, alle_scores))
+        aus.append({"tag": t, "note": e.get("bewertung") if hat_note else None,
+                    "ohne_note": not hat_note,
+                    "offen": not hat_note and d >= heute,
                     "kopf": "%s %02d.%02d." % (WOCHENTAG[d.weekday()],
                                                d.day, d.month),
                     "zeile": " &#183; ".join(zeile)})
     return aus
+
+
+def kopfzeile(liste, n_aufforderungen, erster_abend, ort_zustand=None):
+    """Die Zeile ueber den Karten: Bewertungen MIT Nenner (Review uiux#6).
+
+    "27 BEWERTUNGEN" ohne Nenner liess offen, ob das alle sind.  Der Nenner
+    sind die Aufforderungen (`erinnerungen`, ein Eintrag je gesendeter
+    Abenderinnerung).  "von" steht nur, wenn jede Bewertung auch zu einer
+    Aufforderung gehoert - sonst waere der Nenner kleiner als der Zaehler
+    oder nicht der der Bewertungen, und die Zeile faellt auf die blosse
+    Aufzaehlung zurueck.
+    """
+    bewertet = [e for e in liste if not e.get("ohne_note")]
+    n = len(bewertet)
+    ohne = len(liste) - n
+    erinnert = set(((ort_zustand or {}).get("erinnerungen") or {}))
+    wort = ("NOCH KEINE BEWERTUNG" if n == 0
+            else ("1 BEWERTUNG" if n == 1 else "%d BEWERTUNGEN" % n))
+    if n_aufforderungen:
+        auff = "%d AUFFORDERUNG%s" % (n_aufforderungen,
+                                      "" if n_aufforderungen == 1 else "EN")
+        alle_zu_aufforderung = (not ort_zustand
+                                or all(e["tag"] in erinnert for e in bewertet))
+        wort += (" VON " if alle_zu_aufforderung else " &#183; ") + auff
+    wort = "%s SEIT DEM %d. %s %d" % (
+        wort, erster_abend.day, MONAT[erster_abend.month - 1].upper(),
+        erster_abend.year)
+    if ohne:
+        wort += " &#183; %d ALARMABEND%s OHNE NOTE" % (ohne, "" if ohne == 1 else "E")
+    return wort
 
 
 def karte(e):
@@ -82,6 +191,14 @@ def karte(e):
     diese eine Karte.  Eine unbrauchbare Note wird gezeigt als das, was sie
     ist, statt die Seite mitzunehmen.
     """
+    if e.get("ohne_note"):
+        # Alarmabend ohne Note: kein Balken - ein leerer waere von "nicht
+        # gesehen" (Note 0) nicht zu unterscheiden.
+        return ('<article class="bkarte"><div class="bkopf"><span>%s</span>'
+                '<span class="note-null">%s</span></div>'
+                '<p class="bzeile">%s</p></article>'
+                % (e["kopf"], "noch nicht bewertet" if e.get("offen")
+                   else "nicht bewertet", e["zeile"]))
     n = e.get("note")
     if isinstance(n, bool) or not isinstance(n, int) or not 0 <= n <= 5:
         return ('<article class="bkarte"><div class="bkopf"><span>%s</span>'
@@ -208,13 +325,11 @@ def main():
     with open(kp) as f:
         alle = sorted(v["s"] for v in json.load(f).values())
 
-    liste = eintraege(a.ort, alle)
+    zustand = ort_zustand_laden(a.ort)
+    liste = eintraege(a.ort, alle, zustand)
     n = len(liste)
-    korpus = "%s SEIT DEM %d. %s %d" % (
-        "NOCH KEINE BEWERTUNG" if n == 0
-        else ("1 BEWERTUNG" if n == 1 else "%d BEWERTUNGEN" % n),
-        ERSTER_ABEND.day, MONAT[ERSTER_ABEND.month - 1].upper(),
-        ERSTER_ABEND.year)
+    korpus = kopfzeile(liste, len(zustand.get("erinnerungen") or {}),
+                       ERSTER_ABEND, zustand)
     if liste:
         karten = "".join(karte(e) for e in liste)
     else:
@@ -230,7 +345,7 @@ def main():
     ziel = os.path.join(BASIS, "web", "bisher.html")
     with open(ziel, "w", encoding="utf-8") as f:
         f.write(html)
-    print("geschrieben: %s (%d Bewertungen, %.1f kB)"
+    print("geschrieben: %s (%d Karten, %.1f kB)"
           % (ziel, n, os.path.getsize(ziel) / 1000.0))
 
 

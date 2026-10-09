@@ -49,6 +49,7 @@ Vorauswahl zufaellig auf den besten Abend, sagt die Seite das.
 """
 import argparse
 import json
+import math
 import os
 import sys
 from datetime import date, datetime, timedelta, timezone
@@ -59,7 +60,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import band  # noqa: E402
 import faecher  # noqa: E402
 import tokens  # noqa: E402
-from alarm import begruendung  # noqa: E402
+from alarm import begruendung, satz  # noqa: E402
 from schnitt import lade_feld, schnitt_neu, svg  # noqa: E402
 from sonnen.geometrie import sonnenuntergang, tangentendistanz_km  # noqa: E402
 from sonnen.score import SCHIRME  # noqa: E402
@@ -149,6 +150,54 @@ ANZAHL_WORT = {n: "%s ABENDE" % w for n, w in enumerate(
      "ACHT", "NEUN", "ZEHN", "ELF", "ZWOELF"))}
 
 
+def wahrsch_text(p, n_member=None):
+    """Die Wahrscheinlichkeit als Text: "57 %", bei 0 Membern ueber s* "< 6 %".
+
+    "0 %" bei 0 von 51 Membern behauptete Gewissheit (Review uiux#4): aus 51
+    Membern folgt nur, dass der wahre Anteil unter rund 6 % liegt (Dreierregel
+    bei 95 % einseitig: 3 / n; bei n = 51 genau 5,9 %).  Ohne bekanntes n
+    bleibt es bei der blanken Zahl - eine Grenze zu erfinden waere falscher
+    als die Null.  Gibt es keine Wahrscheinlichkeit (Rueckschau), None.
+    """
+    if p is None:
+        return None
+    if p == 0 and n_member:
+        return "< %d %%" % math.ceil(300.0 / n_member)
+    return "%d %%" % round(p * 100)
+
+
+def untergang_ms(tag):
+    """Sonnenuntergang des Abends als Unix-Millisekunden (UTC) - oder None.
+
+    Die Seite braucht ihn im Browser (Vorauswahl nach Sonnenuntergang) und
+    rechnet dort keine Sonnenstaende: derselbe Wert wie lokalzeit().
+    """
+    std, _ = sonnenuntergang(date.fromisoformat(tag), 52.52, 13.405)
+    if std is None:
+        return None
+    t0 = datetime.fromisoformat(tag + "T00:00").replace(tzinfo=timezone.utc)
+    return int((t0 + timedelta(hours=std)).timestamp() * 1000)
+
+
+def vorwahl(eintraege, jetzt, heute_iso):
+    """Index des vorauszuwaehlenden Abends (Review uiux#2, T-0033).
+
+    Der erste Abend ab HEUTE - ist sein Sonnenuntergang aber schon vorbei,
+    der naechste.  Sonst blieb der vergangene Abend bis zum ersten Lauf nach
+    Mitternacht die Hauptaussage der Seite (und mitunter "Bester Abend").
+    Ist alles vorbei, gilt der letzte Abend.  `jetzt` ist aware (UTC),
+    `heute_iso` der Ortstag.  Abende ohne Untergangszeit (Rueckschau, Polar)
+    zaehlen nie als vorbei.  Das Skript am Seitenende (`vorwahl()` dort)
+    wiederholt dieselbe Regel mit der Uhr der Betrachter:innen.
+    """
+    ms = jetzt.timestamp() * 1000
+    k = next((i for i, e in enumerate(eintraege) if e["tag"] >= heute_iso),
+             len(eintraege) - 1)
+    while k < len(eintraege) - 1 and (eintraege[k].get("unter") or ms + 1) < ms:
+        k += 1
+    return k
+
+
 def kurzmarke(d, erster):
     """Tageszahl auf der Achse - mit Monat nur beim ersten und am Monatsersten."""
     if erster or d.day == 1:
@@ -156,7 +205,36 @@ def kurzmarke(d, erster):
     return "%d." % d.day
 
 
-def pushauskunft(hoechste, schwelle_p, kfg, rueckschau=False):
+def pushauskunft_veraltet(hoechste, schwelle_p, n_member=None):
+    """Die Push-Auskunft, wenn die Zahlen nicht frisch sind (Review seiten#6).
+
+    Bei einem Stand von vor Tagen stand der Streifen "von vor N Tagen" neben
+    dem Satz "Es kommt kein Push. Das ist der normale Zustand" - der Satz
+    sprach ueber eine Zukunft, die die alten Zahlen gar nicht kennen.  Dieser
+    Text sagt nur, was die LETZTEN Zahlen zeigten, und dass seitdem kein Lauf
+    durchgekommen ist.  Reiner Text mit echten Zeichen (kein HTML): er geht
+    auch als Attribut in die Seite, damit der Browser ihn einsetzen kann, wenn
+    erst dort auffaellt, dass die Seite alt ist (FRISCHE_SKRIPT).
+    """
+    p = round(schwelle_p * 100)
+    h = round(hoechste * 100)
+    if hoechste < schwelle_p:
+        wert = ("unter %d\u00a0%%" % math.ceil(300.0 / n_member)
+                if hoechste == 0 and n_member else "h\u00f6chstens %d\u00a0%%" % h)
+        return ("Bei den letzten gerechneten Zahlen rei\u00dft kein Abend die "
+                "Schwelle von %d\u00a0%% (%s). Seitdem ist kein Lauf "
+                "durchgekommen; ob inzwischen ein Push kam, steht hier nicht. "
+                "Ein Push kommt nur bei \u201eselten\u201c \u2013 "
+                "\u201eauff\u00e4llig\u201c allein l\u00f6st keinen aus."
+                % (p, wert))
+    return ("Bei den letzten gerechneten Zahlen rei\u00dft mindestens ein "
+            "Abend die Schwelle von %d\u00a0%% (h\u00f6chstens %d\u00a0%%). "
+            "Seitdem ist kein Lauf durchgekommen; ob der Push schon "
+            "rausging, steht hier nicht." % (p, h))
+
+
+def pushauskunft(hoechste, schwelle_p, kfg, rueckschau=False, veraltet=False,
+                 n_member=None):
     """Der Absatz, der sagt, wann der Nutzer mit einer Meldung rechnen darf.
 
     Er ist die EINZIGE Stelle, die das ueberhaupt sagt - und stand bis zum
@@ -195,15 +273,27 @@ def pushauskunft(hoechste, schwelle_p, kfg, rueckschau=False):
     if rueckschau:
         return ("R&uuml;ckschau: hier wurde nichts vorhergesagt und "
                 "nichts gepusht.")
+    if veraltet:
+        from html import escape
+        return escape(pushauskunft_veraltet(hoechste, schwelle_p, n_member),
+                      quote=False)
     p = round(schwelle_p * 100)
     h = round(hoechste * 100)
     if hoechste < schwelle_p:
+        # "rund 18 Abende im Jahr sind es nicht" behauptete eine ALARMRATE -
+        # die die Bilanzseite ausdruecklich "unbekannt" nennt (Review uiux#4).
+        # Die 18 sind die Haeufigkeit von "selten" in der Klimatologie, nicht
+        # die der Alarme; so steht es jetzt da.
+        wert = ("unter %d&nbsp;%%" % math.ceil(300.0 / n_member)
+                if hoechste == 0 and n_member
+                else "h&ouml;chstens %d&nbsp;%%" % h)
         return ("Kein Abend im Fenster rei&szlig;t die Schwelle von "
-                "%d&nbsp;%% (h&ouml;chstens %d&nbsp;%%). Es kommt kein "
-                "Push. Das ist der normale Zustand: rund 18 Abende im "
-                "Jahr sind es nicht. Ein Push kommt nur bei <b>selten</b> "
-                "&mdash; <b>auff&auml;llig</b> allein l&ouml;st keinen aus."
-                % (p, h))
+                "%d&nbsp;%% (%s). Es kommt kein "
+                "Push. Das ist der normale Zustand: Ein Push kommt nur bei "
+                "<b>selten</b> (ab dem 95. Perzentil, in der Klimatologie "
+                "rund 18 Abende im Jahr); wie oft er tats&auml;chlich "
+                "kommt, ist noch nicht gemessen. <b>Auff&auml;llig</b> "
+                "allein l&ouml;st keinen aus." % (p, wert))
     v = kfg.get("lauf_vorlauf_stunden", 3)
     wann = ("rund eine Stunde vor Sonnenuntergang" if v == 1
             else "rund %g&nbsp;Stunden vor Sonnenuntergang" % v)
@@ -263,7 +353,7 @@ def veraltet_streifen(g, jetzt, kfg, zone=None):
     # stand hier date.today() (Ortszeit) minus g.date() (UTC) - bei einem
     # Abruf zwischen 22 und 24 Uhr UTC um einen Tag daneben.
     tage = (jetzt.astimezone(zone).date() - g.astimezone(zone).date()).days
-    wann = {0: "von heute frueh", 1: "von gestern",
+    wann = {0: "von heute früh", 1: "von gestern",
             2: "von vorgestern"}.get(tage, "von vor %d Tagen" % tage)
     return ('<p class="veraltet">Diese Zahlen sind %s '
             '(%s, %s&nbsp;Uhr). Der Lauf vom %s ist nicht '
@@ -330,7 +420,7 @@ FRISCHE_SKRIPT = """<script>
   const tag=d=>Date.parse(new Intl.DateTimeFormat("en-CA",{timeZone:zone,
     year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(d)));
   const tage=Math.round((tag(jetzt)-tag(geholt))/86400000);
-  const wann={0:"von heute frueh",1:"von gestern",2:"von vorgestern"}[tage]
+  const wann={0:"von heute früh",1:"von gestern",2:"von vorgestern"}[tage]
     ||"von vor "+tage+" Tagen";
   const dm={day:"2-digit",month:"2-digit"}, hm={hour:"2-digit",minute:"2-digit",hourCycle:"h23"};
   let text="Diese Zahlen sind "+wann+" ("+f(geholt,dm)+", "+f(geholt,hm)+"\u00a0Uhr).";
@@ -341,15 +431,14 @@ FRISCHE_SKRIPT = """<script>
   p.textContent=text;
   const k=document.querySelector(".korpus");
   k.parentNode.insertBefore(p,k);
+  // Die Push-Auskunft sprach sonst weiter von einer Zukunft, die diese alten
+  // Zahlen gar nicht kennen (Review seiten#6): der Server legt die Fassung
+  // fuer "veraltet" als Attribut bereit.
+  const pu=document.querySelector(".push");
+  const va=pu&&pu.getAttribute("data-veraltet");
+  if(va)pu.textContent=va;
 }catch(e){}})();
 </script>"""
-
-
-def satz(text):
-    """Halbsatz aus begruendung() zu einem Satz machen: gross, mit Punkt."""
-    if not text:
-        return ""
-    return text[0].upper() + text[1:] + "."
 
 
 def _bilder(tag, feld, segmente, azimut, schirm):
@@ -446,6 +535,9 @@ def prognose_eintraege(ort_name, perzentil, s_stern):
                     "band": band.svg(e["median"], s_stern, len(aus)),
                     "grund": satz(begruendung(e)),
                     "wahrsch": e["p"], "vorlauf_h": e.get("dt_h"),
+                    "n_member": e.get("n_member"),
+                    "wtext": wahrsch_text(e["p"], e.get("n_member")),
+                    "unter": untergang_ms(t),
                     # Aus welchem Alarmlauf stammt diese Zahl?  Der Zustand
                     # bleibt liegen, wenn ein Lauf ausfaellt - ohne diese
                     # Angabe sieht eine Seite mit Vortagsdaten genauso aus
@@ -497,7 +589,8 @@ def rueckschau_eintraege(von, tage, klima, perzentil, s_stern):
                         "A": (det or {}).get("A"),
                         "weg": (det or {}).get("weg"),
                         "sicht": (det or {}).get("sicht")})),
-                    "wahrsch": None, "vorlauf_h": None, "lauf": None})
+                    "wahrsch": None, "vorlauf_h": None, "lauf": None,
+                    "n_member": None, "wtext": None, "unter": None})
     return aus
 
 
@@ -617,6 +710,14 @@ body{margin:0;background:var(--papier);color:var(--tinte);
 .marke{flex:1;min-width:0;height:100%;position:relative;border:0;
  background:transparent;border-radius:var(--radius-mikro);padding:0;
  cursor:pointer;font:inherit;letter-spacing:inherit;color:var(--gedaempft)}
+/* Die Stufenfarbe MUSS nach .marke stehen: .selten/.auffaellig/.unauffaellig
+   (weiter oben) haben dieselbe Spezifitaet und verloren gegen die Farbe in
+   .marke - der Ring (border: currentColor) einer auffaelligen Marke blieb
+   grau statt akzentfarben (Review uiux#13, docs/ui-referenz.md: "offene
+   Marke in Akzentfarbe").  Zwei Klassen schlagen eine, unabhaengig von der
+   Reihenfolge. */
+.marke.selten{color:var(--akzent-tinte)}
+.marke.auffaellig{color:var(--akzent)}
 .fahne{position:absolute;left:50%;width:1px;margin-left:-.5px;bottom:0;
  background:linear-gradient(to bottom,rgba(142,142,147,.16),transparent)}
 .punkt{position:absolute;left:50%;width:11px;height:11px;
@@ -839,11 +940,14 @@ Abfrage&shy;f&auml;cher, und der Azimut des Sonnenuntergangs.</p></div>
 <section class="schluss">
 <p class="fuss">Die Stufe kommt aus der Position in der Jahresverteilung:
 <b>selten</b> ab dem 95. Perzentil (rund 18 Abende im Jahr),
-<b>auff&auml;llig</b> ab dem 80. Bewusst keine Prozentzahl &mdash; belegt ist,
-dass der Score au&szlig;ergew&ouml;hnliche Abende von gew&ouml;hnlichen
-trennt, nicht dass er unter den guten ordnet.</p>
+<b>auff&auml;llig</b> ab dem 80. Die Stufe ist bewusst keine Prozentzahl;
+die Prozentzahl im Kopf der Seite ist etwas anderes: der Anteil der
+Modelll&auml;ufe (Ensemble-Member) &uuml;ber der Schwelle des Alarms, keine
+gemessene Trefferquote.
+Belegt ist, dass der Score au&szlig;ergew&ouml;hnliche Abende von
+gew&ouml;hnlichen trennt, nicht dass er unter den guten ordnet.</p>
 
-<p class="push">__PUSHTEXT__</p>
+<p class="push"__PUSHALT__>__PUSHTEXT__</p>
 </section>
 
 <a class="weiter" href="bisher.html">Was bisher gemessen ist</a>
@@ -878,11 +982,11 @@ function waehle(i){
   // Wahrscheinlichkeit der Anteil der Ensemble-Member ueber der Schwelle
   // ("wie sicher").  In der Rueckschau gibt es nur das Perzentil - dort
   // war nichts vorherzusagen.
-  const hatW=m.wahrsch!==null&&m.wahrsch!==undefined;
+  const hatW=m.wtext!==null&&m.wtext!==undefined;
   const rang=Math.round(m.p*100)+".";
-  const wahr=hatW?Math.round(m.wahrsch*100)+" %":"\\u2014";
+  const wahr=hatW?m.wtext:"\\u2014";
   const teile=[rang+" Perzentil des Jahres"];
-  if(hatW) teile.push(Math.round(m.wahrsch*100)+" % Wahrscheinlichkeit");
+  if(hatW) teile.push(m.wtext+" Wahrscheinlichkeit");
   teile.push("Sonnenuntergang "+m.zeit+" Uhr");
   document.getElementById("zahlen").textContent=teile.join(" \\u00b7 ");
   document.getElementById("kz0").textContent=rang;
@@ -893,18 +997,49 @@ function waehle(i){
   document.getElementById("karte").innerHTML=m.karte;
 }
 marken.forEach((b,i)=>b.onclick=()=>waehle(i));
+// Vorauswahl mit der Uhr der Betrachter:innen (Review uiux#2): die Seite
+// wurde mit dem Abend vorbelegt, der beim BAUEN der naechste war - nach
+// seinem Sonnenuntergang ist es der naechste.  Dieselbe Regel wie
+// seite.vorwahl(); `unter` ist der Untergang in Unix-Millisekunden (null:
+// unbekannt, zaehlt nie als vorbei).
+function vorwahl(i,jetzt){
+  while(i<META.length-1&&META[i].unter!==null&&META[i].unter!==undefined
+        &&META[i].unter<jetzt)i++;
+  return i;
+}
+// Deep-Link (Review uiux#9): der Push zeigt auf index.html#JJJJ-MM-TT.  Ein
+// Abend, den die Seite nicht fuehrt (vergangen, zu weit voraus), gilt nicht -
+// dann bleibt es bei der Vorauswahl.
+function ausHash(h){
+  const t=String(h||"").replace(/^#/,"");
+  return META.findIndex(m=>m.tag===t);
+}
+function start(){
+  let i=vorwahl(gewaehlt,Date.now());
+  const k=ausHash(location.hash);
+  if(k>=0)i=k;
+  if(i!==gewaehlt)waehle(i);
+}
+start();
+window.addEventListener("hashchange",()=>{
+  const k=ausHash(location.hash);
+  if(k>=0&&k!==gewaehlt)waehle(k);
+});
 // Pfeiltasten: auf einem Geraet mit Tastatur ist Durchblaettern die
 // natuerliche Bewegung durch die Abende.  preventDefault NUR bei einem
-// Treffer, sonst nimmt die Seite auch das Rollen mit den Pfeilen weg.
+// echten Wechsel, sonst nimmt die Seite auch das Rollen mit den Pfeilen weg
+// (Home/End am Rand) - und Cmd/Alt/Ctrl+Pfeil gehoeren dem Browser
+// (Zurueck/Vor, Review uiux#12), nicht der Achse.
 document.addEventListener("keydown",e=>{
+  if(e.metaKey||e.altKey||e.ctrlKey)return;
   let z=gewaehlt;
   if(e.key==="ArrowRight") z=Math.min(META.length-1,gewaehlt+1);
   else if(e.key==="ArrowLeft") z=Math.max(0,gewaehlt-1);
   else if(e.key==="Home") z=0;
   else if(e.key==="End") z=META.length-1;
   else return;
-  e.preventDefault();
   if(z!==gewaehlt){
+    e.preventDefault();
     waehle(z);
     // T-0059: den Fokus mitnehmen, wenn er in der Achse liegt.  Sonst wandert
     // die Auswahl, der Screenreader-Cursor aber nicht - und die naechste
@@ -958,9 +1093,10 @@ def main():
     # Vorauswahl: der NAECHSTE Abend (siehe Modul-Docstring, T-0033).  Die
     # Liste ist aufsteigend sortiert; ist der Lauf aelter als sein letzter
     # Abend, faellt die Wahl auf den letzten.
+    # Nach dem Sonnenuntergang des heutigen Abends der naechste (Review
+    # uiux#2); die Seite wiederholt die Regel im Browser mit dessen Uhr.
     heute_iso = date.today().isoformat()
-    kuenftig = [i for i, e in enumerate(eintraege) if e["tag"] >= heute_iso]
-    gewaehlt = kuenftig[0] if kuenftig else len(eintraege) - 1
+    gewaehlt = vorwahl(eintraege, datetime.now(timezone.utc), heute_iso)
     bester = max(range(len(eintraege)), key=lambda i: eintraege[i]["p"])
 
     n = len(eintraege)
@@ -1067,7 +1203,19 @@ def main():
     # und "kein Push" ist der haeufigste Zustand.  Ohne ihn sieht Schweigen
     # aus wie ein Defekt.
     hoechste = max((e["wahrsch"] or 0.0) for e in eintraege)
-    pushtext = pushauskunft(hoechste, schwelle_p, kfg, a.rueckschau)
+    # Bei einer Null-Auskunft zaehlt die Zahl der Member des Abends mit der
+    # hoechsten Wahrscheinlichkeit - sie rechtfertigt die Obergrenze "< 6 %".
+    n_mem = next((e["n_member"] for e in eintraege
+                  if (e["wahrsch"] or 0.0) == hoechste and e["n_member"]), None)
+    pushtext = pushauskunft(hoechste, schwelle_p, kfg, a.rueckschau,
+                            veraltet=bool(veraltet), n_member=n_mem)
+    # Die Fassung fuer "veraltet" legt die Seite fuer den Browser bereit
+    # (FRISCHE_SKRIPT) - nur dort, wo es einen Streifen geben kann.
+    pushalt = ""
+    if frische and not veraltet:
+        from html import escape as _esc
+        pushalt = (' data-veraltet="%s"' % _esc(
+            pushauskunft_veraltet(hoechste, schwelle_p, n_mem), quote=True))
 
     # ANFANGSZUSTAND STEHT IM MARKUP, nicht erst im Skript.  Vorher baute
     # waehle() beim Laden Hero, Band und beide Bilder auf; bis dahin war die
@@ -1076,21 +1224,20 @@ def main():
     from html import escape
     g = eintraege[gewaehlt]
     zahlen = ["%d. Perzentil des Jahres" % round(g["p"] * 100)]
-    if g["wahrsch"] is not None:
-        zahlen.append("%d %% Wahrscheinlichkeit" % round(g["wahrsch"] * 100))
+    if g["wtext"] is not None:
+        zahlen.append("%s Wahrscheinlichkeit" % g["wtext"])
     zahlen.append("Sonnenuntergang %s Uhr" % g["zeit"])
     # Dieselben Werte noch einmal als beschriftete Kennzahlen (Desktopsatz).
     # In der Rueckschau gibt es keine Wahrscheinlichkeit - dort steht ein
     # Gedankenstrich, keine Null: null Prozent waere eine Aussage.
     kz = ["%d." % round(g["p"] * 100),
-          "%d %%" % round(g["wahrsch"] * 100) if g["wahrsch"] is not None
-          else "&#8212;",
+          escape(g["wtext"]) if g["wtext"] is not None else "&#8212;",
           "%s Uhr" % g["zeit"]]
 
     meta = json.dumps([{k: e[k] for k in ("tag", "lang", "p", "stufe",
                                           "klasse", "zeit", "wahrsch",
-                                          "vorlauf_h", "grund", "svg",
-                                          "karte", "band")}
+                                          "vorlauf_h", "wtext", "unter",
+                                          "grund", "svg", "karte", "band")}
                        for e in eintraege], ensure_ascii=False)
 
     html = (VORLAGE
@@ -1109,6 +1256,7 @@ def main():
             .replace("__MARKEN__", marken)
             .replace("__ACHSENFUSS__", achsenfuss)
             .replace("__UEBERHOEHT__", "%.0f" % ueberhoehung_neu())
+            .replace("__PUSHALT__", pushalt)
             .replace("__PUSHTEXT__", pushtext)
             .replace("__ETIKETT__", "Bester Abend im Fenster"
                      if gewaehlt == bester else "Gew&auml;hlter Abend")

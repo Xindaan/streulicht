@@ -40,6 +40,9 @@ def pruefe(bed, text):
         fehler.append(text)
 
 
+DETAILS = []          # (Text, Klickziel) jedes Sendeversuchs, fuer Abschnitt 1b
+
+
 def lauf(sende_wirft):
     """Einen vollstaendigen Alarmlauf fahren.  Rueckgabe: der Zustand."""
     d = tempfile.mkdtemp()
@@ -60,6 +63,7 @@ def lauf(sende_wirft):
 
     def sende(topic, titel, text, prio="default", klick=None):
         gesendet.append(topic)
+        DETAILS.append((text, klick))
         if sende_wirft:
             raise urllib.error.URLError("ntfy nicht erreichbar (Test)")
         return 200
@@ -99,6 +103,22 @@ pruefe(bool(e.get("alarme")), "Push ist gebucht (%d Abende)"
 pruefe(bool(e.get("laeufe")), "Lauf ist gebucht")
 pruefe(bool(e.get("stand")), "Stand ist geschrieben")
 pruefe(len(dat) == 1, "Tagesarchiv ist entstanden (%d Datei(en))" % len(dat))
+
+print("\n1b. Text und Klickziel des Push (T-0080, Review uiux#9, #10)")
+# Durch den ECHTEN Alarmlauf, nicht durch die Hilfsfunktionen allein: dass
+# push_ziel() richtig rechnet, hilft nichts, wenn main() es nicht aufruft.
+# Der Zustand des Laufs nennt die Abende, die gebucht wurden; jeder davon
+# muss im Klickziel stehen.
+pruefe(bool(DETAILS), "der Lauf hat Texte und Ziele aufgezeichnet")
+abende_gebucht = sorted(e.get("alarme", {}))
+ziele = [k for _t, k in DETAILS]
+pruefe(bool(ziele) and all(k and "/index.html#" in k for k in ziele),
+       "jedes Klickziel nennt einen Abend (#JJJJ-MM-TT): %s" % ziele[:1])
+pruefe(sorted((k or "").partition("#")[2] for k in ziele) == abende_gebucht,
+       "die Abende in den Zielen sind genau die gebuchten Alarmabende")
+pruefe(all("Sonnenuntergang" in t and "der Modelll\u00e4ufe" in t
+           and t.rstrip().endswith(".") for t, _k in DETAILS),
+       "Text nennt Sonnenuntergang und Modelll\u00e4ufe, endet mit Punkt")
 
 print("\n2. Der Versand scheitert - der Rest des Laufs muss stehen bleiben")
 z, ges, dat = lauf(sende_wirft=True)

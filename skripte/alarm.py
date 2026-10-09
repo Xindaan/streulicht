@@ -958,8 +958,50 @@ def begruendung(e):
     elif (e["weg"] or 0) >= 0.3:
         teile.append("Lichtweg nach Westen teils frei")
     if (e["sicht"] or 1) < 0.5:
-        teile.append("aber tiefe Decke ueber der Stadt")
+        # Echter Umlaut: der Satz landet unveraendert im Push UND im Hero der
+        # Seite (Review uiux#11); die Seite schreibt sonst durchgehend richtig.
+        teile.append("aber tiefe Decke \u00fcber der Stadt")
     return ", ".join(teile)
+
+
+def satz(text):
+    """Halbsatz aus begruendung() zu einem Satz machen: gross, mit Punkt.
+
+    Stand in seite.py; der Push braucht dieselbe Form (Review uiux#10: er
+    begann nach der Prozentzahl klein und endete ohne Punkt), und seite.py
+    importiert schon aus alarm.py, nicht umgekehrt.
+    """
+    if not text:
+        return ""
+    return text[0].upper() + text[1:] + "."
+
+
+def push_text(wochentag, datum, uhrzeit, p, e):
+    """Der Text des Alarm-Push (Review uiux#10).
+
+    Er steht auf dem Sperrbildschirm, ohne Seite daneben.  Vorher hiess er
+    "Sa 26.09., 18:56 Uhr - 57 %. mittelhohe Wolken ...": weder die Uhrzeit
+    noch die Prozentzahl sagten, WAS sie sind.  Die Uhrzeit ist der
+    Sonnenuntergang (`stunde_utc` ist der Zeitpunkt des Untergangs), die
+    Prozentzahl der Anteil der Modellmember ueber der Schwelle s* - hier
+    "Modelllaeufe" genannt, weil "Member" niemandem etwas sagt.
+    """
+    return "%s %s, Sonnenuntergang %s Uhr: %.0f %% der Modelll\u00e4ufe " \
+           "liegen \u00fcber der Alarmschwelle. %s" % (
+               wochentag, datum, uhrzeit, 100 * p, satz(begruendung(e)))
+
+
+def push_ziel(basis_url, tag):
+    """Klickziel des Push: die Prognoseseite MIT dem Abend (Review uiux#9).
+
+    Alarme gelten bis `vorlauf_tage` Tage im Voraus, die Seite waehlt aber
+    von sich aus den naechsten Abend vor - ein Alarm fuer uebermorgen
+    landete auf heute.  Der Hash (`#YYYY-MM-DD`) nennt den Abend; die Seite
+    wertet ihn aus (seite.py, Skript am Seitenende).  Ohne Basis-URL kein
+    Ziel (None).
+    """
+    basis_url = (basis_url or "").rstrip("/")
+    return "%s/index.html#%s" % (basis_url, tag) if basis_url else None
 
 
 def lokalzeit(tag, stunde_utc, zone):
@@ -1307,9 +1349,8 @@ def _main():
             if tag in eintrag["alarme"]:
                 continue          # Idempotenz: je Abend hoechstens ein Alarm
             titel = "Streulicht %s" % ort["anzeige"]
-            text = "%s %s, %s Uhr - %.0f %%. %s" % (
-                WOCHENTAG[lz.weekday()], lz.strftime("%d.%m."),
-                lz.strftime("%H:%M"), 100 * e["p"], begruendung(e))
+            text = push_text(WOCHENTAG[lz.weekday()], lz.strftime("%d.%m."),
+                             lz.strftime("%H:%M"), e["p"], e)
             if a.trocken:
                 print("     [trocken] wuerde senden: %s" % text)
             else:
@@ -1325,7 +1366,7 @@ def _main():
                 # waren.  Ein toter Push ist kein toter Lauf.
                 try:
                     sende(ort["ntfy_alarm"], titel, text, "high",
-                          "%s/index.html" % basis_url if basis_url else None)
+                          push_ziel(basis_url, tag))
                 except Exception as ex:
                     # NICHT buchen.  Ein Abend, der als gemeldet gilt, ohne
                     # dass eine Meldung ankam, wird durch die Idempotenz-

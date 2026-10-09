@@ -103,9 +103,17 @@ Telefonfassung, darueber die Desktopfassung
 Kennzahlen, die Achse waechst auf 260 px und traegt die Rangzahl je Abend,
 Schnitt und Faecherkarte liegen nebeneinander, Korpuszeile und
 Bilanzverweis sitzen in der Kopfleiste. Pfeiltasten blaettern durch die
-Abende. **Der Inhalt ist in beiden Saetzen derselbe** - kein Bauteil, keine
+Abende (nicht mit Cmd/Alt/Ctrl: das gehoert dem Browser). **Der Inhalt ist in beiden Saetzen derselbe** - kein Bauteil, keine
 Zahl, kein Satz kommt hinzu. Die Bewertungsseite bleibt auf Telefonmass:
 sie wird aus dem Push heraus geoeffnet.
+
+**Welcher Abend vorgewaehlt ist** (T-0080): der erste, dessen Sonnenuntergang
+noch nicht vorbei ist - nach dem Sonnenuntergang also der naechste. Die Seite
+rechnet das beim Laden mit der Uhr der Betrachter:innen nach (die
+Untergangszeiten liegen in der Seite), nicht nur beim Bauen. Ein **Hash** in
+der Adresse waehlt einen bestimmten Abend und schlaegt die Vorauswahl:
+`index.html#2026-10-12`. Der Alarm-Push verlinkt so auf den Abend, fuer den er
+gilt; ein Abend, den die Seite nicht fuehrt, wird ignoriert.
 
 Die Prognoseseite ist seit dem 16.08.2026 nach dem Entwurf in
 `docs/entwurf/handoff-ux-2026-08-16.md` gebaut: Hero mit Stufe und
@@ -116,7 +124,11 @@ ein Push kommt**. Das war vorher nirgends zu lesen, obwohl "keiner reisst die
 Schwelle" der haeufigste Fall ist.
 
 `bisher.html` ist die Bilanz: die bisherigen Bewertungen und eine ehrliche
-Auskunft darueber, was noch fehlt. **Nicht zu verwechseln mit
+Auskunft darueber, was noch fehlt. Die Kopfzeile nennt den Nenner ("27
+Bewertungen von 53 Aufforderungen"), Alarmabende ohne Note stehen als eigene
+Karten da, und bei "vorhergesagt" steht das Laufdatum, wenn der Lauf nicht am
+Abend selbst war. Laeufe vor der Advektionskorrektur (04.09.2026, 16:50
+Ortszeit) tragen den Vermerk, dass ihre Zahl belastet ist. **Nicht zu verwechseln mit
 `rueckschau.html`** — das ist die lokale Diagnose ueber vier Jahre
 Klimatologie (9,5 MB, gitignoriert, nie ausgeliefert).
 
@@ -694,7 +706,7 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 | `skripte/seite.py` | erzeugt die Prognoseseite `web/index.html` |
 | `skripte/bisher.py` | erzeugt die Bilanzseite `web/bisher.html` |
 | `skripte/schnitt.py` | Vertikalschnitt als SVG (`schnitt_neu` fuer die Seite) |
-| `skripte/faecher.py` | Faecherkarte von oben als SVG |
+| `skripte/faecher.py` | Faecherkarte von oben als SVG (Ausschnitt richtet sich nach dem Azimut) |
 | `skripte/band.py` | Himmelsband: Lichteindruck als Farbverlauf |
 | `skripte/satellit.py` | MSG-Wolkenmaske als Beobachtungswahrheit |
 | `skripte/netz.py` | wartet auf Namensaufloesung, bevor ein Lauf beginnt |
@@ -731,6 +743,7 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 .venv/bin/python3 skripte/test_sicherung.py        # Tageskopie der Zustandsdatei (T-0081)
 .venv/bin/python3 skripte/test_ausliefern.py       # Push-Frist, Fehler stoppen nicht alles (T-0081)
 .venv/bin/python3 skripte/test_netz.py              # Netzwartefrist an der Wanduhr (T-0079)
+.venv/bin/python3 skripte/test_ui_paket.py          # Bilanz, Hash, Tastatur, Faecher ganzjaehrig (T-0080, braucht node)
 .venv/bin/python3 skripte/test_bewertungen_holen.py # ntfy-Parser und vier Eingangswaechter (T-0079)
 node   skripte/test_bewertungsseite.js   # Warteschlange und Freilegung
 ```
