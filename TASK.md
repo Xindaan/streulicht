@@ -202,6 +202,11 @@ Warnung. Befunde alarm#5, #6, #8, seiten#1, betrieb#3, tests#10.
 - Ein Lauf ohne ein einziges Ergebnis darf nicht als Erfolg gebucht werden
   (alarm#8); die Nachtluecke nach zwei gescheiterten Laeufen entscheiden
   (alarm#6).
+Stand 09.10.2026: umgesetzt - Lauf ohne Ergebnis wird nicht gebucht (Exit 1,
+leere Bloecke nicht gecacht, Wind paarweise, Abend ohne Wind uebersprungen);
+Seite traegt `streulicht-geholt` und prueft ihr Alter im Browser; Waechter
+`.github/workflows/waechter.yml` auf GitHub (bb686b7). Offen: Secret
+`NTFY_WAECHTER` (Andre), alarm#6 Nachtluecke nicht entschieden.
 
 ### T-0076 Commit-Rueckstand seit 26.08.2026 aufloesen - aus Review 09.10.2026
 22 Dateien geaendert, 5 ungetrackt; die Plists in HEAD zeigen auf das nicht
