@@ -109,6 +109,45 @@ def gezogen(ort_name, tag, pro_woche):
     return wochentag in ordnung[:pro_woche]
 
 
+def lade_geheim(basis):
+    """Liest konfig_geheim.json (gitignoriert); fehlt sie oder ist sie kaputt: {}.
+
+    Ein Fehler hier darf die Erinnerung nicht stillegen - sie faellt dann auf
+    das oeffentliche Topic zurueck (mit Warnzeile), so wie bis T-0077 immer.
+    """
+    pfad = os.path.join(basis, "konfig_geheim.json")
+    try:
+        with open(pfad) as f:
+            g = json.load(f)
+    except FileNotFoundError:
+        return {}
+    except (OSError, ValueError) as ex:
+        print("   WARNUNG konfig_geheim.json unlesbar (%s: %s)"
+              % (type(ex).__name__, ex))
+        return {}
+    return g if isinstance(g, dict) else {}
+
+
+def erinnerungs_topic(ort, geheim):
+    """(Topic, geheim?) fuer die Abenderinnerung dieses Orts.
+
+    T-0077 (Review bewertung#3).  Das Bewertungs-Topic steht im Klartext in
+    der ausgelieferten Seite; wer den Quelltext liest, kann ueber ein
+    abonniertes Topic beliebige Pushs mit Klickziel auf Andres Telefon
+    schicken, die wie die eigene Erinnerung aussehen.  Die Erinnerung geht
+    deshalb auf ein eigenes, geheimes Topic: `ntfy_erinnerung` in
+    konfig_geheim.json, je Ortsname - dieselbe Form wie `ntfy_alarm`.  Die
+    Bewertungsseite postet weiter nur auf das oeffentliche Topic (Eingang
+    fuer den Poller).  Fehlt der Eintrag, laeuft es wie bisher ueber das
+    oeffentliche Topic - mit Warnzeile, damit es nicht still so bleibt.
+    """
+    je_ort = geheim.get("ntfy_erinnerung")
+    t = je_ort.get(ort["name"]) if isinstance(je_ort, dict) else None
+    if isinstance(t, str) and t.strip():
+        return t.strip(), True
+    return ort.get("ntfy_bewertung"), False
+
+
 def sende(topic, titel, text, klick=None):
     kopf = {"Title": titel.encode("utf-8"), "Tags": "sunny", "Priority": "low"}
     if klick:
@@ -133,6 +172,7 @@ def main():
     # am Ende unter Sperre gegen den frischen Stand - der Versand liegt
     # dazwischen und darf die Datei nicht blockieren.
     zustand = lade(zpfad)
+    geheim = lade_geheim(BASIS)      # T-0077: geheimes Erinnerungs-Topic
 
     jetzt = (datetime.fromisoformat(a.jetzt).replace(tzinfo=timezone.utc)
              if a.jetzt else datetime.now(timezone.utc))
@@ -143,9 +183,11 @@ def main():
     netz_geprueft = False
 
     for ort in kfg["orte"]:
-        topic = ort.get("ntfy_bewertung")
-        if not topic:
+        if not ort.get("ntfy_bewertung"):
             continue
+        # Erinnerungs-Topic erst hier und nicht fuer die Seite/den Poller:
+        # die brauchen weiter das oeffentliche (T-0077).
+        topic, topic_geheim = erinnerungs_topic(ort, geheim)
         zone = ZoneInfo(ort.get("zeitzone", "UTC"))
         # Der Abend ist der LOKALE Tag - um 22 Uhr Berlin ist es UTC schon
         # derselbe Tag, im Winter aber nicht immer.
@@ -196,6 +238,9 @@ def main():
         titel = "Wie war er?"
         text = ("Sonnenuntergang %s ist durch. Eine Zahl von 1 bis 5 - "
                 "und ein Foto nach Westen, wenn Du magst." % ort["anzeige"])
+        if not topic_geheim:
+            print("   WARNUNG %s: Erinnerung geht ueber das oeffentliche Topic "
+                  "(ntfy_erinnerung fehlt in konfig_geheim.json)" % ort["name"])
         if a.trocken:
             print("   [trocken] %s %s (+%.0f min): %s | %s"
                   % (ort["name"], tag, d, text, klick or "kein Link"))

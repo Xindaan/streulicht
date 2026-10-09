@@ -46,6 +46,23 @@ versionierten Konfiguration: ohne Anmeldung ist der Topicname bei ntfy das
 Passwort, und wer ihn hat, kann beliebige Pushs schicken. Der Push kommt,
 sobald ein Abend im Vorlauf die Schwelle reisst — hoechstens einmal je Abend.
 
+**Abenderinnerung empfangen (seit T-0077).** Die Erinnerung "Wie war er?"
+laeuft ueber ein eigenes, **geheimes** Topic, nicht mehr ueber das
+Bewertungs-Topic: das steht im Klartext in der Bewertungsseite, und wer es
+liest, koennte Pushs mit Klickziel an dein Telefon schicken, die wie die
+Erinnerung aussehen. Einrichtung, einmalig:
+
+1. Einen neuen, zufaelligen Topicnamen waehlen (so lang und unerratbar wie das
+   Alarm-Topic, z. B. `sl-erinnerung-` plus 12 Zeichen).
+2. In `konfig_geheim.json` (gitignoriert) je Ortsname eintragen, neben
+   `ntfy_alarm`: `"ntfy_erinnerung": {"berlin": "<topicname>"}`.
+3. In der ntfy-App dieses Topic abonnieren und das alte Bewertungs-Topic
+   **abbestellen** (dann kommt auch kein Echo der Quittung mehr).
+
+Solange der Eintrag fehlt, laeuft die Erinnerung wie frueher ueber das
+oeffentliche Topic; `daten/erinnerung.log` traegt dann bei jedem Versand die
+Zeile `WARNUNG ... Erinnerung geht ueber das oeffentliche Topic`.
+
 **Bewerten.** `web/bewerten-<ort>.html` auf dem Telefon oeffnen. Fuenf
 Ziffern und "Nicht gesehen" — Note 0 ist eine echte Antwort, kein leeres Feld.
 Vorher zeigt die Seite **keine** Prognose: wer die Vorhersage sieht, bevor er
@@ -58,7 +75,18 @@ ntfy-Nachricht zum Poller; sie geht damit an dasselbe Topic, das auch die
 Abenderinnerung traegt, und landete deshalb als Push auf demselben Telefon,
 von dem sie kam. Sie laeuft jetzt mit Prioritaet 1 (min): zugestellt, aber
 ohne Benachrichtigung. Loeschen ginge nicht — die Nachricht IST der
-Transportweg.
+Transportweg. Seit T-0077 laeuft die Erinnerung auf einem eigenen Topic (siehe
+oben); die Prioritaet 1 bleibt trotzdem, falls das Bewertungs-Topic noch
+abonniert ist.
+
+**Seite veraltet.** Die Bewertungsseite kennt die Sonnenuntergaenge nur fuer
++-4 Tage um ihren Bauzeitpunkt (der Seiten-Agent baut sie alle 10 Minuten
+neu). Ist sie aelter und liegt "jetzt" hinter ihrer Tafel, zeigt sie "Seite
+veraltet, bitte neu laden", sperrt die Knoepfe und sendet nichts — frueher
+ging die Note still auf den letzten Tafeltag und ueberschrieb dort die echte.
+Bereits gespeicherte, unbestaetigte Noten alter Abende gehen weiter raus.
+Nach jeder Aenderung an `web/bewerten.html` die Seite neu erzeugen
+(`bewertungsseite.py`), sonst testet `test_bewertungsseite.js` die alte.
 
 ## Die Seiten
 
@@ -221,7 +249,7 @@ Andre selbst setzen muss.
 | `vorlauf_tage` | wie weit voraus gerechnet wird |
 | `advektion` | semi-Lagrangesche Zeitinterpolation an/aus (siehe unten) |
 | `pass2_max_zellen` | Obergrenze fuer Pass 2 (Standard 320, `null` = kein Deckel); darueber rechnen die fernen Abende teilweise ohne Advektion, Logzeile `ACHTUNG Pass 2 GEDECKELT` |
-| `orte[]` | Name, Koordinaten, Zeitzone, Bewertungs-Topic |
+| `orte[]` | Name, Koordinaten, Zeitzone, Bewertungs-Topic (oeffentlich, nur Eingang; die Erinnerung nutzt `ntfy_erinnerung` aus `konfig_geheim.json`) |
 | `faecher` | optional: reduzierte Abfragegeometrie |
 | `sicherung_ordner` | optional: Pfad (z. B. ein iCloud-Ordner), in den die Tagessicherung der Zustandsdatei ZUSAETZLICH kopiert wird (T-0081); der Ordner selbst wird angelegt, sein Elternordner muss existieren |
 

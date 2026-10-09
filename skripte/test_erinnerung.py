@@ -16,6 +16,8 @@ Zustand, `sende` durch eine Attrappe ersetzt.
 
 Lauf:  .venv/bin/python3 skripte/test_erinnerung.py
 """
+import contextlib
+import io
 import json
 import os
 import sys
@@ -59,8 +61,14 @@ def falsches_warten(*a, **k):
     return True
 
 
-def lauf(jetzt_iso, vorzustand=None):
-    """Einen Erinnerungslauf fahren.  Rueckgabe: (Zahl Sendungen, Zustand)."""
+AUSGABE = [""]         # was der letzte Lauf auf stdout schrieb
+
+
+def lauf(jetzt_iso, vorzustand=None, geheim=None):
+    """Einen Erinnerungslauf fahren.  Rueckgabe: (Zahl Sendungen, Zustand).
+
+    `geheim`: Inhalt einer konfig_geheim.json im Temp-Verzeichnis (str = roher
+    Dateitext, sonst wird json.dump benutzt); None = Datei fehlt."""
     GESENDET.clear()
     EREIGNISSE.clear()
     ENDE[0] = None
@@ -72,6 +80,9 @@ def lauf(jetzt_iso, vorzustand=None):
         json.dump(kfg, f)
     zp = os.path.join(d, "daten", "zustand.json")
     schreibe(zp, vorzustand or {})
+    if geheim is not None:
+        with open(os.path.join(d, "konfig_geheim.json"), "w") as f:
+            f.write(geheim if isinstance(geheim, str) else json.dumps(geheim))
 
     alt_basis, alt_sende = erinnerung.BASIS, erinnerung.sende
     alt_netz = erinnerung.warte_auf_netz
@@ -80,11 +91,14 @@ def lauf(jetzt_iso, vorzustand=None):
     erinnerung.warte_auf_netz = falsches_warten
     sicher, sys.argv = sys.argv, ["erinnerung.py", "--konfig", kp,
                                   "--jetzt", jetzt_iso]
+    puffer = io.StringIO()
     try:
-        erinnerung.main()
+        with contextlib.redirect_stdout(puffer):
+            erinnerung.main()
     except SystemExit as ex:
         ENDE[0] = ex
     finally:
+        AUSGABE[0] = puffer.getvalue()
         sys.argv = sicher
         erinnerung.BASIS, erinnerung.sende = alt_basis, alt_sende
         erinnerung.warte_auf_netz = alt_netz
@@ -155,6 +169,39 @@ WIRFT[0] = False
 n, z = lauf("2026-09-02T18:55", z)
 pruefe(n == 1 and ENDE[0] is None,
        "der naechste Tick sendet nach, wenn das Netz da ist (%d)" % n)
+
+print("\n8. Erinnerung geht auf das GEHEIME Topic (T-0077, bewertung#3)")
+# Das oeffentliche Bewertungs-Topic steht im Klartext in der Seite; wer es
+# kennt, kann Pushs mit Klickziel auf Andres Telefon schicken.  Die Erinnerung
+# soll deshalb ueber `ntfy_erinnerung` in konfig_geheim.json laufen.
+oeffentlich = json.load(open(os.path.join(BASIS, "konfig.json")))[
+    "orte"][0]["ntfy_bewertung"]     # steht im Klartext in der Seite
+GEHEIM = "sl-erinnerung-testtopic-geheim"
+n, _ = lauf("2026-09-02T18:40", geheim={"ntfy_erinnerung": {"berlin": GEHEIM}})
+pruefe(n == 1 and GESENDET[0]["topic"] == GEHEIM,
+       "mit Eintrag: gesendet wird auf das geheime Topic")
+pruefe(GESENDET[0]["topic"] != oeffentlich,
+       "und NICHT auf das oeffentliche Bewertungs-Topic")
+pruefe("WARNUNG" not in AUSGABE[0],
+       "ohne Warnzeile, wenn das geheime Topic gesetzt ist")
+pruefe(GEHEIM not in AUSGABE[0],
+       "das geheime Topic steht nicht im Log")
+n, _ = lauf("2026-09-02T18:40")
+pruefe(n == 1 and GESENDET[0]["topic"] == oeffentlich,
+       "ohne konfig_geheim.json: wie bisher ueber das oeffentliche Topic")
+pruefe("oeffentliche Topic" in AUSGABE[0] and "WARNUNG" in AUSGABE[0],
+       "und mit Warnzeile im Log")
+
+for bild, geh in (("Schluessel fehlt", {"ntfy_alarm": {"berlin": "x"}}),
+                  ("anderer Ort", {"ntfy_erinnerung": {"hamburg": GEHEIM}}),
+                  ("leerer Wert", {"ntfy_erinnerung": {"berlin": "  "}}),
+                  ("falscher Typ", {"ntfy_erinnerung": GEHEIM}),
+                  ("kaputtes JSON", "{nicht json")):
+    n, _ = lauf("2026-09-02T18:40", geheim=geh)
+    pruefe(n == 1 and GESENDET[0]["topic"] == oeffentlich
+           and "WARNUNG" in AUSGABE[0],
+           "%s: Rueckfall auf das oeffentliche Topic mit Warnung, kein Absturz"
+           % bild)
 
 print("")
 if fehler:

@@ -211,22 +211,34 @@ const ANLASS_TEXT = {aufgefordert:"auf Nachfrage bewertet",
 // stattgefunden hatte. Jede feste Uhrzeit liegt irgendwann schief: in
 // Berlin geht die Sonne im Juni um 21:33 unter und im Dezember um 15:53.
 //
-// SONNE kommt aus bewertungsseite.py und deckt einige Tage um heute ab.
-// Fehlt sie (alte Seite im Cache), greift die alte Regel als Rueckfall -
-// lieber die schlechtere Antwort als gar keine.
+// SONNE kommt aus bewertungsseite.py und deckt einige Tage um den Bauzeitpunkt
+// der Seite ab (+-4 Tage).
+//
+// T-0077 (Review bewertung#1, seiten#3): AUSSERHALB der Tafel gibt es keine
+// Antwort mehr, auch keinen Rueckfall.  Bis dahin lieferte die Funktion bei
+// einer Seite, die 5 Tage oder aelter war, still den LETZTEN Tafeltag - die
+// Bewertung ging dann auf einen alten Abend und ueberschrieb dort die echte
+// Note (der Poller prueft nur, ob der Sonnenuntergang vorbei ist).  Und der
+// 04:00-Rueckfall bei fehlender Tafel war dieselbe stille Vermutung.
+// Vertrauenswuerdig ist die Antwort nur, wenn NACH dem gefundenen Abend noch
+// ein Tafeleintrag kommt: dann liegt jetzt sicher zwischen zwei bekannten
+// Sonnenuntergaengen.  Ist der gefundene Abend der letzte Tafeleintrag (oder
+// liegt jetzt vor dem ersten), weiss die Seite nicht, welcher Abend gemeint
+// ist, und liefert null.
 function abendVonJetzt(jetzt) {
-  const vorbei = Object.keys(SONNE)
-    .filter(t => new Date(SONNE[t]) <= jetzt)
-    .sort();
-  if (vorbei.length) return vorbei[vorbei.length - 1];
-  const d = new Date(jetzt);
-  if (d.getHours() < 4) d.setDate(d.getDate() - 1);
-  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0")
-       + "-" + String(d.getDate()).padStart(2, "0");
+  const tage = Object.keys(SONNE).sort();
+  const vorbei = tage.filter(t => new Date(SONNE[t]) <= jetzt);
+  if (!vorbei.length) return null;
+  const letzter = vorbei[vorbei.length - 1];
+  if (letzter === tage[tage.length - 1]) return null;
+  return letzter;
 }
 const tag = abendVonJetzt(new Date());
-const heute = new Date(tag + "T12:00:00");
-const datumLang = WOCHENTAG[heute.getDay()] + ", " + heute.getDate() + ". "
+const veraltet = tag === null;
+const VERALTET_TEXT = "Seite veraltet, bitte neu laden.";
+const heute = veraltet ? null : new Date(tag + "T12:00:00");
+const datumLang = veraltet ? "Seite veraltet"
+                : WOCHENTAG[heute.getDay()] + ", " + heute.getDate() + ". "
                 + MONAT[heute.getMonth()];
 document.getElementById("datum").textContent = datumLang;
 
@@ -325,11 +337,14 @@ async function uebertrage(eintrag) {
       tags: [eintrag.note === 0 ? "grey_question" : "sunny"],
       // PRIORITAET 1 = min, und das ist der Punkt.
       //
-      // Andre ist im ntfy-App auf DIESES Topic abonniert, weil die
-      // Abenderinnerung darueber laeuft. Die Bewertungsquittung geht also
+      // Andre war im ntfy-App auf DIESES Topic abonniert, weil die
+      // Abenderinnerung darueber lief. Die Bewertungsquittung ging also
       // an dasselbe Geraet zurueck, von dem sie kommt: er tippt eine Note
       // und bekommt Sekunden spaeter einen Push ueber seine eigene Note.
       // Genau das waren die "komischen Push-Nachrichten" vom 16.08.2026.
+      // Seit T-0077 laeuft die Erinnerung auf einem eigenen geheimen Topic
+      // (erinnerung.py); wer dieses oeffentliche hier noch abonniert hat,
+      // bekommt trotzdem keinen Push - deshalb bleibt es bei Prioritaet 1.
       //
       // Loeschen geht nicht - die Nachricht IST der Transportweg zum
       // Poller. Bei min-Prioritaet stellt ntfy sie zu, ohne zu
@@ -363,6 +378,17 @@ async function sendeOffene(still) {
     status.textContent = t;
     document.getElementById("qstatus").textContent = fehler ? t : "";
     if (!fehler) document.getElementById("qkopf").textContent = "Angekommen";
+  }
+  // T-0077 (bewertung#6): kam die Note dieses Abends gerade an, waehrend die
+  // Quittung schon "Gespeichert, noch nicht angekommen" zeigt (stilles
+  // Nachsenden beim Oeffnen), muss sich auch die Quittung korrigieren - sonst
+  // widerspricht sich die Seite selbst.  Im Ablauf senden() steht die
+  // Quittung hier noch nicht; freilegen() setzt den Kopf dort selbst.
+  const heutige = aktuell.find(x => x.tag === tag);
+  if (heutige && heutige.gesendet
+      && document.getElementById("quittung").classList.contains("an")) {
+    document.getElementById("qkopf").textContent = "Angekommen";
+    if (still) document.getElementById("qstatus").textContent = "";
   }
   return fehler;
 }
@@ -412,6 +438,9 @@ function freilegen(note, angekommen) {
 }
 
 async function senden(note, knopf) {
+  // Zweiter Riegel neben den gesperrten Knoepfen: ohne gesicherten Abend
+  // wird nichts gespeichert und nichts gesendet (T-0077).
+  if (veraltet) { status.textContent = VERALTET_TEXT; return; }
   const aktuell = warteschlange().filter(x => x.tag !== tag);
   aktuell.push({tag: tag, note: note, anlass: ANLASS,
               erfasst: new Date().toISOString(), gesendet: false});
@@ -437,6 +466,14 @@ for (const b of knoepfe.querySelectorAll("button")) {
 }
 nichtgesehen.onclick = () => senden(0, nichtgesehen);
 for (const b of nachsendeKnoepfe) b.onclick = () => sendeOffene(false);
+
+// Veraltete Seite: Hinweis statt Erfassung.  Die Knoepfe sind gesperrt, senden()
+// tut ohnehin nichts.  Bereits gespeicherte, noch unbestaetigte Noten (alte
+// Abende mit ihrem EIGENEN Datum) werden unten trotzdem nachgesendet.
+if (veraltet) {
+  status.textContent = VERALTET_TEXT;
+  alleKnoepfe().forEach(x => x.disabled = true);
+}
 
 // Schon heute bewertet?  Dann direkt die Quittung - eine zweite Abfrage
 // waere eine Einladung, die Note nach der Prognose zu korrigieren.

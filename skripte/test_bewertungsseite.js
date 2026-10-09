@@ -125,7 +125,30 @@ function umgebung({speicherGeht = true, fetchOk = true} = {}) {
 }
 
 const html = fs.readFileSync(SEITE, "utf8");
-const js = html.split("<script>")[1].split("</script>")[0];
+const jsRoh = html.split("<script>")[1].split("</script>")[0];
+
+// Die erzeugte Seite traegt eine Sonnentafel von +-4 Tagen um ihren Bauzeitpunkt.
+// Seit T-0077 verweigert die Seite ausserhalb davon die Antwort - ein Test
+// gegen die Datei auf der Platte wuerde also nach fuenf Tagen von selbst
+// rot, ohne dass sich am Code etwas geaendert haette.  Deshalb laufen alle
+// Pruefungen gegen eine Tafel, die um JETZT gelegt wird; nur 6b liest die
+// echte, eingebettete Tafel.
+const SONNENTAFEL = /const SONNE\s*=\s*\{[^\n]*\};/;
+function tafelUm(zeit, tage) {
+  // Ein Sonnenuntergang je Tag um 16:00 UTC; Genauigkeit ist hier egal,
+  // es zaehlt nur die Reihenfolge.
+  const t = {};
+  for (let k = -tage; k <= tage; k++) {
+    const d = new Date(Date.UTC(zeit.getUTCFullYear(), zeit.getUTCMonth(),
+                                zeit.getUTCDate() + k, 16, 0, 0));
+    t[d.toISOString().slice(0, 10)] = d.toISOString().slice(0, 19) + "Z";
+  }
+  return t;
+}
+function mitTafel(tafel) {
+  return jsRoh.replace(SONNENTAFEL, "const SONNE = " + JSON.stringify(tafel) + ";");
+}
+const js = mitTafel(tafelUm(new Date(), 4));
 
 async function lauf(opt) {
   const u = umgebung(opt);
@@ -171,8 +194,8 @@ async function lauf(opt) {
   pruefe(/auf Nachfrage/.test(g._text || ""),
          "erste Zeile nennt den Anlass in Worten");
   // Prioritaet 1 = min: die Quittung geht an dasselbe Geraet zurueck, von
-  // dem sie kommt (Andre ist auf dieses Topic abonniert, weil die
-  // Abenderinnerung darueber laeuft). Bei min stellt ntfy zu, ohne zu
+  // dem sie kommt, solange Andre dieses Topic noch abonniert hat (bis
+  // T-0077 lief die Abenderinnerung darueber). Bei min stellt ntfy zu, ohne zu
   // benachrichtigen - der Poller liest weiter, das Telefon schweigt.
   pruefe(g._prio === 1, "Quittung mit min-Prioritaet (ist: " + g._prio + ")");
 
@@ -241,6 +264,53 @@ async function lauf(opt) {
   pruefe(u2.ctx._gesendet[0] && u2.ctx._gesendet[0].tag === "2026-08-14",
          "und zwar der ALTE Abend, nicht heute");
 
+  console.log("\n=== 3b. Stilles Nachsenden korrigiert auch die Quittung (T-0077, bewertung#6)");
+  // Liegt fuer den HEUTIGEN Abend eine ungesendete Note vor, legt die Seite
+  // beim Oeffnen die Quittung frei ("Gespeichert, noch nicht angekommen") und
+  // sendet danach still nach.  Kommt die Note an, durfte die Quittung bis
+  // dahin weiter "noch nicht angekommen" behaupten.
+  {
+    const probe = umgebung({});
+    vm.createContext(probe.ctx);
+    vm.runInContext(js, probe.ctx);
+    const heuteTag = probe.ctx.abendVonJetzt(new Date());
+    pruefe(/^\d{4}-\d{2}-\d{2}$/.test(heuteTag || ""),
+           "Voraussetzung: die Seite kennt den heutigen Abend (" + heuteTag + ")");
+    const ungesendet = JSON.stringify(
+      [{tag: heuteTag, note: 4, anlass: "aufgefordert",
+        erfasst: new Date().toISOString(), gesendet: false}]);
+
+    const ok = umgebung({});
+    ok.speicher["su-bewertungen-berlin"] = ungesendet;
+    vm.createContext(ok.ctx);
+    vm.runInContext(js, ok.ctx);
+    await new Promise(r => setTimeout(r, 30));
+    pruefe(ok.ctx._gesendet.length === 1 && ok.ctx._gesendet[0].tag === heuteTag,
+           "die Note des heutigen Abends wurde still nachgesendet");
+    pruefe(ok.el.quittung.classList.contains("an"),
+           "die Quittung ist sichtbar");
+    pruefe(ok.el.qkopf.textContent === "Angekommen",
+           "Kopfzeile sagt nach dem Nachsenden \"Angekommen\" (ist: \""
+           + ok.el.qkopf.textContent + "\")");
+    pruefe(ok.el.qstatus.textContent === "",
+           "Statuszeile ist leer (ist: \"" + ok.el.qstatus.textContent + "\")");
+    pruefe(ok.el.nachsenden2.style.display === "none",
+           "und der Nachsende-Knopf ist weg");
+
+    // Gegenprobe: schlaegt das Nachsenden fehl, darf die Quittung NICHT
+    // "Angekommen" sagen - sonst waere der Fix nur eine andere Luege.
+    const aus = umgebung({fetchOk: false});
+    aus.speicher["su-bewertungen-berlin"] = ungesendet;
+    vm.createContext(aus.ctx);
+    vm.runInContext(js, aus.ctx);
+    await new Promise(r => setTimeout(r, 30));
+    pruefe(/noch nicht angekommen/i.test(aus.el.qkopf.textContent || ""),
+           "bei weiterem Netzausfall bleibt die Kopfzeile ehrlich (\""
+           + aus.el.qkopf.textContent + "\")");
+    pruefe(aus.el.qstatus.textContent !== "",
+           "und die Statuszeile erklaert, dass die Note lokal liegt");
+  }
+
   console.log("\n=== 4. Ohne localStorage trotzdem senden");
   u = await lauf({speicherGeht: false});
   u.knoepfe[1].click();                       // Note 2
@@ -276,12 +346,12 @@ async function lauf(opt) {
   {
     const u2 = umgebung({});
     vm.createContext(u2.ctx);
-    vm.runInContext(js, u2.ctx);
+    vm.runInContext(jsRoh, u2.ctx);
     await new Promise(r => setTimeout(r, 10));
     // `const` im VM-Skript landet NICHT auf dem Kontextobjekt (anders als
     // Funktionsdeklarationen).  Die Tafel wird deshalb aus der Seite
     // gelesen - und das prueft nebenbei, dass sie ueberhaupt drinsteht.
-    const roh = (js.match(/const SONNE\s*=\s*(\{[^\n]*\});/) || [])[1];
+    const roh = (jsRoh.match(/const SONNE\s*=\s*(\{[^\n]*\});/) || [])[1];
     const sonne = roh ? JSON.parse(roh) : {};
     const tage = Object.keys(sonne).sort();
     pruefe(tage.length >= 3,
@@ -300,6 +370,84 @@ async function lauf(opt) {
              "eine Stunde vor Sonnenuntergang gilt der Tag noch nicht ("
              + u2.ctx.abendVonJetzt(vorher) + ")");
     }
+  }
+
+  console.log("\n=== 6c. Rand der Sonnentafel: ausserhalb gibt es keine Antwort (T-0077)");
+  {
+    // Feste Tafel, 10.-18.01.2026, Sonnenuntergang jeweils 16:00 UTC.
+    const fest = {};
+    for (let t = 10; t <= 18; t++) fest["2026-01-" + t] = "2026-01-" + t + "T16:00:00Z";
+    const ctxF = umgebung({});
+    vm.createContext(ctxF.ctx);
+    vm.runInContext(mitTafel(fest), ctxF.ctx);
+    await new Promise(r => setTimeout(r, 10));
+    const abend = (iso) => ctxF.ctx.abendVonJetzt(new Date(iso));
+    pruefe(abend("2026-01-14T17:00:00Z") === "2026-01-14",
+           "mitten in der Tafel: der letzte vergangene Abend");
+    pruefe(abend("2026-01-17T17:00:00Z") === "2026-01-17",
+           "vorletzter Tafeltag nach Sonnenuntergang: noch eindeutig");
+    pruefe(abend("2026-01-18T17:00:00Z") === null,
+           "nach dem Sonnenuntergang des LETZTEN Tafeltags: null, nicht dieser Tag ("
+           + abend("2026-01-18T17:00:00Z") + ")");
+    pruefe(abend("2026-01-23T10:00:00Z") === null,
+           "fuenf Tage hinter dem Tafelende: null, nicht der letzte Tafeltag ("
+           + abend("2026-01-23T10:00:00Z") + ")");
+    pruefe(abend("2026-01-10T10:00:00Z") === null,
+           "vor dem ersten Eintrag: null");
+    const leer = umgebung({});
+    vm.createContext(leer.ctx);
+    vm.runInContext(mitTafel({}), leer.ctx);
+    await new Promise(r => setTimeout(r, 10));
+    pruefe(leer.ctx.abendVonJetzt(new Date()) === null,
+           "ohne Tafel: null - kein stiller 04:00-Rueckfall mehr");
+  }
+
+  console.log("\n=== 6d. Veraltete Seite: Hinweis, nichts wird gespeichert oder gesendet (T-0077)");
+  {
+    const frisch = await lauf({});
+    pruefe(!/veraltet/i.test(frisch.el.datum.textContent || "")
+           && !/neu laden/i.test(frisch.el.status.textContent || ""),
+           "frische Seite zeigt keinen Veraltet-Hinweis");
+    pruefe(frisch.knoepfe.every(b => !b.disabled) && !frisch.el.nichtgesehen.disabled,
+           "und alle Knoepfe sind benutzbar");
+
+    // Tafel von vor zehn Tagen: jetzt liegt weit hinter ihrem Ende.
+    const alt = tafelUm(new Date(Date.now() - 10 * 86400e3), 4);
+    const a = umgebung({});
+    vm.createContext(a.ctx);
+    vm.runInContext(mitTafel(alt), a.ctx);
+    await new Promise(r => setTimeout(r, 10));
+    pruefe(/veraltet/i.test(a.el.datum.textContent || ""),
+           "Kopf nennt den Zustand: \"" + a.el.datum.textContent + "\"");
+    pruefe(/Seite veraltet, bitte neu laden/.test(a.el.status.textContent || ""),
+           "Hinweis \"Seite veraltet, bitte neu laden\": \""
+           + a.el.status.textContent + "\"");
+    pruefe(a.knoepfe.every(b => b.disabled) && a.el.nichtgesehen.disabled,
+           "alle Notenknoepfe und \"Nicht gesehen\" sind gesperrt");
+    // Ein Browser feuert click bei gesperrten Knoepfen gar nicht; die
+    // Attrappe feuert immer.  Genau deshalb prueft das den zweiten Riegel
+    // in senden() - fuer den Fall, dass die Sperre je verloren geht.
+    a.knoepfe[2].click();
+    a.el.nichtgesehen.click();
+    await new Promise(r => setTimeout(r, 30));
+    pruefe(a.ctx._gesendet.length === 0, "nichts gesendet");
+    pruefe(JSON.parse(a.speicher["su-bewertungen-berlin"] || "[]").length === 0,
+           "und nichts als Note fuer irgendeinen Abend gespeichert");
+    pruefe(!a.el.quittung.classList.contains("an")
+           && a.el.erfassen.style.display !== "none",
+           "keine Quittung - die Seite tut nicht so, als waere bewertet");
+
+    // Schon gespeicherte, unbestaetigte Noten alter Abende tragen ihr EIGENES
+    // Datum; sie gehen weiter raus, sonst ginge hier eine Messung verloren.
+    const q = umgebung({});
+    q.speicher["su-bewertungen-berlin"] = JSON.stringify(
+      [{tag: "2026-08-14", note: 4, anlass: "spontan",
+        erfasst: "2026-08-14T20:10:00Z", gesendet: false}]);
+    vm.createContext(q.ctx);
+    vm.runInContext(mitTafel(alt), q.ctx);
+    await new Promise(r => setTimeout(r, 30));
+    pruefe(q.ctx._gesendet.length === 1 && q.ctx._gesendet[0].tag === "2026-08-14",
+           "bereits gespeicherte Note eines alten Abends wird weiter nachgesendet");
   }
 
   console.log("\n=== 7. Abend ohne Prognose wird benannt, nicht geschaetzt");

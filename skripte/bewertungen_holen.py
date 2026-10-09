@@ -14,6 +14,7 @@ Bias.
 import argparse
 import json
 import os
+import re
 import sys
 import urllib.parse
 import urllib.request
@@ -94,6 +95,14 @@ def _nutzlast(text):
 ERSTER_ABEND = date(2026, 8, 15)
 
 
+# T-0077 (Review bewertung#2): date.fromisoformat() nimmt ab Python 3.11 auch
+# 20260915, 2026W382 und 2026-W38-2.  Die Seite sendet immer YYYY-MM-DD; jede
+# andere Schreibweise desselben Tages wuerde im Zustand einen Zweit-Schluessel
+# neben der echten Note anlegen.  [0-9] statt \d: \d liesse auch andere
+# Unicode-Ziffern durch.
+_TAGFORM = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
+
+
 def sonnenuntergang_vorbei(tag, ort, jetzt=None):
     """Hat der Sonnenuntergang dieses Abends schon stattgefunden?
 
@@ -106,9 +115,11 @@ def sonnenuntergang_vorbei(tag, ort, jetzt=None):
     Bewusst hier UND dort: die Seite kann veraltet sein, der Poller nicht.
     """
     from sonnen.geometrie import sonnenuntergang
+    if not isinstance(tag, str) or not _TAGFORM.fullmatch(tag):
+        return False
     try:
         d = date.fromisoformat(tag)
-    except (TypeError, ValueError):
+    except ValueError:
         return False
     std, _ = sonnenuntergang(d, ort["breite"], ort["laenge"])
     if std is None:
@@ -127,7 +138,7 @@ def plausibel(tag):
     Genau so ist am 15.08.2026 ein Testeintrag mit dem Datum 2099-01-01
     dreimal zurueckgekommen, nachdem er von Hand entfernt worden war.
     """
-    if not isinstance(tag, str):
+    if not isinstance(tag, str) or not _TAGFORM.fullmatch(tag):
         return False
     try:
         d = date.fromisoformat(tag)

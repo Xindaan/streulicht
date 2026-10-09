@@ -1,5 +1,5 @@
 {
- "_hinweis": "ntfy-Topics sind durch Namens-Obskuritaet geschuetzt, nicht durch Auth. Das ALARM-Topic steht deshalb in konfig_geheim.json (gitignoriert) - wer es hat, kann beliebige Pushs schicken. Das BEWERTUNGS-Topic bleibt hier: es steht ohnehin im Klartext in der ausgelieferten Bewertungsseite und laesst sich nicht verbergen.",
+ "_hinweis": "ntfy-Topics sind durch Namens-Obskuritaet geschuetzt, nicht durch Auth. Das ALARM-Topic steht deshalb in konfig_geheim.json (gitignoriert) - wer es hat, kann beliebige Pushs schicken. Das BEWERTUNGS-Topic bleibt hier: es steht ohnehin im Klartext in der ausgelieferten Bewertungsseite und laesst sich nicht verbergen - es ist nur der EINGANG fuer Bewertungen (Seite sendet, Poller liest). Die Abenderinnerung geht seit T-0077 auf ein eigenes geheimes Topic: ntfy_erinnerung in konfig_geheim.json, je Ortsname wie ntfy_alarm. Fehlt es, faellt erinnerung.py mit Warnzeile auf dieses oeffentliche Topic zurueck.",
  "modell": "ecmwf_ifs025",
  "schwelle_score": 0.7065,
  "schwelle_wahrscheinlichkeit": 0.5,

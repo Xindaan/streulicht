@@ -80,6 +80,11 @@ def sonnentafel(ort, tage=4):
     Mit dieser Tafel entscheidet die Seite richtig: gemeint ist der LETZTE
     Sonnenuntergang, der schon vorbei ist.  Das gilt im Dezember (SU 15:53)
     genauso wie im Juni (21:33), wo jede feste Grenze schiefliegt.
+
+    T-0077: die Tafel ist zugleich die Frist der Seite.  Liegt jetzt hinter
+    dem letzten Eintrag (Seite aelter als `tage` Tage), weiss die Seite den
+    Abend nicht mehr und verlangt ein Neuladen, statt den letzten Tafeltag
+    zu raten.  Breiter machen verlaengert nur diese Frist.
     """
     aus = {}
     heute = date.today()

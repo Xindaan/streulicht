@@ -18,6 +18,7 @@ import json
 import os
 import sys
 import tempfile
+import urllib.parse
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(BASIS, "skripte"))
@@ -38,8 +39,9 @@ def pruefe(bed, text):
 GESTERN = str(dt.date.today() - dt.timedelta(days=1))
 
 
-def lauf(nachricht, vorbelegt=None):
-    """`main()` mit EINER erfundenen ntfy-Nachricht.  Rueckgabe: der Abend."""
+def lauf(nachricht, vorbelegt=None, alle=False):
+    """`main()` mit EINER erfundenen ntfy-Nachricht.  Rueckgabe: der Abend
+    (mit alle=True: das ganze abende-Dict, um Zweit-Schluessel zu sehen)."""
     d = tempfile.mkdtemp()
     os.makedirs(os.path.join(d, "daten"), exist_ok=True)
     kfg = {"orte": [{"name": "berlin", "anzeige": "Berlin", "breite": 52.52,
@@ -63,7 +65,8 @@ def lauf(nachricht, vorbelegt=None):
         sys.argv = sicher
         bh.BASIS, bh.hole, bh.warte_auf_netz = alt_basis, alt_hole, alt_netz
     with open(zp) as f:
-        return json.load(f)["berlin"]["abende"].get(GESTERN, {})
+        abende = json.load(f)["berlin"]["abende"]
+    return abende if alle else abende.get(GESTERN, {})
 
 
 def note(**zusatz):
@@ -133,6 +136,46 @@ for wert, text in ((99, "Note 99"), ("5", "Note als Zeichenkette"),
     except Exception as ex:
         pruefe(False, "%s laesst den Seitenbau sterben: %s"
                % (text, type(ex).__name__))
+
+print("\n7. Nur YYYY-MM-DD ist ein Tag (T-0077, bewertung#2)")
+# Unter Python >= 3.11 nimmt date.fromisoformat() auch Kurz- und Wochen-
+# schreibweisen.  Die Seite sendet sie nie; wer das Topic kennt, legt damit
+# aber einen Zweit-Schluessel neben der echten Note an.  Die Aliase werden
+# aus GESTERN abgeleitet, damit der Test nicht an einem festen Datum klebt.
+g = dt.date.today() - dt.timedelta(days=1)
+jahr, woche, wtag = g.isocalendar()
+ORT_ = {"breite": 52.52, "laenge": 13.405}
+aliase = [(GESTERN.replace("-", ""), "Kurzform"),
+          ("%d-W%02d-%d" % (jahr, woche, wtag), "ISO-Woche mit Strichen"),
+          ("%dW%02d%d" % (jahr, woche, wtag), "ISO-Woche kompakt")]
+for alias, name in aliase:
+    # Gegenprobe gegen einen leeren Test: die Schreibweise muss unter der
+    # laufenden Python-Version wirklich als dasselbe Datum durchgehen, sonst
+    # haette schon die alte Pruefung sie abgelehnt und der Fall zeigte nichts.
+    try:
+        wirkt = dt.date.fromisoformat(alias) == g
+    except ValueError:
+        wirkt = False
+    pruefe(wirkt, "Voraussetzung: fromisoformat nimmt %s (%s) als Gestern"
+           % (name, alias))
+    pruefe(not bh.plausibel(alias), "plausibel() verwirft %s" % name)
+    # Der echte Eingangsweg: Klickziel der ntfy-Nachricht -> Nutzlast.
+    ziel = "https://x.invalid/b.html?d=" + urllib.parse.quote(
+        json.dumps({"ort": "berlin", "tag": alias, "note": 3}))
+    pruefe(bh._nutzlast_klick(ziel) is None,
+           "%s kommt nicht als Nutzlast aus dem Klickziel" % name)
+    pruefe(not bh.sonnenuntergang_vorbei(alias, ORT_),
+           "sonnenuntergang_vorbei() verwirft %s" % name)
+    abende = lauf(note(tag=alias, note=3), alle=True)
+    pruefe(alias not in abende and GESTERN not in abende,
+           "%s: kein Zweit-Schluessel im Zustand (%s)" % (name, sorted(abende)))
+pruefe(bh.plausibel(GESTERN) and bh.sonnenuntergang_vorbei(GESTERN, ORT_),
+       "die echte Schreibweise YYYY-MM-DD geht weiter durch")
+pruefe(bh._nutzlast_klick("https://x.invalid/b.html?d=" + urllib.parse.quote(
+    json.dumps({"ort": "berlin", "tag": GESTERN, "note": 3}))) is not None,
+       "und kommt auch aus dem Klickziel")
+pruefe(lauf(note(note=3)).get("bewertung") == 3,
+       "und eine Note mit YYYY-MM-DD wird weiter uebernommen")
 
 print()
 if fehler:
