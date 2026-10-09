@@ -184,8 +184,12 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
 
 ## Backlog
 
-- T-0084 Perzentil-Zonen gegen die Median-Verteilung neu eichen (Entscheidung
-  Andre 09.10.2026, methodik#F3). Die Seite ordnet den Member-Median heute in
+- T-0084 Perzentil-Zonen an den Anteil der Member koppeln (Entscheidung Andre
+  09.10.2026 nach Vorlage `docs/entscheidungen-2026-10-09.md`, Option B;
+  ersetzt die erste Wahl "Median neu eichen", methodik#F3). "selten" = mindestens
+  die Haelfte der Member ueber s* (= Push-Bedingung), "auffaellig" = ein Anteil
+  der Member im obersten Fuenftel, Anteil so gewaehlt, dass die Haeufigkeit zur
+  Klimatologie passt. Urspruengliche Notiz: Die Seite ordnet den Member-Median heute in
   die Verteilung einzelner Analysen ein; "auffaellig"/"selten" trifft der
   Median nur in 10 % bzw. 0,3 %. Zonen aus der Verteilung archivierter
   Median-Werte ableiten; vorher pruefen, ob genug Archivtage fuer stabile
@@ -197,7 +201,10 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   physik#4). Im Archiv zaehlen, wie oft tiefe Decke nur am Standort unter hohem
   Schirm vorkommt; Klimatologie und s* fuer gleich- und raumwinkelgewichteten
   Sichtfaktor rechnen; Ergebnis Andre zur Entscheidung vorlegen.
-- T-0087 Nachtluecke schliessen (Entscheidung Andre 09.10.2026, alarm#6):
+- T-0087 Nachtluecke schliessen (Entscheidung Andre 09.10.2026 nach Vorlage,
+  Option A mit Kostenbedingung: kein Nachtlauf bei aktiver Kontingentsperre,
+  bekommener Modelllauf ins Log; ein Nachtlauf kostet einen vollen Abruf, der
+  Blockcache gilt je Modelllauf und UTC-Tag; alarm#6):
   blieb ein Tag ohne erfolgreichen Lauf, nach 00 UTC (neues Tageskontingent)
   einen Nachhol-Lauf fuer die Folgetage zulassen; mit Blockcache und Sperre
   aus T-0074 zusammenspielen, Verhaltenstest mit Negativprobe.
