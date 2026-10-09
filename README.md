@@ -220,6 +220,7 @@ Andre selbst setzen muss.
 | `schwelle_wahrscheinlichkeit` | p\* — ab diesem Memberanteil wird gepusht |
 | `vorlauf_tage` | wie weit voraus gerechnet wird |
 | `advektion` | semi-Lagrangesche Zeitinterpolation an/aus (siehe unten) |
+| `pass2_max_zellen` | Obergrenze fuer Pass 2 (Standard 320, `null` = kein Deckel); darueber rechnen die fernen Abende teilweise ohne Advektion, Logzeile `ACHTUNG Pass 2 GEDECKELT` |
 | `orte[]` | Name, Koordinaten, Zeitzone, Bewertungs-Topic |
 | `faecher` | optional: reduzierte Abfragegeometrie |
 
@@ -307,22 +308,50 @@ Gemessen wird tatsaechlich meist der **06z** benutzt, siehe die Zaehlung
 oben.
 
 **Was die Grenze kostet.** Die freie Stufe erlaubt 600 Aufrufe/Minute,
-5.000/Stunde, 10.000/Tag und **300.000/Monat**. Zwei Laeufe am Tag sind rund
-210.000 im Monat - es passt, aber ohne viel Luft. Ein Abo waere die
+5.000/Stunde, 10.000/Tag und **300.000/Monat**. Wie Open-Meteo einen
+Ensemble-Abruf gewichtet, ist **nicht geklaert** (Review 09.10.2026,
+alarm#3/#4). Das Log stuetzt meist die Rechnung "Variablen x Member / 10 je
+Ort", also 15,3 Einheiten je Ortsabruf, aber nicht ausnahmslos: Nach diesem
+Gewicht waeren zwei Laeufe zu je rund 380 Ortsabrufen rund 350.000 im Monat,
+also ueber der Grenze - am 08.10.2026 liefen aber zwei solche Laeufe an einem
+UTC-Tag durch, nach demselben Gewicht 11.600 Einheiten bei 10.000 am Tag.
+Gardena fragt vom selben Rechner dieselbe API ab, ist aber zu klein, um das
+zu erklaeren. Eine belastbare Monatsrechnung gibt es deshalb nicht; die
+fruehere Zahl "210.000 im Monat, es passt" beruhte auf 216 Ortsabrufen je
+Lauf und ist ueberholt. Ein Abo waere die
 **Professional**-Stufe, nicht Standard: die Ensemble-API ist in Standard
 ausdruecklich nicht enthalten (Preistabelle und FAQ auf open-meteo.com/en/pricing).
 
-**Zweitens das Kontingent.** Ein vollstaendiger Lauf sind rund zehn
-HTTP-Anfragen ueber 216 Ortsabrufe. **Open-Meteo zaehlt Ensemble-Member wie
-zusaetzliche Variablen** - neun Variablen mal 51 Member wiegen dreimal so
+**Zweitens das Kontingent.** Ein vollstaendiger Lauf sind im Oktober 2026
+16-17 HTTP-Anfragen ueber **378-383 Ortsabrufe**: 72 Faecherzellen in Pass 1,
+eine Windzelle und 290-320 versetzte Zellen in Pass 2. Im August waren es
+rund zehn Anfragen ueber 216 Ortsabrufe. Treiber ist Pass 2, und der waechst
+nicht mit der Windlage, sondern mit dem **saisonalen Abstand dt** zwischen
+Sonnenuntergang und dem naechsten 3-h-Modellschritt (Versatz = v * dt):
+Spitze Anfang Oktober, Ende November nahe null, wieder hoch im Maerz und
+Juni. Pass 2 ist deshalb gedeckelt (`pass2_max_zellen`, siehe
+Konfiguration). Nach dem Log zaehlt Open-Meteo Ensemble-Member meist wie
+zusaetzliche Variablen - neun Variablen mal 51 Member wiegen dann dreimal so
 viel wie drei mal 51. Bis zum 18.08.2026 holte der Lauf die sechs
 Windvariablen fuer alle 68 Faecherzellen, obwohl sie **nur am Heimatpunkt
 gelesen** werden (der Advektionsversatz ist ein Ensemble-Mittelwind je
-Schicht, kein Feld). Das kostete rund 5.500 Einheiten und riss das
-Stundenlimit von 5.000 bei der vorletzten Anfrage. Mit Wind nur am Ort sind
-es rund 3.500. Das Tagesbudget (10.000) traegt damit knapp **drei
-Laeufe** statt zwei. Es gibt also keinen zweiten Lauf "zur Sicherheit" - es gibt einen,
-und der muss sitzen. Deshalb liegt er so spaet wie moeglich.
+Schicht, kein Feld). Das kostete damals rund 5.500 Einheiten und riss das
+Stundenlimit bei der vorletzten Anfrage. Es gibt also keinen zweiten Lauf
+"zur Sicherheit" - es gibt einen, und der muss sitzen. Deshalb liegt er so
+spaet wie moeglich.
+
+**Abbruch am Kontingent (seit 09.10.2026, T-0074).** Jeder erfolgreich
+geholte Block liegt in `daten/cache/abruf/<Modelllauf>/`; ein
+Wiederholungslauf auf **demselben** Modelllauf holt nur, was fehlt, ein
+neuer Modelllauf bekommt nie alte Bloecke. Ist der Modelllauf unbekannt
+(`meta.json` nicht erreichbar), laeuft der Abruf ohne Cache. Cacheordner,
+deren Modelllauf aelter als zwei Tage ist, raeumt der naechste Lauf. Nach
+`Hourly ... exceeded` vermerkt der Lauf in `daten/zustand.json` unter
+`_kontingent` eine Sperre bis zur naechsten vollen UTC-Stunde + 2 min, nach
+`Daily ... exceeded` bis 00:02 UTC. Jeder Lauf davor - auch einer von Hand -
+endet mit `Kontingentsperre bis ... - kein Abruf` und bucht nichts, das
+Fenster bleibt also offen. Eine Sperre von Hand aufheben: den Eintrag
+`_kontingent` aus der Zustandsdatei loeschen.
 
 **Warum keine feste Uhrzeit.** Der Sonnenuntergang wandert in Berlin ueber
 das Jahr um mehr als fuenfeinhalb Stunden: 21:33 am 21. Juni, 15:53 am
@@ -353,9 +382,10 @@ Vormittagslauf sorgt dafuer, dass ein Abend ueber der Schwelle frueher
 gemeldet wird und die Seite vormittags nicht den Vorabend zeigt.
 
 Im Winter benutzen beide Laeufe denselben 18z-Lauf des Vortags - der zweite
-ist dann redundant. Bewusst in Kauf genommen: zwei Laeufe kosten rund 7.000
-der 10.000 Tageseinheiten, und eine Sonderregel dafuer waere mehr Code als
-Nutzen.
+ist dann redundant. Seit dem Blockcache (T-0074) kostet er dann auch nichts
+mehr: derselbe Modelllauf mit denselben Abenden liefert dieselben Anfragen,
+und die liegen schon in `daten/cache/abruf/`. (Vorher: rund 7.000 der
+10.000 Tageseinheiten fuer zwei Laeufe, damals bei 216 Ortsabrufen je Lauf.)
 
 **Verschlaeft der Agent den Tick, wird nachgeholt.** Am 18.08.2026 fehlte
 genau der eine stuendliche Tick, der ins Abendfenster fiel (Rechner im
@@ -474,9 +504,9 @@ Bedeutungen, und nur eine ist terminal — im `reason`-Feld nachsehen:
 
 | `reason` enthaelt | heisst | richtige Antwort |
 |---|---|---|
-| `Too many concurrent requests` | zu viele gleichzeitig | kurz warten, wenige Faeden |
-| `Minutely ... exceeded` | Minutenfenster voll | 20-65 s warten |
-| `Hourly` / `Daily ... exceeded` | Kontingent | abbrechen, Cache haelt |
+| `Too many concurrent requests` | zu viele gleichzeitig | kurz warten, wenige Faeden (`alarm.py`: 5 s) |
+| `Minutely ... exceeded` | Minutenfenster voll | 20-65 s warten (`alarm.py`: 65 s, hoechstens fuenfmal je Anfrage) |
+| `Hourly` / `Daily ... exceeded` | Kontingent | abbrechen, Cache haelt (`alarm.py`: Sperre bis volle Stunde + 2 min bzw. 00:02 UTC) |
 
 Wer alle drei gleich behandelt, bricht bei voller Quote ab: `icond2.py` kam
 so im ersten Lauf ueber 5 von 166 Abenden nicht hinaus.
@@ -603,6 +633,7 @@ richtige Zustand, kein Defekt.
 .venv/bin/python3 skripte/test_faechergeometrie.py # eine Faechergeometrie, nicht zwei (T-0057)
 .venv/bin/python3 skripte/test_score_distanz.py    # Deckung und Luecken in score_distanz (T-0061)
 .venv/bin/python3 skripte/test_erinnerung.py       # Fenster und Nachholen bis Mitternacht (T-0067)
+.venv/bin/python3 skripte/test_kontingent.py       # Blockcache, Kontingentsperre, Pass-2-Deckel (T-0074)
 node   skripte/test_bewertungsseite.js   # Warteschlange und Freilegung
 ```
 

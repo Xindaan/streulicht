@@ -30,9 +30,11 @@ ENTSCHEIDUNGEN, bewusst getroffen:
 * Idempotenz ueber die Zustandsdatei: je (Ort, Abend) hoechstens ein Alarm.
 """
 import argparse
+import hashlib
 import json
 import math
 import os
+import shutil
 import sys
 import time
 import urllib.error
@@ -114,11 +116,21 @@ def mitte(z):
 # jeder Lauf mit, wann er was geholt hat - die naechsten Laeufe sind dann
 # Messungen statt Anekdoten.
 #
-# Open-Meteo zaehlt nach eigener Doku nach VARIABLEN und ZEITRAUM, nicht
-# nach Orten - die Rechnung unten ist deshalb ausdruecklich eine SCHAETZUNG
-# und keine Nachbildung ihrer Formel.  Sie taugt zum Vergleichen von
-# Laeufen untereinander, nicht zum Vorhersagen des Limits.
-LAST = {"anfragen": 0, "orte": 0, "variablen": 0, "member": 0, "tage": 0}
+# WAS DAS KONTINGENT ZAEHLT, IST NICHT GEKLAERT (korrigiert 09.10.2026,
+# Review alarm#3/#4).  Hier stand "nach Variablen und Zeitraum, nicht nach
+# Orten" - das widersprach dem Kommentar in lauf_ort() (Member zaehlen wie
+# Variablen) und dem Log.  Gemessen ist: das Log stuetzt meist eine
+# Gewichtung mit Variablen x Member je Ort (3 x 51 / 10 = 15,3 Einheiten je
+# Ortsabruf), aber nicht ausnahmslos.  Kein additives Modell aus dem eigenen
+# Verbrauch erklaert alle Abbrueche: am 21.09.2026 scheiterte der erste Lauf
+# des Tages nach hoechstens 329 Ortsabrufen, am 08.10.2026 liefen
+# 378 und 383 Ortsabrufe je in einer Uhrstunde und zusammen an EINEM UTC-Tag
+# durch (nach dem 15,3-Gewicht 11.600 Einheiten bei 10.000 am Tag).  Gardena
+# fragt vom selben Rechner stuendlich dieselbe API ab.  LAST ist deshalb die
+# Buchhaltung UNSERER Abrufe, keine Nachbildung ihrer Formel: gut zum
+# Vergleichen von Laeufen, nicht zum Vorhersagen des Limits.
+LAST = {"anfragen": 0, "orte": 0, "variablen": 0, "member": 0, "tage": 0,
+        "aus_cache": 0}
 
 
 def schreibe_archiv(name, tag, fenster, init, jetzt, kfg, abende):
@@ -189,12 +201,103 @@ def melde(text):
 # ein Abendlauf sie sich leisten kann, lang genug, dass ein WLAN nach dem
 # Aufwachen zurueckkommt.
 RUHEPAUSEN = (5, 15, 45)
+# Wie oft _hole() je Anfrage ein Minutenlimit oder "Too many concurrent
+# requests" abwartet.  EIGENES Budget, nicht die Versuche fuer Netzstoerungen
+# (Review 09.10.2026, alarm#10): vorher teilten sich beide die vier Versuche,
+# und ein Minutenlimit im vierten Versuch endete als "Kontingent".
+MINUTENWARTEN = 5
+
+
+# --- Kontingentsperre (T-0074) -----------------------------------------
+#
+# WARUM (09.10.2026, Review alarm#1).  Nach "Hourly/Daily API request limit
+# exceeded" bot im_laufenster() den Abendlauf bei jedem stuendlichen Tick bis
+# Sonnenuntergang erneut an, und jeder Versuch begann wieder bei Pass 1.  Seit
+# 16.09. stehen 41 Kontingentabbrueche im Log, davon 29 volle Fehllaeufe mit
+# zusammen 10.175 Ortsabrufen.  Jetzt merkt sich der Lauf, bis wann die Wand
+# steht, und die Ticks davor beenden sich ohne einen einzigen Abruf.
+SPERRSCHLUESSEL = "_kontingent"       # Eintrag in daten/zustand.json
+
+
+class Kontingent(SystemExit):
+    """Abbruch am Kontingent.  `sperre_bis` ist None, wenn keine Sperre folgt.
+
+    Unterklasse von SystemExit, damit sich fuer jeden bisherigen Aufrufer
+    nichts aendert: der Lauf endet weiter mit der Meldung als Exitgrund.
+    """
+
+    def __init__(self, text, sperre_bis=None, grund=None):
+        super().__init__(text)
+        self.sperre_bis = sperre_bis
+        self.grund = grund
+
+
+def _jetzt_utc():
+    """Die echte Uhr - eigene Funktion, damit ein Test sie stellen kann."""
+    return datetime.now(timezone.utc)
+
+
+def sperre_bis(grund, jetzt):
+    """Bis wann nach diesem 429-Grund kein Abruf lohnt, oder None.
+
+    Stundenlimit: volle naechste UTC-Stunde + 2 min.  Tageslimit: 00:02 UTC
+    des Folgetags.  Die zwei Minuten sind Abstand zur Uhr der Gegenseite.
+    Der stuendliche Agent tickt um :20 - eine Sperre bis :02 kostet also nie
+    den naechsten Tick.  Alles andere (Minute, Gleichzeitigkeit, unbekannt)
+    bekommt keine Sperre.
+    """
+    g = (grund or "").lower()
+    if "hourly" in g:
+        return (jetzt.replace(minute=0, second=0, microsecond=0)
+                + timedelta(hours=1, minutes=2))
+    if "daily" in g:
+        return datetime.combine(jetzt.date() + timedelta(days=1),
+                                dtzeit(0, 2), timezone.utc)
+    return None
+
+
+def aktive_sperre(zustand, jetzt):
+    """(bis, grund), solange eine vermerkte Sperre noch gilt, sonst None.
+
+    Ein unlesbarer Eintrag zaehlt als KEINE Sperre: das Schlimmste, was dann
+    passiert, ist ein Abruf, der am 429 endet - mit dem Blockcache eine
+    einzige Anfrage.  Andersherum wuerde ein kaputter Eintrag den Alarm
+    stilllegen, und das faellt niemandem auf.
+    """
+    e = (zustand or {}).get(SPERRSCHLUESSEL)
+    if not isinstance(e, dict):
+        return None
+    try:
+        bis = datetime.fromisoformat(e["sperre_bis"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    if bis.tzinfo is None:
+        bis = bis.replace(tzinfo=timezone.utc)
+    return (bis, e.get("grund")) if bis > jetzt else None
+
+
+def vermerke_sperre(zpfad, bis, grund):
+    """Die Sperre unter Sperre in den FRISCHEN Zustand schreiben (T-0058).
+
+    Auch bei --trocken: das Limit ist echt, egal ob der Lauf senden wollte.
+    Eine spaetere Sperre wird nie durch eine fruehere ersetzt (Tageslimit
+    vermerkt, dann meldet ein Handlauf das Stundenlimit).
+    """
+    def eintragen(z):
+        if aktive_sperre(z, bis):
+            return                     # eine spaetere Sperre steht schon
+        z[SPERRSCHLUESSEL] = {
+            "sperre_bis": bis.isoformat(timespec="minutes"),
+            "grund": grund,
+            "vermerkt": _jetzt_utc().isoformat(timespec="seconds")}
+    aktualisiere(zpfad, eintragen)
 
 
 def _hole(u, versuche=4):
     LAST["anfragen"] += 1
-    for n in range(versuche):
-        letzter = n >= versuche - 1
+    n = 0                    # gestoerte Versuche (Netz, 5xx)
+    gewartet = 0             # abgewartete Minuten-/Gleichzeitigkeitslimits
+    while True:
         try:
             with urllib.request.urlopen(u, timeout=600) as f:
                 return json.load(f)
@@ -208,19 +311,28 @@ def _hole(u, versuche=4):
                     grund = json.loads(e.read()).get("reason", "429")
                 except Exception:                            # noqa: BLE001
                     grund = "429 ohne lesbaren Grund"
-                if "inutely" in grund and not letzter:
-                    melde("   Minutenlimit, warte 65 s ... (Anfrage %d)"
-                          % LAST["anfragen"])
-                    time.sleep(65)
+                # Minutenlimit und "Too many concurrent requests" sind
+                # voruebergehend: warten, mit eigenem Budget (alarm#10).
+                # Vorher brach "concurrent" sofort ab, obwohl die README
+                # dafuer "kurz warten" nennt.
+                kurz = "oncurrent" in grund
+                if ("inutely" in grund or kurz) and gewartet < MINUTENWARTEN:
+                    gewartet += 1
+                    warte = RUHEPAUSEN[0] if kurz else 65
+                    melde("   %s, warte %d s ... (Anfrage %d)"
+                          % ("Zu viele gleichzeitig" if kurz else "Minutenlimit",
+                             warte, LAST["anfragen"]))
+                    time.sleep(warte)
                     continue
-                raise SystemExit("%s Kontingent nach %d Anfragen "
+                raise Kontingent("%s Kontingent nach %d Anfragen "
                                  "(%d Ortsabrufe, %d Variablen, %d Tage): %s"
                                  % (uhr(), LAST["anfragen"], LAST["orte"],
-                                    LAST["variablen"], LAST["tage"], grund))
+                                    LAST["variablen"], LAST["tage"], grund),
+                                 sperre_bis(grund, _jetzt_utc()), grund)
             # 5xx ist die Gegenseite, nicht wir: das lohnt einen zweiten
             # Versuch.  4xx ist unsere Anfrage und wird beim Wiederholen
             # nicht besser - durchreichen, damit es auffaellt.
-            if e.code < 500 or letzter:
+            if e.code < 500 or n >= versuche - 1:
                 raise
             fehler = "HTTP %d" % e.code
         except (urllib.error.URLError, TimeoutError, ValueError, OSError) as e:
@@ -232,15 +344,101 @@ def _hole(u, versuche=4):
             # gescheiterte Versuch hat sein Kontingent schon verbraucht.
             # ValueError faengt die truncierte JSON-Antwort mit ab; sie ist
             # in der Praxis ein Netzabbruch, kein Formatfehler.
-            if letzter:
+            if n >= versuche - 1:
                 raise
             fehler = "%s: %s" % (type(e).__name__, e)
         warte = RUHEPAUSEN[min(n, len(RUHEPAUSEN) - 1)]
+        n += 1
         melde("   Abruf gestoert (%s), neuer Versuch in %d s (Anfrage %d, "
               "Versuch %d von %d)" % (fehler, warte, LAST["anfragen"],
-                                      n + 2, versuche))
+                                      n + 1, versuche))
         time.sleep(warte)
-    raise SystemExit("unerreichbar")
+
+
+# --- Blockcache (T-0074) -----------------------------------------------
+#
+# WARUM (09.10.2026, Review alarm#1, tests#6).  abfrage() sammelte nur im
+# Speicher.  Ein 429 oder Netzabbruch in Block 14 von 17 verwarf die 13
+# geholten Bloecke, und der naechste Tick zahlte sie noch einmal.  Jetzt
+# liegt jeder erfolgreich geholte Block als eigene Datei auf der Platte, und
+# ein Wiederholungslauf holt nur, was fehlt.
+#
+# SCHLUESSEL IST DER MODELLLAUF, NICHT DER TAG.  Ein Tag hat bis zu vier
+# Modelllaeufe; ein Cache je Tag lieferte einem Abendlauf auf dem 06z die
+# Bloecke des Vormittagslaufs auf dem 18z des Vortags - still, und mit
+# genau dem Verzug, den die Seite als Modelllauf ausweist.  Der Ordner traegt
+# deshalb die Initialisierung aus modelllauf(), und die Datei den SHA-1 der
+# vollstaendigen Anfrage-URL (Zellen, Variablen, Modell, Tage).
+#
+# Ist der Modelllauf UNBEKANNT (meta.json nicht erreichbar), gibt es keinen
+# Cache - weder lesen noch schreiben.  Lieber einmal voll bezahlen als Daten
+# eines anderen Laufs unter falschem Namen rechnen.
+#
+# Bekannte Restluecke, nicht neu: modelllauf() wird VOR dem Abruf gelesen
+# (T-0065).  Wird dazwischen ein neuer Lauf verfuegbar, landen seine Bloecke
+# unter dem alten Namen.  Gelesen werden sie nur von einem Lauf, der denselben
+# alten Namen sieht - also von einem, der ohnehin schon gemischt haette.
+ABRUF_CACHE = {"init": None}          # setzt main(); None = kein Cache
+CACHE_HALTEN_TAGE = 2
+
+
+def _cache_ordner(init=None):
+    """Cacheordner fuer diesen Modelllauf, oder None (kein Cache)."""
+    init = init if init is not None else ABRUF_CACHE.get("init")
+    if not init:
+        return None
+    try:
+        t = datetime.fromisoformat(init)
+    except (TypeError, ValueError):
+        return None
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=timezone.utc)
+    return os.path.join(BASIS, "daten", "cache", "abruf",
+                        t.astimezone(timezone.utc).strftime("%Y%m%dT%H%MZ"))
+
+
+def _aus_cache(pfad, n):
+    """Den gespeicherten Block lesen; jede Unstimmigkeit ist ein Fehltreffer."""
+    if not pfad or not os.path.exists(pfad):
+        return None
+    try:
+        with open(pfad) as f:
+            d = json.load(f)
+    except (OSError, ValueError):
+        return None
+    if isinstance(d, dict):
+        d = [d]
+    if not isinstance(d, list) or len(d) != n \
+            or not all(isinstance(e, dict) and "hourly" in e for e in d):
+        return None
+    return d
+
+
+def raeume_cache(jetzt, halten_tage=CACHE_HALTEN_TAGE):
+    """Cacheordner von Modelllaeufen, die aelter als `halten_tage` sind, loeschen.
+
+    Das Alter kommt aus dem Ordnernamen (der Initialisierung); ein Name, der
+    sich nicht lesen laesst, faellt auf die Aenderungszeit zurueck.  Ein
+    Block wiegt rund 2 MB, ein voller Lauf rund 17 Bloecke.
+    """
+    wurzel = os.path.join(BASIS, "daten", "cache", "abruf")
+    if not os.path.isdir(wurzel):
+        return 0
+    grenze = jetzt - timedelta(days=halten_tage)
+    weg = 0
+    for name in sorted(os.listdir(wurzel)):
+        pfad = os.path.join(wurzel, name)
+        if not os.path.isdir(pfad):
+            continue
+        try:
+            t = datetime.strptime(name, "%Y%m%dT%H%MZ").replace(
+                tzinfo=timezone.utc)
+        except ValueError:
+            t = datetime.fromtimestamp(os.path.getmtime(pfad), timezone.utc)
+        if t < grenze:
+            shutil.rmtree(pfad, ignore_errors=True)
+            weg += 1
+    return weg
 
 
 def abfrage(zellen, variablen, modell, tage, block=25):
@@ -248,22 +446,41 @@ def abfrage(zellen, variablen, modell, tage, block=25):
     liste = sorted(zellen)
     LAST["variablen"] = max(LAST["variablen"], len(variablen))
     LAST["tage"] = max(LAST["tage"], tage)
+    ordner = _cache_ordner()
     melde("   Abruf: %d Zellen, %d Variablen, %d Tage, Bloecke zu %d"
           % (len(liste), len(variablen), tage, block))
+    treffer = 0
     for i in range(0, len(liste), block):
         teil = liste[i:i + block]
-        LAST["orte"] += len(teil)
         u = ("https://ensemble-api.open-meteo.com/v1/ensemble?latitude=%s&longitude=%s"
              "&models=%s&hourly=%s&forecast_days=%d&temporal_resolution=native"
              % (",".join("%.4f" % mitte(z)[0] for z in teil),
                 ",".join("%.4f" % mitte(z)[1] for z in teil),
                 modell, ",".join(variablen), tage))
-        d = _hole(u)
-        if isinstance(d, dict):
-            d = [d]
+        pfad = (os.path.join(ordner, hashlib.sha1(u.encode()).hexdigest()
+                             + ".json") if ordner else None)
+        d = _aus_cache(pfad, len(teil))
+        if d is not None:
+            treffer += 1
+            LAST["aus_cache"] += len(teil)
+        else:
+            LAST["orte"] += len(teil)
+            d = _hole(u)
+            if isinstance(d, dict):
+                d = [d]
+            if pfad:
+                # Ein Cache, der nicht geschrieben werden kann, kostet beim
+                # naechsten Abbruch Kontingent - aber nicht DIESEN Lauf.
+                try:
+                    schreibe(pfad, d, indent=None, separators=(",", ":"))
+                except OSError as ex:
+                    melde("   Blockcache nicht geschrieben (%s)" % ex)
+            time.sleep(1)
         for z, e in zip(teil, d):
             aus[z] = e["hourly"]
-        time.sleep(1)
+    if treffer:
+        melde("   davon %d Bloecke aus dem Cache (%s)"
+              % (treffer, os.path.basename(ordner)))
     return aus
 
 
@@ -372,6 +589,57 @@ def naechster_schritt(zeiten, ziel_dt):
     return bi, best / 3600.0
 
 
+# Obergrenze fuer Pass 2 (T-0074, Review alarm#2), ueberschreibbar per
+# `pass2_max_zellen` in konfig.json (null = kein Deckel).
+#
+# WARUM 320.  Gemessen im Log: Pass 2 hatte im August 110-150 Zellen, Anfang
+# Oktober 290-320 (Hoechstwert im ganzen Log 319, am 07.10.).  Dazu kommen 72
+# Zellen Pass 1 und eine Windzelle; mit Deckel ist ein Lauf also hoechstens
+# rund 390 Ortsabrufe gross - so gross wie die groessten Laeufe, die
+# nachweislich in einer Uhrstunde durchgingen (378 und 383 am 08.10.2026).
+# Heute schneidet der Deckel nichts ab.  Er faengt, was die Messung nicht
+# abdeckt: eine Starkwindlage im Maerz oder Juni, wenn dt wieder gross ist,
+# koennte Pass 2 ueber jeden beobachteten Lauf treiben, und dann riss bisher
+# der ganze Lauf am Limit, statt nur die fernen Abende ungenauer zu machen.
+# Ein Deckel unter 320 wuerde schon viele Oktoberlaeufe beschneiden, ohne
+# dass belegt ist, dass er das Stundenlimit verhindert (siehe LAST: das
+# Gewicht ist offen).
+PASS2_MAX_ZELLEN = 320
+
+
+def deckle_pass2(neu, karte, abende, grenze):
+    """Pass 2 auf `grenze` Zellen begrenzen, naechste Abende zuerst.
+
+    Rueckgabe: die Zellen, die geholt werden.  Jede Zelle bekommt den Rang
+    des FRUEHESTEN Abends, der sie braucht; behalten wird von vorn.  Fuer
+    die verworfenen Zellen zeigt `karte` danach auf die unversetzte
+    Faecherzelle aus Pass 1 - an diesen Punkten rechnet der Abend also wie
+    mit `advektion: false`, statt mit einer Luecke.  Eine Luecke wuerde
+    score() still aus dem Gewicht nehmen, und der Faecher waere an genau den
+    Stellen duenn, an denen niemand nachsieht.
+    """
+    if grenze is None or len(neu) <= grenze:
+        return set(neu)
+    grenze = max(0, int(grenze))
+    erster = {}
+    for (t, _s, _schl), z in karte.items():
+        if z in neu and (z not in erster or t < erster[z]):
+            erster[z] = t
+    rang = sorted(neu, key=lambda z: (erster[z], z))
+    verworfen = set(rang[grenze:])
+    betroffen = {}
+    for (t, s, schl), z in list(karte.items()):
+        if z in verworfen:
+            karte[(t, s, schl)] = zelle(*abende[t]["punkte"][schl])
+            betroffen[t] = betroffen.get(t, 0) + 1
+    melde("   ACHTUNG Pass 2 GEDECKELT: %d von %d Zellen verworfen (Grenze %d)."
+          " Ohne Advektion: %s"
+          % (len(verworfen), len(neu), grenze,
+             ", ".join("%s %d Punkte" % (t.strftime("%d.%m."), n)
+                       for t, n in sorted(betroffen.items()))))
+    return set(rang[:grenze])
+
+
 def lauf_ort(ort, kfg, jetzt):
     """Die Abende dieses Ortes rechnen.  `jetzt` ist der Bezugszeitpunkt.
 
@@ -420,13 +688,20 @@ def lauf_ort(ort, kfg, jetzt):
     # Heimatpunkt gelesen (`zentrum` weiter unten) - der Advektionsversatz
     # ist ein Ensemble-Mittelwind je Schicht, kein Feld.  Sie fuer alle 68
     # Faecherzellen zu holen war also reine Verschwendung, und keine
-    # billige: Open-Meteo zaehlt Ensemble-Member wie zusaetzliche
-    # Variablen, 9 Variablen x 51 Member wiegen dreimal so viel wie 3 x 51.
+    # billige: nach dem Log zaehlt Open-Meteo Ensemble-Member meist wie
+    # zusaetzliche Variablen, 9 Variablen x 51 Member wiegen dann dreimal so
+    # viel wie 3 x 51 (siehe LAST oben: nicht ausnahmslos belegt).
     #
     # Gemessen am 18.08.2026: der Lauf kostete rund 5.500 Einheiten und riss
-    # damit das Stundenlimit von 5.000 bei der vorletzten Anfrage. Ohne den
-    # Windballast sind es rund 3.500 - der Lauf passt wieder, und es bleibt
-    # Luft fuer einen Nachholversuch.
+    # damit das Stundenlimit von 5.000 bei der vorletzten Anfrage.  Ohne den
+    # Windballast waren es damals 217 Ortsabrufe, rund 3.500 Einheiten.
+    # STAND 09.10.2026 (Review alarm#2): inzwischen 378-383 Ortsabrufe je
+    # Lauf, nach demselben Gewicht rund 5.800 Einheiten.  Treiber ist Pass 2
+    # (August 110-150 Zellen, Oktober 290-320), und der waechst mit dem
+    # saisonalen Abstand dt zwischen Sonnenuntergang und naechstem
+    # 3-h-Modellschritt (Versatz = v * dt): Spitze Anfang Oktober, Ende
+    # November nahe 0, wieder hoch im Maerz und Juni.  Pass 2 ist deshalb
+    # gedeckelt (`pass2_max_zellen`, unten).
     wolken = ["cloud_cover_%s" % s for s in SCHICHTEN]
     winde = []
     for s in SCHICHTEN:
@@ -502,7 +777,10 @@ def lauf_ort(ort, kfg, jetzt):
     neu = versetzt_zellen - fan_zellen
     if kfg.get("advektion", True) and neu:
         print("   Pass 2: %d zusaetzliche Zellen" % len(neu), flush=True)
-        feld.update(abfrage(neu, wolken, kfg["modell"], tage))
+        neu = deckle_pass2(neu, karte, abende,
+                           kfg.get("pass2_max_zellen", PASS2_MAX_ZELLEN))
+        if neu:
+            feld.update(abfrage(neu, wolken, kfg["modell"], tage))
 
     ergebnisse = {}
     for t, info in abende.items():
@@ -770,6 +1048,19 @@ def raeume(eintrag, heute):
 
 
 def main():
+    """Der Lauf.  Die Huelle setzt den Blockcache-Schluessel danach zurueck.
+
+    Sonst schriebe ein spaeterer Aufruf von lauf_ort() im selben Prozess (ein
+    Test, ein Analyseskript) still in den Cache eines Laufs, der laengst
+    vorbei ist.
+    """
+    try:
+        _main()
+    finally:
+        ABRUF_CACHE["init"] = None
+
+
+def _main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--trocken", action="store_true",
                     help="rechnen und anzeigen, aber nichts senden")
@@ -846,15 +1137,35 @@ def main():
     # Archiv und Standzeile eine Initialisierung, aus der die Zahlen gar
     # nicht stammten.  Das ist ausgerechnet das Feld, auf dem alle
     # Verzugsaussagen des Projekts beruhen.
+    # T-0074: Kontingentsperre VOR jedem Abruf.  Steht noch ein Vermerk aus
+    # einem Abbruch am Stunden- oder Tageslimit, endet der Lauf hier - ohne
+    # Abruf und ohne Buchung, damit das Fenster nach Ablauf der Sperre noch
+    # offen ist.  Geprueft gegen die ECHTE Uhr, nicht gegen --jetzt: die
+    # Sperre beschreibt die Gegenseite, nicht den simulierten Zeitpunkt.
+    gesperrt = aktive_sperre(zustand, _jetzt_utc())
+    if gesperrt:
+        melde("   Kontingentsperre bis %s UTC (%s) - kein Abruf"
+              % (gesperrt[0].strftime("%d.%m. %H:%M"), gesperrt[1]))
+        return
+    # Alte Cacheordner weg, bevor neue entstehen (T-0074).
+    weg = raeume_cache(_jetzt_utc())
+    if weg:
+        melde("   Blockcache: %d alte Modelllaeufe geraeumt" % weg)
+
     init = modelllauf(kfg["modell"])
     melde("   Modelllauf: %s" % (init or "unbekannt"))
+    # Blockcache je Modelllauf (T-0074).  Unbekannter Lauf: kein Cache.
+    ABRUF_CACHE["init"] = init
+    if not init:
+        melde("   Blockcache aus: Modelllauf unbekannt")
 
     for ort in kfg["orte"]:
         name = ort["name"]
         # T-0056: Beim geplanten Lauf nur die Orte rechnen, deren Fenster
         # wirklich offen ist.  Ohne diesen Filter loeste EIN faelliger Ort
-        # den vollen Abruf fuer ALLE aus - rund 3.500 Kontingenteinheiten je
-        # Ort fuer Zahlen, die niemand angefordert hat, und ihre `laeufe`
+        # den vollen Abruf fuer ALLE aus - je Ort ein ganzer Lauf (im Oktober
+        # 2026 rund 380 Ortsabrufe, siehe lauf_ort) fuer Zahlen, die niemand
+        # angefordert hat, und ihre `laeufe`
         # wurden dabei als "vonhand" gebucht, was ihr eigenes Fenster fuer
         # den Tag verbraucht haette.  Bei drei Orten waere das Tagesbudget
         # nach einem Abendlauf weitgehend weg.
@@ -863,7 +1174,17 @@ def main():
         if a.geplant and name not in fenster:
             continue
         print("=== %s" % ort["anzeige"], flush=True)
-        erg = lauf_ort(ort, kfg, jetzt)
+        try:
+            erg = lauf_ort(ort, kfg, jetzt)
+        except Kontingent as k:
+            # T-0074: die Sperre festhalten, dann wie bisher abbrechen.  Die
+            # geholten Bloecke liegen im Blockcache; der erste Tick nach der
+            # Sperre holt nur, was fehlt.
+            if k.sperre_bis:
+                vermerke_sperre(zpfad, k.sperre_bis, k.grund)
+                melde("   Kontingentsperre vermerkt bis %s UTC"
+                      % k.sperre_bis.strftime("%d.%m. %H:%M"))
+            raise
         eintrag = zustand.setdefault(name, {"abende": {}, "alarme": {}})
         archiv_abende = archive.setdefault(name, {})
         meine = neue_abende.setdefault(name, {})
@@ -918,7 +1239,8 @@ def main():
                 # verwarf also Buchung, Stand UND Tagesarchiv.  Weil dann
                 # auch `laeufe` fehlt, haelt im_laufenster() das Fenster fuer
                 # offen und der naechste stuendliche Tick rechnet alles neu:
-                # rund 3.500 Kontingenteinheiten fuer Zahlen, die schon da
+                # ein ganzer Lauf (Oktober 2026 rund 380 Ortsabrufe; seit
+                # T-0074 meist aus dem Blockcache) fuer Zahlen, die schon da
                 # waren.  Ein toter Push ist kein toter Lauf.
                 try:
                     sende(ort["ntfy_alarm"], titel, text, "high",
@@ -996,14 +1318,16 @@ def main():
                                 "modelllauf": init,
                                 "fenster": fenster.get(name, "vonhand")}
             geraeumt += raeume(eintrag, tag)
+        if SPERRSCHLUESSEL in z and not aktive_sperre(z, _jetzt_utc()):
+            del z[SPERRSCHLUESSEL]          # abgelaufen: kein Vermerk mehr noetig
         if geraeumt or gekuerzt:
             melde("   Geraeumt: %d alte Abende, %d Verlaufszeilen gekuerzt"
                   % (geraeumt, gekuerzt))
 
     melde("   Bilanz: %d HTTP-Anfragen, %d Ortsabrufe, bis %d Variablen, "
-          "%d Tage, %d Member"
+          "%d Tage, %d Member, %d Orte aus dem Blockcache"
           % (LAST["anfragen"], LAST["orte"], LAST["variablen"],
-             LAST["tage"], LAST["member"]))
+             LAST["tage"], LAST["member"], LAST["aus_cache"]))
     if not a.trocken:
         # T-0051 atomar UND T-0058 unter Sperre: `aktualisiere` laedt frisch,
         # wendet den Merge an und tauscht die Datei per os.replace ein.
