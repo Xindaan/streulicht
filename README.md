@@ -745,6 +745,7 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 .venv/bin/python3 skripte/test_netz.py              # Netzwartefrist an der Wanduhr (T-0079)
 .venv/bin/python3 skripte/test_ui_paket.py          # Bilanz, Hash, Tastatur, Faecher ganzjaehrig (T-0080, braucht node)
 .venv/bin/python3 skripte/test_bewertungen_holen.py # ntfy-Parser und vier Eingangswaechter (T-0079)
+.venv/bin/python3 skripte/test_syntax.py           # keine ungueltige Escape-Sequenz in sonnen/ und skripte/ (T-0078)
 node   skripte/test_bewertungsseite.js   # Warteschlange und Freilegung
 ```
 
@@ -807,14 +808,14 @@ freien Blick zum Horizont**. Er prueft, ob das Licht 200-400 km westlich in
 1-2 km Hoehe durchkommt. Die Sonne muss nicht sichtbar sein und darf laengst
 untergegangen sein - Cirrus auf 9,5 km glueht noch rund 28 Minuten weiter.
 
-**Die Advektion tastet STROMAUF ab** (korrigiert 02.09.2026, T-0063). Das
-Modellfeld liegt zu einem nativen 3-h-Schritt vor, der Sonnenuntergang liegt
+**Die Advektion tastet STROMAUF ab** (korrigiert 04.09.2026, T-0063; das
+Review, das den Fehler fand, war vom 02.09.). Das Modellfeld liegt zu einem nativen 3-h-Schritt vor, der Sonnenuntergang liegt
 daneben. Gesucht ist die Wolke, die zum Sonnenuntergang ueber dem Fanpunkt
 steht — zum frueheren Modellschritt war dieselbe Luft noch stromauf, bei
 Westwind also westlich. Abgetastet wird deshalb **Fanpunkt minus
 Transportversatz**.
 
-Bis zum 02.09.2026 stand dort ein Plus: der Lauf las die Zelle auf der
+Bis zum 04.09.2026 stand dort ein Plus: der Lauf las die Zelle auf der
 falschen Seite, mit dem doppelten Fehler 2·v·|Δt| — bei 100 km/h und
 Δt = 0,5 h also 100 km daneben. Aufgefallen ist es nie, weil ein
 verschobener Faecher genauso plausible Zahlen liefert wie ein richtiger.

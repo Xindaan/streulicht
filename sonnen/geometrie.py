@@ -7,9 +7,13 @@ Zwei Dinge:
 Zu (2): Ein Strahl, der bei Sonnenuntergang eine Wolke in Hoehe h ueber dem
 Beobachter beleuchtet, beruehrt die Erdoberflaeche in der Entfernung
 D = sqrt(2*R_eff*h) und verlaeuft bei Entfernung d in der Hoehe
-z(d) = (D-d)^2 / (2*R_eff).  R_eff = 4/3*R beruecksichtigt die Refraktion
-naeherungsweise; bei bodennahen Inversionen ist das eher eine Unter- als eine
-Ueberschaetzung (Groessenordnung 10 %).
+z(d) = (D-d)^2 / (2*R_eff).  R_eff = 4/3*R ist der RADIOWERT der
+Standardrefraktion; fuer sichtbares Licht ist etwa 1.15*R ueblich (Literatur-
+wert, nicht selbst geprueft, Review physik#16 vom 09.10.2026).  Der Modulkopf
+war bis dahin unbelegt.  Der Score ist dafuer unempfindlich: die
+Tangentendistanzen bleiben im selben 60-km-Stuetzintervall des Faechers
+(401.7 statt 373.1 km und 267.1 statt 248.1 km); R_eff bleibt deshalb unveraendert.
+Bei bodennahen Inversionen kann die Refraktion deutlich staerker sein.
 """
 import math
 from datetime import date as _date

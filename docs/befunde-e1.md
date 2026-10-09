@@ -1120,6 +1120,16 @@ S schlaegt A jetzt deutlicher (0.694 gegen 0.618).
 Alle Werte gestiegen und die Intervalle enger.  Vergleichbar mit der
 Erwartung aus Abschnitt 23.2 (bei rho 0.45: 22 % bei 18 Alarmen).
 
+**Nachtrag 09.10.2026 (Review methodik#F4; Original oben unveraendert):**
+Die hervorgehobene Zeile "18/Jahr: 14 % [8-24]" (n = 70) gilt fuer
+S >= 0.630, das 95. Perzentil der 11-Jahres-Datei (`albumtest.py:116-118`),
+NICHT fuer die Betriebsschwelle s* = 0.7065.  Bei s* trifft das Album 6 von 76
+Abenden (7.9 %, Wilson [3.7; 16.2]); nur die n = 43-Spalte (9 %, S >= 0.707)
+passt zur Betriebsschwelle.  Die Prozentzahl im Push ("... - 57 %") ist ein
+Memberanteil und keine Trefferwahrscheinlichkeit: von 30 Fotoabenden mit
+S >= s* sind 6 Album-Abende (20 %, Basisanteil 9.9 %) - als
+Praezisions-Proxy nur grob.
+
 ### 24.3 Die Ordnung: 2 < 3 < 4 klar, 5 nicht aufloesbar
 
 Mechanisches Ausschlusskriterium, **symmetrisch auf alle Abende angewandt**:

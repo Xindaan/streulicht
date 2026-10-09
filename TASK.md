@@ -73,6 +73,15 @@ stehen im Backlog-Block T-0072.
       unerreichbar. Ausweg waere die Quantilabbildung, die Befund E1 schon
       fuer GFS->ECMWF vorgesehen hat, ueber eine Ueberlappungsperiode.
       Das ist zu klaeren, BEVOR ueber eine Instanz geredet wird.
+      **Nachtrag 09.10.2026 (Review methodik#F8):** Die Begruendung "Album
+      2014 bis 2022" ist falsch. Das Album umfasst 81 Abende von 2014-10-07
+      bis 2026-06-28 (2023: 14, 2024: 11, 2025: 7, 2026: 6). s* stammt
+      ohnehin nicht aus dem Album, sondern ist das 95. Perzentil der
+      Klimatologie. Der Ausweg (Quantilabbildung) steht schon oben und bleibt
+      richtig; falsch war nur die Begruendung. Fuer 2026 enthaelt die
+      Klimatologie nur 40 Abende; der Kontingentbedarf zum Nachholen ist
+      UNBELEGT. (Gleiche Begruendung in STATE.md:185-186; STATE.md wird
+      hier nicht angefasst.)
 - [ ] Ab sofort je Lauf das WN3-Medianfeld mitschreiben (kostenlos), damit
       die Ueberlappung waechst statt zu warten. Dieselbe Lehre wie in
       Befund E1: "jeder Tag Wartezeit ist ein verlorener Kalibrierungstag".
@@ -154,6 +163,20 @@ Die Antwort "NEIN" wird durch den Fix fester, nicht wackliger.
 Wer den Wechsel doch ernsthaft erwaegt, rechnet vorher neu - dann aber mit
 der heutigen Fassung beider Scorer, und der Vermerk hier faellt weg.
 - [ ] Spearman rho und Top-15-%-Ueberlappung ueber 42 Abende
+
+**NACHTRAG 09.10.2026 (Review physik#13 / methodik#F1; Original oben
+unveraendert):** `sonnen/score_niveaus.py` mittelt Term A UNGEWICHTET ueber
+die Nahpunkte (= GEWICHTUNG "punkt"), `sonnen/score.py` rechnet seit dem
+14.08.2026 raumwinkelgewichtet. Die Ablation verglich damit zwei verschieden
+gewichtete Scores. Neu gerechnet im Review mit raumwinkelgewichtetem Term A:
+Sommer rho +0.690 (statt +0.504), Niveau-Maximum im Sommer 0.808 (statt 0.488,
+also ein Abend >= s*, 3-Schicht loest 2-mal aus, nicht 3-mal), Herbst rho
++0.651 (statt +0.697), Top-6 bleibt 4/6 bzw. 1/6. "Kein einziger Abend",
+"zwei Massstaebe" und "s* ~ 0.4224" tragen bezueglich der Gewichtung nicht
+(0.4224 ist der dritthoechste Niveau-Wert; fuer gleiche Rate ergibt sich
+0.511). Die **Kernaussage NEIN haelt**. Auch "rho eher Obergrenze / NEIN wird
+fester" (Vermerk 23.08.) gilt nur mit dieser Einschraenkung. Auf den
+Live-Betrieb ohne Einfluss; `icond2_test.py` erbt dieselbe Mittelung.
 
 ### T-0003 Taegliche Ensemble-Archivierung
 Das Ensemble-Archiv reicht nur 93 Tage zurueck und wandert. Ein Cron, der

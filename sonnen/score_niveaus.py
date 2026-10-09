@@ -2,9 +2,17 @@
 
 Hier stand bis zum 23.08.2026 "der eigentliche Betriebsscore".  Das war
 falsch: `skripte/alarm.py` importiert `sonnen.score`, die 3-Schicht-Variante,
-und begruendet das in seinem Modulkopf (s\* = 0.7065 ist auf der
+und begruendet das in seinem Modulkopf (s* = 0.7065 ist auf der
 3-Schicht-Klimatologie kalibriert).  Der Wechsel haengt an T-0006 und ist
 nach der Messung vom 14.08.2026 offen - rho = +0.697, Sommerfenster +0.504.
+
+NACHTRAG 09.10.2026 (Review physik#13 / methodik#F1): Term A wird hier
+UNGEWICHTET ueber die Nahpunkte gemittelt (entspricht GEWICHTUNG "punkt" in
+score.py); der Betriebsscore rechnet seit dem 14.08.2026 raumwinkelgewichtet.
+Die Messung oben vergleicht also zwei verschieden gewichtete Scores.  Mit
+raumwinkelgewichtetem Term A: Sommer rho +0.690 (statt +0.504), Niveau-Maximum
+0.808 (statt 0.488), Herbst rho +0.651 (statt +0.697).  Die Kernaussage
+"nicht uebertragbar" (NEIN) haelt.  Aenderung am Code: keine.
 
 Unterschied zur 3-Schicht-Variante in score.py:
   * Sechs Schirmniveaus (600..200 hPa) statt zwei, jedes mit eigener

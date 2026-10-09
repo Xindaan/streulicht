@@ -615,7 +615,7 @@ def versatz_km(sp_kmh, richtung_grad, stunden):
     nicht die Stelle, an der man es vorher abtastet.  Wer wissen will, welche
     Luft spaeter ueber einem Punkt steht, muss STROMAUF schauen, also den
     Versatz ABZIEHEN.  Siehe die Fundstelle in lauf_ort() - genau dort stand
-    bis zum 02.09.2026 ein Plus (T-0063).
+    bis zum 04.09.2026 ein Plus (T-0063).
     """
     ms = sp_kmh / 3.6
     return (-ms * math.sin(math.radians(richtung_grad)) * stunden * 3.6,
@@ -821,7 +821,7 @@ def lauf_ort(ort, kfg, jetzt):
         for s in SCHICHTEN:
             dx, dy = versatz[(t, s)]
             for schl, (la, lo) in info["punkte"].items():
-                # STROMAUF, nicht stromab (T-0063, korrigiert 02.09.2026).
+                # STROMAUF, nicht stromab (T-0063, korrigiert 04.09.2026).
                 #
                 # Gesucht ist die Wolke, die zum SONNENUNTERGANG ueber dem
                 # Fanpunkt steht.  Das Modellfeld liegt aber zum nativen
@@ -830,7 +830,7 @@ def lauf_ort(ort, kfg, jetzt):
                 # Westwind also westlich.  Abgetastet wird deshalb
                 # Fanpunkt MINUS Transportversatz.
                 #
-                # Bis zum 02.09.2026 stand hier ein Plus.  Der Lauf las damit
+                # Bis zum 04.09.2026 stand hier ein Plus.  Der Lauf las damit
                 # die Zelle auf der falschen Seite, mit dem doppelten Fehler
                 # 2*v*|dt| - bei 100 km/h und dt = 0.5 h also 100 km daneben.
                 # Aufgefallen ist es nie, weil ein verschobener Faecher
