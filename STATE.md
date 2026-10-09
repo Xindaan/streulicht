@@ -1,10 +1,14 @@
 # STATE
 
-**Stand 09.10.2026: Gesamtreview liegt vor** (`docs/review-2026-10-09.md`,
-108 gegengepruefte Befunde, keiner widerlegt). Der Betrieb liefert seit Mitte
-September an vielen Tagen nichts: Kontingent (T-0074) und Mac-Schlaf, und
-niemand merkt es (T-0075). Seit 26.08. ist nichts committet (T-0076). Der
-Rest dieses Kopfes ist der Stand vom 04.09.
+**Stand 09.10.2026 nachmittags: Review umgesetzt** (`docs/review-2026-10-09.md`).
+T-0074 bis T-0083 sind gebaut, je mit Gate und Negativproben, und laufen live:
+Blockcache und Sperre nach 429 (T-0074), ein Lauf ohne Ergebnis gilt nicht
+mehr als Erfolg, die Seite merkt selbst, wenn sie alt ist, und ein Waechter
+als GitHub-Action prueft sie von aussen (T-0075), Logs mit Datum und Rotation,
+Tageskopie der Noten (T-0081), geheimes Erinnerungs-Topic vorbereitet
+(T-0077). Tests: 821 Python-Pruefungen in 27 Dateien + 64 JS, alle gruen.
+Offen sind nur noch Andres Schritte (siehe Next actions). Der Rest dieses
+Kopfes ist der Stand vom 04.09.
 
 Stand: 04.09.2026 abends. **Der Betrieb laeuft; ein Fremdreview hat einen
 Rechenfehler im Kern gefunden.** Die Advektion tastete stromab statt
@@ -183,12 +187,19 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
 
 ## Next actions
 
-**Ab 09.10.2026 zuerst (aus dem Gesamtreview, Reihenfolge = Vorschlag):**
-1. **T-0076** Commit-Rueckstand aufloesen - vorher die private Adresse aus dem
-   T-0072-Messblock nehmen; Andres Entscheidung, weil das Repo oeffentlich ist.
-2. **T-0074** Abruf inkrementell und gedeckelt - der groesste Hebel gegen die
-   Ausfaelle.
-3. **T-0075** Ausfall sichtbar machen, Waechter ausserhalb des Macs.
+**Ab 09.10.2026 (nach der Umsetzung), alles Andres Schritte:**
+1. **Wirkung messen** (T-0074): ab dem naechsten Abendlauf in daten/alarm.log
+   auf "Cache" und "Sperre" achten; Plattenbedarf von daten/cache/abruf/ nach
+   zwei Tagen ansehen (geschaetzt 70-140 MB).
+2. **Andres Konfiguration** (T-0075, T-0077, T-0081): Repo-Secret
+   NTFY_WAECHTER (optional, sonst meldet der Waechter per GitHub-Mail);
+   neues geheimes Topic als `ntfy_erinnerung` in konfig_geheim.json und in der
+   App abonnieren, altes Bewertungs-Topic abbestellen; `sicherung_ordner` in
+   konfig.json (z. B. iCloud). Waechter einmal von Hand ausloesen.
+3. **Fachliche Entscheidungen** (T-0078): Perzentil-Zonen gegen Median
+   (methodik#F3), Sichtfaktor-Gewichtung (physik#4), Versprechen "2-10 Tage"
+   (F11), Verankerung der Noten (F10), Nachtluecke nach zwei gescheiterten
+   Laeufen (alarm#6), 44-px-Tippziele der Abendachse.
 
 Die Punkte darunter sind der Stand vom 08.09.; "Wecken nachsehen" ist
 beantwortet (wirkt, in allen 6 im Energielog sichtbaren Naechten 03.-08.10.,
