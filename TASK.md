@@ -213,6 +213,13 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   blieb ein Tag ohne erfolgreichen Lauf, nach 00 UTC (neues Tageskontingent)
   einen Nachhol-Lauf fuer die Folgetage zulassen; mit Blockcache und Sperre
   aus T-0074 zusammenspielen, Verhaltenstest mit Negativprobe.
+  Stand 09.10.2026: umgesetzt - Fenster "nachts" ab 02:00 Ortszeit (nie vor
+  00 UTC, bis vor das Vormittagsfenster), nur nach einem Vortag ganz ohne Lauf
+  (ein Nachtlauf zaehlt nicht), einmal je Nacht, Schalter `nachtlauf`, Sperre
+  greift vor dem Abruf; Logzeile "Modelllauf: ... (Fenster nachts)". Kein Push
+  nachts: Abend bleibt ungebucht, der naechste Tageslauf sendet (ab0d4dd,
+  test_nachtlauf.py, 10 Negativproben). Offen bei Andre: zurueckstellen statt
+  leise senden bestaetigen; Cache-Teilung nach zwei Wochen im Log nachzaehlen.
 
 - T-0001 Fotoarchiv-Gate (aus Doing nach Backlog verschoben 09.10.2026,
   Review architektur#1 / T-0082). Vermerk: Der Doing-Text meldete BLOCKIERT
