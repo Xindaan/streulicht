@@ -197,6 +197,11 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
 - T-0085 Vorlauf-Versprechen abschwaechen (Entscheidung Andre 09.10.2026,
   methodik#F11). README Z. 3 und Seitentexte: "zwei bis zehn Tage im Voraus"
   auf "ab etwa 1-3 Tagen belastbar, weiter voraus nur Tendenz" umformulieren.
+  Stand 09.10.2026: umgesetzt - README Z. 3 auf "bis zu zehn Abende voraus
+  gerechnet, belastbar ab etwa 1-3 Tagen, weiter voraus nur Tendenz". Seiten-,
+  Push- und Konfigtexte enthalten kein Zeitversprechen (rg), dort nichts
+  geaendert; Rechenweg unberuehrt. Offen: TASK.md Z. 3 und STATE.md Z. 45
+  tragen noch die alte Formulierung (Steuerdateien, nicht angefasst).
 - T-0086 Sichtfaktor-Gewichtung erst messen (Entscheidung Andre 09.10.2026,
   physik#4). Im Archiv zaehlen, wie oft tiefe Decke nur am Standort unter hohem
   Schirm vorkommt; Klimatologie und s* fuer gleich- und raumwinkelgewichteten

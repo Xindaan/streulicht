@@ -1,8 +1,11 @@
 # Streulicht
 
-Meldet zwei bis zehn Tage im Voraus eine Wahrscheinlichkeit dafuer, dass in
+Rechnet bis zu zehn Abende voraus eine Wahrscheinlichkeit dafuer, dass in
 Berlin ein aussergewoehnlicher Sonnenuntergang stattfindet — und schickt einen
-Push aufs Telefon, wenn sie hoch genug ist.
+Push aufs Telefon, wenn sie hoch genug ist. Belastbar ist die Zahl ab etwa
+ein bis drei Tagen vorher; weiter voraus ist sie nur eine Tendenz (bisher kam
+ein Push ueber der Schwelle erst am Abend selbst; zwei Alarme im Herbst 2026,
+siehe T-0085).
 
 **Zum Namen.** In der Optik ist Streulicht der Parasit: das, was man aus einem
 Instrument herauskonstruiert. Hier ist es das Produkt. Der Betriebsscore
