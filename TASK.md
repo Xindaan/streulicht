@@ -256,6 +256,11 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   erinnerung.py wartet nicht aufs Netz und endet bei Fehler mit 0 (bewertung#5);
   git push ohne Timeout (seiten#9); ein Absturz von seite.py stoppt auch
   Bewertungs- und Bilanzseite (seiten#4, architektur#6).
+  Stand 09.10.2026: umgesetzt - 7690b2f. Logs mit Datum+Uhrzeit und Rotation
+  (`skripte/logbuch.py`), erinnerung.py wartet aufs Netz und endet bei
+  Versandfehler != 0, ausliefern.py baut jede Seite fuer sich und pusht mit
+  Zeitgrenze, Tageskopie der Noten nach `daten/sicherung/` (`skripte/sicherung.py`).
+  OFFEN bei Andre: `sicherung_ordner` in konfig.json setzen (z. B. iCloud).
 - T-0082 Doku und Steuerdateien (Review 09.10.2026): STATE.md 335 Zeilen statt
   Kurzstand, Next actions doppelt nummeriert und ueberfaellig (architektur#2);
   Doing mit 5 statt 3 Eintraegen, T-0003/T-0001/T-0006 erledigt bzw.
