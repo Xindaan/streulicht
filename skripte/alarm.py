@@ -52,6 +52,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import logbuch  # noqa: E402
 from netz import warte_auf_netz  # noqa: E402
 from zustandsdatei import aktualisiere, schreibe  # noqa: E402
+import stufen  # noqa: E402
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Die Datei, die betrieb/de.greatbelow.streulicht.alarm.plist als
@@ -563,7 +564,7 @@ def _rund(x, n=5):
     return None if x is None else round(x, n)
 
 
-def verdichte(werte, schwelle):
+def verdichte(werte, schwelle, klima=None):
     """(Score, Detail) je Member -> Wahrscheinlichkeit, Median, Mediandetail.
 
     Herausgeloest, weil hier der Fehler sass: score() gibt (0.0, None) zurueck,
@@ -599,10 +600,18 @@ def verdichte(werte, schwelle):
     if not gueltig:
         return None
     mitte = gueltig[len(gueltig) // 2]
-    return {"p": sum(1 for x in gueltig if x[0] >= schwelle) / len(gueltig),
-            "median": mitte[0],
-            "detail": mitte[1],
-            "n_member": len(gueltig), "n_member_gesamt": len(werte)}
+    erg = {"p": sum(1 for x in gueltig if x[0] >= schwelle) / len(gueltig),
+           "median": mitte[0],
+           "detail": mitte[1],
+           "n_member": len(gueltig), "n_member_gesamt": len(werte)}
+    if klima:
+        # T-0084: Anteil der Member im obersten Fuenftel des Jahres - die
+        # Grundlage der Stufe "auffaellig" (skripte/stufen.py).  Aus den
+        # Membern allein ist sie spaeter nicht mehr zu rechnen: der Zustand
+        # haelt die einzelnen Member nicht.
+        erg["anteil_auffaellig"] = stufen.anteil_auffaellig(
+            [x[0] for x in gueltig], klima)
+    return erg
 
 
 def versatz_km(sp_kmh, richtung_grad, stunden):
@@ -697,6 +706,14 @@ def lauf_ort(ort, kfg, jetzt):
     breite, laenge = ort["breite"], ort["laenge"]
     heute = jetzt.date()
     km_lon = 111.32 * math.cos(math.radians(breite))
+    # T-0084: die Klimatologie fuer den Memberanteil der Stufe "auffaellig".
+    # Fehlt sie, rechnet der Lauf trotzdem; dann fehlt nur dieses Feld.
+    try:
+        klima = stufen.klima_sortiert(BASIS)
+    except (OSError, ValueError, KeyError) as ex:
+        klima = None
+        melde("   ACHTUNG Klimatologie nicht lesbar (%s) - Stufe 'auffaellig' "
+              "wird dieses Mal nicht gespeichert" % ex)
 
     abende = {}
     fan_zellen = set()
@@ -896,7 +913,7 @@ def lauf_ort(ort, kfg, jetzt):
                     vals.sort()
                     eintrag[schicht] = vals[len(vals) // 2]
 
-        v = verdichte(werte, kfg["schwelle_score"])
+        v = verdichte(werte, kfg["schwelle_score"], klima)
         if v is None:
             print("   %s: KEIN Member mit Daten - Abend uebersprungen" % t,
                   flush=True)
@@ -923,6 +940,11 @@ def lauf_ort(ort, kfg, jetzt):
                          for a, b, sch, c in (besterdet["segmente"]
                                               if besterdet else [])],
             "n_member": v["n_member"], "n_member_gesamt": v["n_member_gesamt"],
+            # T-0084: Anteil der Member im obersten Fuenftel (Stufe
+            # "auffaellig"); fehlt, wenn die Klimatologie nicht lesbar war -
+            # die Seiten fallen dann auf die alte Stufe zurueck.
+            **({"anteil_auffaellig": v["anteil_auffaellig"]}
+               if v.get("anteil_auffaellig") is not None else {}),
             "feld": feld_seite,
             # Fuers Archiv (T-0003, Neufassung 20.08.2026): eine Zeile je
             # Member.  Die Wahrscheinlichkeit ist ein Anteil ueber diese 51
@@ -1412,12 +1434,15 @@ def _main():
             e.pop("member", None)
             meine[tag] = (e, verlaufszeile)
             lz = lokalzeit(tag, e["stunde_utc"], ort.get("zeitzone", "UTC"))
-            marke = "*" if e["p"] >= kfg["schwelle_wahrscheinlichkeit"] else " "
+            # Die Push-Bedingung ist zugleich die Stufe "selten" (T-0084):
+            # EINE Funktion, damit beide nicht auseinanderlaufen koennen.
+            selten = stufen.ist_selten(e["p"], kfg["schwelle_wahrscheinlichkeit"])
+            marke = "*" if selten else " "
             print("   %s %s %s %2.0f %%  Median %.2f  (%s, dt %.1f h)"
                   % (marke, WOCHENTAG[lz.weekday()], lz.strftime("%d.%m. %H:%M"),
                      100 * e["p"], e["median"], e["schirm"], e["dt_h"]))
 
-            if e["p"] < kfg["schwelle_wahrscheinlichkeit"]:
+            if not selten:
                 continue
             if tag in eintrag["alarme"]:
                 continue          # Idempotenz: je Abend hoechstens ein Alarm

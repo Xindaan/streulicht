@@ -85,6 +85,56 @@ ist A naeher an dem, was sie verstehen.
 bzw. Viertel waere (nicht gerechnet). **Kippt die Empfehlung**, wenn B mit
 keinem vernuenftigen Anteil auf rund 20-25 % "auffaellig" kommt - dann A.
 
+**Nachtrag 09.10.2026 (T-0084 umgesetzt): die Auswertung, die oben fehlte.**
+Die Empfehlung kippt nicht: mit einem Memberanteil von 37 % (19 von 51) kommt
+B auf 19,3 % "auffaellig", also auf das, was das 80. Perzentil verspricht.
+
+*Wie gerechnet.* Alle Abendvorhersagen aus `daten/archiv/berlin/*.json`, die
+nach dem Advektionsfix geholt wurden (ab 04.09.2026 14:50 UTC): 440
+Vorhersagen aus 40 Archivdateien fuer 44 Zielabende, je 51 Member (keine
+datenlosen). Je Vorhersage der Anteil der Member, deren Score in der
+Klimatologie (`score_berlin_g0.5_2022_2025.json`) den Rang >= 0,80 hat (Rang =
+Anteil der Abende strikt darunter, wie `seite.perzentil`). Vorlauf = Zielabend
+minus Lauftag. Das Rechenskript liegt nicht im Repo (Einmalauswertung); der
+Rechenweg steht hier vollstaendig.
+
+*Haeufigkeit von "Memberanteil >= q" (Anteil der Vorhersagen in %):*
+
+| q | alle (440) | Vorlauf 0-1 (80) | Vorlauf 2-4 (120) | Vorlauf >= 5 (240) |
+|---|---|---|---|---|
+| 12/51 = 0,235 | 46,8 | 42,5 | 49,2 | 47,1 |
+| 14/51 = 0,275 | 36,6 | 37,5 | 44,2 | 32,5 |
+| 16/51 = 0,314 | 27,5 | 32,5 | 37,5 | 20,8 |
+| 17/51 = 0,333 | 24,5 | 31,2 | 35,8 | 16,7 |
+| 18/51 = 0,353 | 21,4 | 27,5 | 34,2 | 12,9 |
+| **19/51 = 0,373 (gewaehlt)** | **19,3** | **27,5** | **32,5** | **10,0** |
+| 20/51 = 0,392 | 17,5 | 26,2 | 31,7 | 7,5 |
+| 22/51 = 0,431 | 15,5 | 25,0 | 29,2 | 5,4 |
+| 26/51 = 0,510 (Haelfte) | 9,5 | 16,2 | 22,5 | 0,8 |
+
+Dazu "selten" (p >= 0,5): 2 von 440 (0,5 %), beide bei Vorlauf 0-1 (2 von 80 =
+2,5 %); ab Vorlauf 2 nie. Und zur Gegenprobe: "Median im Rang >= 0,80" ist
+mathematisch dasselbe wie "Memberanteil >= 26/51" (die Mitte von 51 ist der
+26. Wert) und bestaetigt die 9,5 % der Vorlage Zeile fuer Zeile.
+
+*Gewaehlt: Q_AUFFAELLIG = 0,37* (19 von 51 genuegen, 18 von 51 nicht): 19,3 %
+liegen am naechsten an den 20 % der Definition (18/51 ergaeben 21,4 %, 20/51
+17,5 %). **Die Haelfte als Anteil taugt nicht** (9,5 %, bei Vorlauf >= 5 Tage
+0,8 %), ein Viertel ist zu viel (41 %).
+
+*Vorbehalte.* (1) Duenne Basis: 44 Zielabende zwischen September und Oktober,
+nur Spaetsommer/Herbst; Vorhersagen desselben Abends aus verschiedenen Laeufen
+sind keine unabhaengigen Stichproben (nimmt man je Zielabend nur die letzte
+Vorhersage, sind es bei 19/51 sogar 27,3 % von 44). Die Grenze ist eine
+Setzung und gehoert nach Winter und Fruehjahr neu gemessen. (2) Die Rate
+haengt stark am Vorlauf: gesamt 19 %, aber 27,5 % bei Vorlauf 0-1 und nur
+10 % ab Vorlauf 5. Weit voraus streuen die Member ueber die Klimatologie, ein
+hoher Memberanteil ist dort selten - "auffaellig" erscheint deshalb weit
+voraus selten, nah dran haeufiger. Eine vorlaufabhaengige Grenze waere
+moeglich, ist aber bei dieser Datenmenge nicht gedeckt. (3) Die Klimatologie
+liegt auf dem 0,5-Grad-Gitter, der Betrieb rechnet auf 0,25 Grad (Befund
+methodik#F12); der Effekt auf den Rang ist ungemessen.
+
 ---
 
 ## 2. Vorlauf-Versprechen (T-0085)

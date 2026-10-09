@@ -156,10 +156,32 @@ haben sie nichts zu suchen.
 Die Prognoseseite zeigt je Abend **zwei Zahlen, die nicht dasselbe sind**:
 
 - **Wahrscheinlichkeit** — Anteil der Ensemble-Member ueber s\*. "Wie sicher?"
-- **Perzentil** — klimatologischer Rang des Member-MEDIANS. "Wie selten?"
+- **Perzentil** — klimatologischer Rang des Member-MEDIANS. Wo der mittlere
+  Modelllauf im Jahr liegt.
 
-Die Achse traegt das Perzentil (Schwellen bei 80. und 95.), weil sie danach
+Die Achse traegt das Perzentil (Linien bei 80. und 95.), weil sie danach
 gebaut ist; die Wahrscheinlichkeit steht als Text daneben.
+
+**Die Stufe (selten / auffaellig / unauffaellig) haengt NICHT am Perzentil,
+sondern daran, wie viele Modelllaeufe den Abend so sehen** (seit 09.10.2026,
+T-0084; Regel in `skripte/stufen.py`, dieselbe fuer Prognose-, Bewertungsseite,
+Bilanz und Alarm):
+
+- **selten**: mindestens `schwelle_wahrscheinlichkeit` (50 %) der Member ueber
+  s\* &mdash; genau die Push-Bedingung. Die Funktion `ist_selten` steht im
+  Alarm und auf den Seiten; Stufe und Push koennen nicht auseinanderlaufen.
+- **auffaellig**: mindestens 37 % der Member im obersten Fuenftel des Jahres
+  (klimatologischer Rang >= 0,80). Der Wert `Q_AUFFAELLIG` ist eine Setzung:
+  er ist so gewaehlt, dass rund jede fuenfte Vorhersage "auffaellig" heisst
+  (Auswertung und Vorbehalt: `docs/entscheidungen-2026-10-09.md`, Abschnitt 1,
+  Nachtrag). Nach Winter und Fruehjahr neu messen.
+- **unauffaellig**: sonst.
+
+Der Alarmlauf schreibt dafuer `anteil_auffaellig` je Abend in den Zustand.
+Abende, die davor gerechnet wurden, haben das Feld nicht (die einzelnen Member
+liegen nur im Tagesarchiv); die Bilanzseite zeigt sie mit der alten Stufe und
+dem Vermerk "nach dem alten Verfahren". Die Rueckschau (`--rueckschau`) hat nur
+einen Score je Abend und bleibt bei der Stufe nach Rang (0,80 / 0,95).
 
 **Die Begruendung daneben gehoert zum MEDIAN-Member** (seit 04.09.2026,
 T-0064). Bis dahin kamen Schirm, A, Sicht, Weg und die Segmentliste vom
@@ -794,11 +816,12 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 .venv/bin/python3 skripte/test_netz.py              # Netzwartefrist an der Wanduhr (T-0079)
 .venv/bin/python3 skripte/test_ui_paket.py          # Bilanz, Hash, Tastatur, Faecher ganzjaehrig (T-0080, braucht node)
 .venv/bin/python3 skripte/test_bewertungen_holen.py # ntfy-Parser und vier Eingangswaechter (T-0079)
+.venv/bin/python3 skripte/test_stufen.py           # Stufe nach Modelllaeufen, eine Regel fuer alle Seiten (T-0084)
 .venv/bin/python3 skripte/test_syntax.py           # keine ungueltige Escape-Sequenz in sonnen/ und skripte/ (T-0078)
 node   skripte/test_bewertungsseite.js   # Warteschlange und Freilegung
 ```
 
-Stand 09.10.2026 (nach T-0087): **856 Python-Pruefungen in 28 Dateien + 64 JS, alle gruen**
+Stand 09.10.2026 (nach T-0084): **887 Python-Pruefungen in 29 Dateien + 64 JS, alle gruen**
 (gezaehlt als Ausgabezeilen `ok` je Datei, ohne Netz; `test_phantomnullen.py`
 mit ICON-Cache, `test_seiten.py` und `test_seiten_atomar.py` mit `daten/`
 mitgezaehlt; `test_advektion.py` zaehlt seine `ok`-Zeilen jetzt mit). Vorher, am 04.09.2026:

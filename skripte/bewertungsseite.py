@@ -29,7 +29,7 @@ from datetime import date, datetime, timedelta, timezone
 from datetime import time as dtzeit
 
 import band  # noqa: E402
-from seite import stufe  # noqa: E402
+import stufen  # noqa: E402
 from sonnen.geometrie import sonnenuntergang  # noqa: E402
 from zustandsdatei import schreibe_text  # noqa: E402
 
@@ -39,8 +39,11 @@ PLATZHALTER = ("__NTFY_BEWERTUNG__", "__ORT__", "__ANZEIGE__", "__SEITE__",
                "__PROGNOSE__", "__PROGNOSESEITE__", "__SONNE__")
 
 
-def prognosestand(ort_name, s_stern):
+def prognosestand(ort_name, s_stern, schwelle_p=None):
     """{tag: {band, stufe, klasse, p, wahrsch}} - was der Alarm gerechnet hat.
+
+    Die Stufe kommt aus skripte/stufen.py, wie auf der Prognoseseite (T-0084):
+    nach dem Anteil der Modelllaeufe, nicht nach dem Rang des Medians.
 
     Nur Abende MIT Prognose landen hier.  Ein Abend, den es im Zustand gibt,
     weil er bewertet wurde, aber fuer den nie gerechnet wurde, fehlt bewusst -
@@ -48,11 +51,11 @@ def prognosestand(ort_name, s_stern):
     einen Platzhalter zu zeigen.  Genau der Fall des 15.08.2026.
     """
     zp = os.path.join(BASIS, "daten", "zustand.json")
-    kp = os.path.join(BASIS, "daten", "score_berlin_g0.5_2022_2025.json")
-    if not (os.path.exists(zp) and os.path.exists(kp)):
+    alle = stufen.klima_sortiert(BASIS)
+    if not os.path.exists(zp) or alle is None:
         return {}
-    with open(kp) as f:
-        alle = sorted(v["s"] for v in json.load(f).values())
+    if schwelle_p is None:
+        schwelle_p = stufen.schwelle_p(BASIS)
     with open(zp) as f:
         zustand = json.load(f)
     abende = (zustand.get(ort_name) or {}).get("abende", {})
@@ -61,8 +64,8 @@ def prognosestand(ort_name, s_stern):
         e = abende[t]
         if e.get("median") is None:
             continue
-        rang = sum(1 for x in alle if x < e["median"]) / len(alle)
-        name, klasse = stufe(rang)
+        rang = stufen.rang(alle, e["median"])
+        name, klasse, _ = stufen.stufe_eintrag(e, rang, schwelle_p)
         aus[t] = {"band": band.svg(e["median"], s_stern, i),
                   "stufe": name, "klasse": klasse,
                   "p": round(rang, 4), "wahrsch": e.get("p")}
@@ -138,7 +141,8 @@ def main():
         ort["_seite"] = ("%s/bewerten-%s.html" % (basis_url, ort["name"])
                          if basis_url else "")
         ort["_prognoseseite"] = "%s/index.html" % basis_url if basis_url else ""
-        stand = prognosestand(ort["name"], s_stern)
+        stand = prognosestand(ort["name"], s_stern,
+                              kfg["schwelle_wahrscheinlichkeit"])
         ort["_prognose"] = json.dumps(stand, ensure_ascii=False)
         ort["_sonne"] = json.dumps(sonnentafel(ort), ensure_ascii=False)
         fehlt = [k for k in ("name", "ntfy_bewertung") if not ort.get(k)]

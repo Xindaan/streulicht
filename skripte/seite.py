@@ -4,11 +4,18 @@ Bewusst KEINE Prozentzahl als Hauptaussage.  Nach allem, was gemessen ist,
 kann der Score aussergewoehnliche Abende von gewoehnlichen trennen
 (Anreicherung n = 43, p = 0.0001), aber ob er unter den guten ordnet, ist
 offen.  Eine Zahl wie "71 %" behauptet eine Trennschaerfe, die nicht belegt
-ist.  Deshalb drei Stufen, an Perzentilen der Klimatologie festgemacht:
+ist.  Deshalb drei Stufen, festgemacht daran, WIE VIELE MODELLLAEUFE
+(Ensemble-Member) einen Abend so sehen (T-0084, vorher: Rang des Medians):
 
-    unauffaellig   unter dem 80. Perzentil
-    auffaellig     80. bis 95.
-    selten         ab dem 95. (= s*, rund 18 Abende im Jahr)
+    unauffaellig   weniger als Q_AUFFAELLIG der Member im obersten Fuenftel
+    auffaellig     mindestens Q_AUFFAELLIG der Member im obersten Fuenftel
+                   des Jahres (klimatologischer Rang >= 0,80)
+    selten         mindestens die Haelfte der Member ueber s* (p >= p*) -
+                   genau die Push-Bedingung
+
+Die Regel steht in skripte/stufen.py und ist fuer alle Seiten und den Alarm
+dieselbe.  Die Rangzahl ("NN. Perzentil des Jahres") bleibt als Zahl stehen:
+sie sagt, wo der mittlere Modelllauf im Jahr liegt, nicht welche Stufe gilt.
 
 Laeuft mit Prognosedaten (Standard) und mit historischen Abenden
 (--rueckschau, Kennzeichnung "Rueckschau").
@@ -59,6 +66,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import band  # noqa: E402
 import faecher  # noqa: E402
+import stufen  # noqa: E402
 import tokens  # noqa: E402
 from alarm import begruendung, satz  # noqa: E402
 from schnitt import lade_feld, schnitt_neu, svg  # noqa: E402
@@ -77,7 +85,7 @@ MONAT = ("Januar", "Februar", "März", "April", "Mai", "Juni", "Juli",
 # Alles, was durch json.dumps in die Seite und dort ueber textContent
 # ausgegeben wird, muss echtes UTF-8 sein - textContent dekodiert keine
 # Entities und zeigt "unauff&auml;llig" woertlich an.  Betroffen waren
-# stufe() (sofort sichtbar) und MONAT (waere erst im Maerz aufgefallen).
+# stufen.stufe() (sofort sichtbar) und MONAT (waere erst im Maerz aufgefallen).
 # Die Seite meldet charset=utf-8 und wird als UTF-8 geschrieben.
 #
 # Und im SVG gilt es doppelt: dort sind BENANNTE Entities gar nicht
@@ -116,8 +124,6 @@ MONAT = ("Januar", "Februar", "März", "April", "Mai", "Juni", "Juli",
 # verschoben - das war laut Handoff der einzige Umbau an bestehendem Code.
 ACHSE_PX = 200
 ACHSE_PX_GROSS = 260
-SCHWELLE_SELTEN = 0.95
-SCHWELLE_AUFFAELLIG = 0.80
 
 
 def lokalzeit(tag):
@@ -132,15 +138,6 @@ def lokalzeit(tag):
     except Exception:
         pass
     return dt.strftime("%H:%M")
-
-
-def stufe(rang):
-    """(Anzeigename, CSS-Klasse).  Klasse ASCII, Anzeige echtes UTF-8."""
-    if rang >= SCHWELLE_SELTEN:
-        return "selten", "selten"
-    if rang >= SCHWELLE_AUFFAELLIG:
-        return "auffällig", "auffaellig"
-    return "unauffällig", "unauffaellig"
 
 
 # Ausgeschrieben liest sich die Korpuszeile wie Sprache, als Ziffer wie ein
@@ -225,7 +222,8 @@ def pushauskunft_veraltet(hoechste, schwelle_p, n_member=None):
         return ("Bei den letzten gerechneten Zahlen rei\u00dft kein Abend die "
                 "Schwelle von %d\u00a0%% (%s). Seitdem ist kein Lauf "
                 "durchgekommen; ob inzwischen ein Push kam, steht hier nicht. "
-                "Ein Push kommt nur bei \u201eselten\u201c \u2013 "
+                "Ein Push kommt nur bei \u201eselten\u201c (mindestens die "
+                "H\u00e4lfte der Modelll\u00e4ufe \u00fcber der Schwelle) \u2013 "
                 "\u201eauff\u00e4llig\u201c allein l\u00f6st keinen aus."
                 % (p, wert))
     return ("Bei den letzten gerechneten Zahlen rei\u00dft mindestens ein "
@@ -261,10 +259,11 @@ def pushauskunft(hoechste, schwelle_p, kfg, rueckschau=False, veraltet=False,
         s*         IST das 95. Perzentil
         also       Stufe = "selten"
 
-    Ueber alle bisher gerechneten Abende stimmen die beiden Bedingungen
-    ausnahmslos ueberein.  Die Seite zeigt aber drei Stufen und weckt damit
-    die Erwartung, dass die mittlere auch etwas ausloest.  Deshalb steht es
-    jetzt im Text.
+    Seit T-0084 (09.10.2026) ist das keine Eigenschaft der Zahlen mehr,
+    sondern die Definition: "selten" HEISST p >= p* und ist dieselbe
+    Funktion, die der Alarm fuer den Push benutzt (skripte/stufen.py).  Die
+    Seite zeigt aber drei Stufen und weckt damit die Erwartung, dass die
+    mittlere auch etwas ausloest.  Deshalb steht es im Text.
 
     "spaetestens": den Push traegt der ERSTE Lauf, der die Schwelle sieht -
     das kann schon der Vormittagslauf sein (`lauf_morgens_utc`).  Der
@@ -291,8 +290,9 @@ def pushauskunft(hoechste, schwelle_p, kfg, rueckschau=False, veraltet=False,
         return ("Kein Abend im Fenster rei&szlig;t die Schwelle von "
                 "%d&nbsp;%% (%s). Es kommt kein "
                 "Push. Das ist der normale Zustand: Ein Push kommt nur bei "
-                "<b>selten</b> (ab dem 95. Perzentil, in der Klimatologie "
-                "rund 18 Abende im Jahr); wie oft er tats&auml;chlich "
+                "<b>selten</b> (mindestens die H&auml;lfte der Modelll&auml;ufe "
+                "&uuml;ber der Schwelle; in der Klimatologie rund 18 Abende "
+                "im Jahr); wie oft er tats&auml;chlich "
                 "kommt, ist noch nicht gemessen. <b>Auff&auml;llig</b> "
                 "allein l&ouml;st keinen aus." % (p, wert))
     v = kfg.get("lauf_vorlauf_stunden", 3)
@@ -482,7 +482,7 @@ def datenstand(ort_name):
     return (zustand.get(ort_name) or {}).get("stand") or {}
 
 
-def prognose_eintraege(ort_name, perzentil, s_stern):
+def prognose_eintraege(ort_name, perzentil, s_stern, schwelle_p=None):
     """Die kommenden Abende aus daten/zustand.json - was der Alarm gerechnet hat.
 
     WARUM ZWEI ZAHLEN JE ABEND, und warum sie nicht dasselbe sind:
@@ -494,6 +494,12 @@ def prognose_eintraege(ort_name, perzentil, s_stern):
     95.), also steht der Punkt dort.  Die Wahrscheinlichkeit ist die Zahl,
     nach der Andre gefragt hat, und steht als Text daneben.
 
+    DIE STUFE kommt seit T-0084 NICHT mehr aus dem Rang (skripte/stufen.py):
+    "selten" = p >= p* (die Push-Bedingung), "auffaellig" = Memberanteil im
+    obersten Fuenftel >= Q_AUFFAELLIG.  Eintraege aus der Zeit davor tragen
+    den Memberanteil nicht; fuer sie gilt die alte Stufe am Rang des Medians
+    (`stufe_neu` ist dann False).
+
     Die Bilder rechnen aus dem gespeicherten MEDIANFELD.  Das ist fuer das
     BILD richtig und fuer die ZAHL falsch: S ist ein Produkt nichtlinearer
     Terme, der Score des Medianfelds ist nicht der Median der Scores
@@ -503,6 +509,8 @@ def prognose_eintraege(ort_name, perzentil, s_stern):
     zp = os.path.join(BASIS, "daten", "zustand.json")
     if not os.path.exists(zp):
         return []
+    if schwelle_p is None:
+        schwelle_p = stufen.schwelle_p(BASIS)
     with open(zp) as f:
         zustand = json.load(f)
     abende = (zustand.get(ort_name) or {}).get("abende", {})
@@ -524,13 +532,14 @@ def prognose_eintraege(ort_name, perzentil, s_stern):
                 t, e["feld"], e.get("segmente"), e.get("azimut", 270.0),
                 e.get("schirm"))
         rang = perzentil(e["median"])
-        name, klasse = stufe(rang)
+        name, klasse, neu = stufen.stufe_eintrag(e, rang, schwelle_p)
         d = date.fromisoformat(t)
         aus.append({"tag": t, "wt": WOCHENTAG[d.weekday()],
                     "kurz": kurzmarke(d, not aus),
                     "lang": "%s, %d. %s" % (WOCHENTAG_LANG[d.weekday()],
                                             d.day, MONAT[d.month - 1]),
                     "p": rang, "stufe": name, "klasse": klasse,
+                    "stufe_neu": neu,
                     "zeit": lokalzeit(t), "svg": schnitt_bild,
                     "karte": karte_bild,
                     "band": band.svg(e["median"], s_stern, len(aus)),
@@ -575,7 +584,9 @@ def rueckschau_eintraege(von, tage, klima, perzentil, s_stern):
         schnitt_bild, karte_bild = _bilder(
             t, feld, (det or {}).get("segmente"), azimut, schirm)
         p = perzentil(s)
-        name, klasse = stufe(p)
+        # Ein Einzelscore, kein Ensemble: hier ist der Rang gegen die
+        # Verteilung einzelner Abende die passende Stufe (stufen.stufe_alt).
+        name, klasse = stufen.stufe_alt(p)
         d = date.fromisoformat(t)
         aus.append({"tag": t, "wt": WOCHENTAG[d.weekday()],
                     "kurz": kurzmarke(d, not aus),
@@ -915,8 +926,8 @@ Abends.</p>
 Jahres<span class="nurgross"> &#183; &#8592; &#8594; bl&auml;ttert</span></span></div>
 <div class="achse">
 <i class="zone zone-selten"></i><i class="zone zone-auffaellig"></i>
-<b class="zonenname" style="top:5%;color:var(--akzent-tinte)">SELTEN 95.</b>
-<b class="zonenname" style="top:20%;color:var(--gedaempft)">AUFF&Auml;LLIG 80.</b>
+<b class="zonenname" style="top:5%;color:var(--akzent-tinte)">95.</b>
+<b class="zonenname" style="top:20%;color:var(--gedaempft)">80.</b>
 <svg class="linie" viewBox="0 0 100 100" preserveAspectRatio="none"
  aria-hidden="true"><polyline points="__LINIE__" fill="none"
  stroke="__LINIENFARBE__" stroke-width=".7"
@@ -939,14 +950,21 @@ Abfrage&shy;f&auml;cher, und der Azimut des Sonnenuntergangs.</p></div>
 </section>
 
 <section class="schluss">
-<p class="fuss">Die Stufe kommt aus der Position in der Jahresverteilung:
-<b>selten</b> ab dem 95. Perzentil (rund 18 Abende im Jahr),
-<b>auff&auml;llig</b> ab dem 80. Die Stufe ist bewusst keine Prozentzahl;
-die Prozentzahl im Kopf der Seite ist etwas anderes: der Anteil der
-Modelll&auml;ufe (Ensemble-Member) &uuml;ber der Schwelle des Alarms, keine
-gemessene Trefferquote.
-Belegt ist, dass der Score au&szlig;ergew&ouml;hnliche Abende von
-gew&ouml;hnlichen trennt, nicht dass er unter den guten ordnet.</p>
+<p class="fuss">Die Stufe z&auml;hlt, wie viele Modelll&auml;ufe
+(Ensemble-Member) den Abend so sehen:
+<b>selten</b>, wenn mindestens __SCHWELLEP__&nbsp;% von ihnen &uuml;ber der
+Schwelle des Alarms liegen (dann kommt auch der Push),
+<b>auff&auml;llig</b>, wenn mindestens __QAUFF__&nbsp;% im obersten
+F&uuml;nftel des Jahres liegen (ab dem 80. Perzentil). Die Zahl
+&bdquo;Perzentil des Jahres&ldquo; und die Achse zeigen dagegen, wo der
+mittlere Modelllauf im Jahr liegt &mdash; die Stufe richtet sich nicht nach
+ihnen. Die Prozentzahl im Kopf der Seite ist der Anteil der Modelll&auml;ufe
+&uuml;ber der Schwelle des Alarms, keine gemessene Trefferquote.
+Die Grenze f&uuml;r &bdquo;auff&auml;llig&ldquo; ist gesetzt, nicht gemessen:
+sie ist so gew&auml;hlt, dass rund jede f&uuml;nfte Vorhersage
+&bdquo;auff&auml;llig&ldquo; heisst. Belegt ist, dass der Score
+au&szlig;ergew&ouml;hnliche Abende von gew&ouml;hnlichen trennt, nicht dass er
+unter den guten ordnet.</p>
 
 <p class="push"__PUSHALT__>__PUSHTEXT__</p>
 </section>
@@ -1076,13 +1094,13 @@ def main():
     alle = sorted(v["s"] for v in klima.values())
 
     def perzentil(s):
-        return sum(1 for x in alle if x < s) / len(alle)
+        return stufen.rang(alle, s)
 
     if a.rueckschau:
         eintraege = rueckschau_eintraege(a.von, a.tage, klima, perzentil,
                                          s_stern)
     else:
-        eintraege = prognose_eintraege(a.ort, perzentil, s_stern)
+        eintraege = prognose_eintraege(a.ort, perzentil, s_stern, schwelle_p)
         if not eintraege:
             print("Keine Prognose in daten/zustand.json - der Alarmlauf war "
                   "noch nicht erfolgreich.\nEntwurfsmuster mit historischen "
@@ -1246,6 +1264,8 @@ def main():
             .replace("__FRISCHESKRIPT__", FRISCHE_SKRIPT if frische else "")
             .replace("__TOKENS__", tokens.quelltext())
             .replace("__ORT__", anzeige)
+            .replace("__SCHWELLEP__", "%g" % round(schwelle_p * 100))
+            .replace("__QAUFF__", "%g" % round(stufen.Q_AUFFAELLIG * 100))
             .replace("__KORPUS__", korpus)
             .replace("__STAND__", stand_text)
             .replace("__VERALTET__", veraltet)

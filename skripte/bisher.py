@@ -26,7 +26,8 @@ from datetime import date, datetime, timezone
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import tokens  # noqa: E402
-from seite import MONAT, WOCHENTAG, stufe  # noqa: E402
+import stufen  # noqa: E402
+from seite import MONAT, WOCHENTAG  # noqa: E402
 from zustandsdatei import schreibe_text  # noqa: E402
 # EINE Quelle fuer das Anfangsdatum (T-0071).  Es stand hier als zweite
 # Kopie: dort die Plausibilitaetsgrenze des Pollers, hier die Korpusangabe
@@ -75,22 +76,42 @@ def vor_advektionsfix(lauf_tag, zeit):
     return lauf_tag < ADVEKTIONSFIX.date().isoformat()
 
 
-def vorhersage_zeile(e, tag, ort_zustand, alle_scores):
+def vorhersage_zeile(e, tag, ort_zustand, alle_scores, schwelle_p=None):
     """Der Satzteil "vorhergesagt: ..." samt Laufdatum und Korrekturvermerk.
+
+    Die Stufe kommt aus skripte/stufen.py, dieselbe Regel wie auf der
+    Prognoseseite (T-0084): nach dem Anteil der Modelllaeufe.  Hat der
+    Zustandseintrag den Memberanteil nicht (gerechnet vor T-0084), steht die
+    alte Stufe am Rang des Medians, mit Vermerk - die Member sind im Zustand
+    nicht aufbewahrt, nachrechnen laesst sich die neue Stufe dann nicht.
 
     Das Laufdatum steht nur, wenn der Lauf nicht am Abend selbst war: bei
     6 von 26 Karten stammte die Prognose aus einem 1-3 Tage aelteren Lauf, am
     Abend selbst lief keiner (Review uiux#5).
     """
-    rang = (sum(1 for x in alle_scores if x < e["median"])
-            / len(alle_scores))
-    name, _ = stufe(rang)
+    if schwelle_p is None:
+        schwelle_p = stufen.schwelle_p(BASIS)
+    rang = stufen.rang(alle_scores, e["median"])
+    name, _, neu = stufen.stufe_eintrag(e, rang, schwelle_p)
     lauf = ((e.get("verlauf") or [{}])[-1]).get("lauf")
     wann = ""
     if lauf and lauf != tag:
         d = date.fromisoformat(lauf)
         wann = " (Lauf vom %02d.%02d.)" % (d.day, d.month)
-    text = "vorhergesagt%s: %s, %d. Perzentil" % (wann, name, round(rang * 100))
+    if neu and stufen.ist_selten(e["p"], schwelle_p):
+        beleg = (" (%d %% der Modelll&auml;ufe &uuml;ber der Schwelle)"
+                 % round(e["p"] * 100))
+    elif neu:
+        beleg = (" (%d %% der Modelll&auml;ufe im obersten F&uuml;nftel)"
+                 % round(e["anteil_auffaellig"] * 100))
+    else:
+        beleg = ""
+    text = "vorhergesagt%s: %s%s, %d. Perzentil" % (wann, name, beleg,
+                                                   round(rang * 100))
+    if not neu:
+        text += (" &#183; Stufe nach dem alten Verfahren (Rang des mittleren "
+                 "Modelllaufs), die Modelll&auml;ufe wurden damals nicht "
+                 "festgehalten")
     if lauf and vor_advektionsfix(lauf, lauf_zeitpunkt(ort_zustand, lauf)):
         text += (" &#183; vor der Korrektur der Windverschiebung (Advektion) vom "
                  "04.09.2026 gerechnet, die Zahl ist belastet")
@@ -106,7 +127,8 @@ def ort_zustand_laden(ort_name):
         return json.load(f).get(ort_name) or {}
 
 
-def eintraege(ort_name, alle_scores, ort_zustand=None, heute=None):
+def eintraege(ort_name, alle_scores, ort_zustand=None, heute=None,
+              schwelle_p=None):
     """Abende mit Bewertung ODER Alarm, neueste zuerst - mit der Prognose dazu.
 
     Ein Alarmabend ohne Note gehoert auf die Bilanz (Review uiux#6): beide
@@ -115,6 +137,8 @@ def eintraege(ort_name, alle_scores, ort_zustand=None, heute=None):
     haengt.  Sie tragen `ohne_note`.
     """
     z = ort_zustand if ort_zustand is not None else ort_zustand_laden(ort_name)
+    if schwelle_p is None:
+        schwelle_p = stufen.schwelle_p(BASIS)
     heute = heute or date.today()
     abende = z.get("abende") or {}
     alarme = z.get("alarme") or {}
@@ -140,7 +164,7 @@ def eintraege(ort_name, alle_scores, ort_zustand=None, heute=None):
         if e.get("median") is None:
             zeile.append("keine Prognose f&uuml;r diesen Abend gerechnet")
         else:
-            zeile.append(vorhersage_zeile(e, t, z, alle_scores))
+            zeile.append(vorhersage_zeile(e, t, z, alle_scores, schwelle_p))
         aus.append({"tag": t, "note": e.get("bewertung") if hat_note else None,
                     "ohne_note": not hat_note,
                     "offen": not hat_note and d >= heute,
@@ -322,12 +346,13 @@ def main():
     ort = next((o for o in kfg["orte"] if o["name"] == a.ort), None)
     anzeige = (ort or {}).get("anzeige", a.ort.capitalize())
 
-    kp = os.path.join(BASIS, "daten", "score_berlin_g0.5_2022_2025.json")
-    with open(kp) as f:
-        alle = sorted(v["s"] for v in json.load(f).values())
+    alle = stufen.klima_sortiert(BASIS)
+    if alle is None:
+        raise SystemExit("daten/%s fehlt" % stufen.KLIMA_DATEI)
 
     zustand = ort_zustand_laden(a.ort)
-    liste = eintraege(a.ort, alle, zustand)
+    liste = eintraege(a.ort, alle, zustand,
+                      schwelle_p=kfg["schwelle_wahrscheinlichkeit"])
     n = len(liste)
     korpus = kopfzeile(liste, len(zustand.get("erinnerungen") or {}),
                        ERSTER_ABEND, zustand)

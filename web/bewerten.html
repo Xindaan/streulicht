@@ -422,8 +422,10 @@ function freilegen(note, angekommen) {
     if (p.wahrsch !== null && p.wahrsch !== undefined)
       teile.push(Math.round(p.wahrsch * 100) + " % Wahrscheinlichkeit");
     zahlen.textContent = teile.join(" · ");
-    text.textContent = "Jetzt gehört die Zahl dem Himmel und nicht der "
-      + "Vorhersage. Genau dafür lag sie vorher verdeckt.";
+    text.textContent = "Die Stufe zählt, wie viele Modellläufe den Abend so "
+      + "sehen; das Perzentil ist der Rang des mittleren Modelllaufs im Jahr. "
+      + "Jetzt gehört die Zahl dem Himmel und nicht der Vorhersage. Genau "
+      + "dafür lag sie vorher verdeckt.";
   } else {
     // Kein Schaetzen und kein leerer Kasten: der Fall ist echt (15.08.2026
     // gab es die Seite, aber noch keinen Alarmlauf) und gehoert benannt.
