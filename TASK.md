@@ -225,6 +225,14 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   letzten Tafeltag (bewertung#1, Randfall mit stillem Datenschaden); die als
   erledigt gemeldete Umbuchung aus T-0043 fehlt im Zustand (bewertung#4);
   Quittung nach stillem Nachsenden (bewertung#6).
+  Stand 09.10.2026: umgesetzt - bewertung#1/#2/#3/#6, seiten#3/#14 (aa69201).
+  Erinnerung geht auf ntfy_erinnerung aus konfig_geheim.json (Rueckfall mit
+  Warnzeile aufs oeffentliche Topic), Datum nur noch YYYY-MM-DD, die Seite
+  verweigert ausserhalb ihrer Sonnentafel die Bewertung, die Quittung
+  korrigiert sich nach stillem Nachsenden. OFFEN bei Andre: neues Topic
+  waehlen, in konfig_geheim.json eintragen, abonnieren, altes abbestellen
+  (README "Abenderinnerung empfangen"). bewertung#4 (fehlende Umbuchung
+  18.08. -> 17.08.) ist NICHT Teil dieser Umsetzung und bleibt offen.
 - T-0078 Methodik-Paket (Review 09.10.2026, Befunde methodik#F1-F13,
   physik#4, physik#13). Die Seite ordnet den Member-MEDIAN in die Verteilung
   einzelner Analysen ein - "auffaellig"/"selten" treffen der Median nur in 10 %
