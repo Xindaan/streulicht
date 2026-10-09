@@ -30,13 +30,11 @@ import os
 from contextlib import contextmanager
 
 
-def schreibe(pfad, daten, indent=1, separators=None):
-    """`daten` als JSON nach `pfad` - ganz oder gar nicht.
+def _atomar(pfad, schreiber, **offen):
+    """Kern von schreibe() und schreibe_text(): tmp im selben Ordner, dann ersetzen.
 
-    `indent`/`separators` werden an `json.dump` durchgereicht: die
-    Zustandsdatei will `indent=1` (lesbar im Diff), Archiv und Klimatologie
-    wollen es kompakt.  Ohne das Durchreichen waere das Tagesarchiv rund
-    15 % groesser geworden - eine stille Regression durch einen Fix.
+    `schreiber(f)` schreibt in die geoeffnete Temporaerdatei; `offen` geht an
+    `open` (Modus bleibt "w", z.B. `encoding`).
     """
     os.makedirs(os.path.dirname(pfad) or ".", exist_ok=True)
     ordner = os.path.dirname(os.path.abspath(pfad))
@@ -45,8 +43,8 @@ def schreibe(pfad, daten, indent=1, separators=None):
     # auf Kopieren zurueck - und dann ist das Fenster wieder da.
     tmp = os.path.join(ordner, ".%s.tmp" % os.path.basename(pfad))
     try:
-        with open(tmp, "w") as f:
-            json.dump(daten, f, indent=indent, separators=separators)
+        with open(tmp, "w", **offen) as f:
+            schreiber(f)
             f.flush()
             os.fsync(f.fileno())
         os.replace(tmp, pfad)
@@ -64,6 +62,29 @@ def schreibe(pfad, daten, indent=1, separators=None):
             except OSError:
                 pass
         raise
+
+
+def schreibe(pfad, daten, indent=1, separators=None):
+    """`daten` als JSON nach `pfad` - ganz oder gar nicht.
+
+    `indent`/`separators` werden an `json.dump` durchgereicht: die
+    Zustandsdatei will `indent=1` (lesbar im Diff), Archiv und Klimatologie
+    wollen es kompakt.  Ohne das Durchreichen waere das Tagesarchiv rund
+    15 % groesser geworden - eine stille Regression durch einen Fix.
+    """
+    _atomar(pfad, lambda f: json.dump(daten, f, indent=indent,
+                                      separators=separators))
+
+
+def schreibe_text(pfad, text):
+    """Text (UTF-8) nach `pfad` - ganz oder gar nicht.
+
+    Fuer die erzeugten HTML-Seiten (09.10.2026): `ausliefern.py` veroeffentlicht
+    seit T-0081 auch dann, wenn ein Seitenbauer scheitert.  Schrieb der Bauer
+    mit `open(..., "w")` und starb mitten im Text, ging die halbe Seite live.
+    So bleibt die alte Seite stehen, bis die neue vollstaendig da ist.
+    """
+    _atomar(pfad, lambda f: f.write(text), encoding="utf-8")
 
 
 @contextmanager

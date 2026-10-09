@@ -31,6 +31,7 @@ from datetime import time as dtzeit
 import band  # noqa: E402
 from seite import stufe  # noqa: E402
 from sonnen.geometrie import sonnenuntergang  # noqa: E402
+from zustandsdatei import schreibe_text  # noqa: E402
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 VORLAGE = os.path.join(BASIS, "web", "bewerten.html")
@@ -147,8 +148,7 @@ def main():
             continue
         ziel = os.path.join(BASIS, "web", "bewerten-%s.html" % ort["name"])
         seite = erzeuge(ort, vorlage)
-        with open(ziel, "w", encoding="utf-8") as f:
-            f.write(seite)
+        schreibe_text(ziel, seite)
         print("   %-10s -> %s (%.1f kB, %d Abende mit Prognose)"
               % (ort["name"], os.path.relpath(ziel, BASIS),
                  len(seite.encode()) / 1000, len(stand)))

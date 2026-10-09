@@ -27,6 +27,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import tokens  # noqa: E402
 from seite import MONAT, WOCHENTAG, stufe  # noqa: E402
+from zustandsdatei import schreibe_text  # noqa: E402
 # EINE Quelle fuer das Anfangsdatum (T-0071).  Es stand hier als zweite
 # Kopie: dort die Plausibilitaetsgrenze des Pollers, hier die Korpusangabe
 # der Bilanzseite.  Zwei Zahlen mit derselben Bedeutung laufen auseinander,
@@ -343,8 +344,7 @@ def main():
             .replace("__KARTEN__", karten)
             .replace("__ORT__", anzeige))
     ziel = os.path.join(BASIS, "web", "bisher.html")
-    with open(ziel, "w", encoding="utf-8") as f:
-        f.write(html)
+    schreibe_text(ziel, html)
     print("geschrieben: %s (%d Karten, %.1f kB)"
           % (ziel, n, os.path.getsize(ziel) / 1000.0))
 

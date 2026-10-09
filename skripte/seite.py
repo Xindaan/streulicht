@@ -64,6 +64,7 @@ from alarm import begruendung, satz  # noqa: E402
 from schnitt import lade_feld, schnitt_neu, svg  # noqa: E402
 from sonnen.geometrie import sonnenuntergang, tangentendistanz_km  # noqa: E402
 from sonnen.score import SCHIRME  # noqa: E402
+from zustandsdatei import schreibe_text  # noqa: E402
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WOCHENTAG = ("Mo", "Di", "Mi", "Do", "Fr", "Sa", "So")
@@ -1275,8 +1276,7 @@ def main():
             .replace("__BESTER__", str(bester))
             .replace("__GEWAEHLT__", str(gewaehlt)))
     ziel = os.path.join(BASIS, "web", "index.html")
-    with open(ziel, "w", encoding="utf-8") as f:
-        f.write(html)
+    schreibe_text(ziel, html)
     print("geschrieben: %s (%d Abende, %.2f MB, gewaehlt %s, bester %s)"
           % (ziel, n, os.path.getsize(ziel) / 1e6,
              eintraege[gewaehlt]["tag"], eintraege[bester]["tag"]))
