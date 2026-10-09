@@ -782,6 +782,7 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 | `skripte/ausliefern.py` | baut die Seiten und pusht nach `gh-pages` |
 | `skripte/fensterterm.py` | Fensterterm gegen die Maske: Phantom oder bestaetigt (T-0027) |
 | `skripte/wegterm.py` | Wegterm anders aggregiert, fuenf Varianten gegen Album/Referenz (T-0029) |
+| `skripte/sichtfaktor_messung.py` | Analyse: Sichtfaktor gleich oder raumwinkelgewichtet, Klimatologie aus `daten/roh/` neu gerechnet, Haeufigkeit des Falls, Albumprobe; aendert `score.py` nicht (T-0086) |
 | `sonnen/grib2.py` | GRIB2-Leser fuer die Wolkenmaske, ohne Fremdbibliothek |
 | `betrieb/*.plist` | Vorlagen der vier launchd-Agenten (Kopie dessen, was installiert ist) |
 | `betrieb/anforderungen.txt` | die zwei Fremdpakete, mit Begruendung wofuer |

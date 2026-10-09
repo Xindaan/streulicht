@@ -214,6 +214,13 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   physik#4). Im Archiv zaehlen, wie oft tiefe Decke nur am Standort unter hohem
   Schirm vorkommt; Klimatologie und s* fuer gleich- und raumwinkelgewichteten
   Sichtfaktor rechnen; Ergebnis Andre zur Entscheidung vorlegen.
+  Stand 09.10.2026: umgesetzt (Messung) - Rohdaten reichen (118 Zellen, 6
+  Sichtzellen, 0 Luecken, kein Abruf). Fall hoher Schirm: 2 Abende in 11 Jahren,
+  keiner ueber s*; Spielart mittlerer Schirm: 25 Abende, 2 Fehlalarme (2022-07-01,
+  2023-10-10). Raumwinkel: s* 0,7065 -> 0,6928, Albumprobe nicht besser (Mittelrang
+  0,674 -> 0,667, Differenz-CI schliesst 0 ein). Nachtrag in
+  docs/entscheidungen-2026-10-09.md Abschnitt 3, Skript skripte/sichtfaktor_messung.py;
+  `score.py` unveraendert. Entscheidung B/C bei Andre offen, Messung stuetzt C.
 - T-0087 Nachtluecke schliessen (Entscheidung Andre 09.10.2026 nach Vorlage,
   Option A mit Kostenbedingung: kein Nachtlauf bei aktiver Kontingentsperre,
   bekommener Modelllauf ins Log; ein Nachtlauf kostet einen vollen Abruf, der

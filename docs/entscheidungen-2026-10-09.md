@@ -217,6 +217,129 @@ ist die Messung verschwendet und C waere billiger.
 **Was die Empfehlung kippt:** Zeigt ein erster Blick in `daten/roh/`, dass die
 Sichtzellen fehlen und nur Abrufe helfen, dann erst C und spaeter messen.
 
+### Nachtrag 09.10.2026: Messung (Option A, `skripte/sichtfaktor_messung.py`)
+
+**Kippbedingung nicht eingetreten.** Die Rohdaten in `daten/roh/` (IFS-Analysen,
+22 Blockdateien, 2015-2025) enthalten alle 118 Zellen, die der Faecher in
+4018 Abenden braucht, darunter die 6 Sichtzellen; 0 Luecken (geprueft je Zelle,
+Tag und Schicht). Es wurde nichts bei Open-Meteo abgerufen, das Kontingent ist
+unberuehrt. `sonnen/score.py` ist unveraendert.
+
+**Rechenweg.** Das Skript laedt `score.py` als Kopie im Speicher und ersetzt
+genau die zwei Stellen des Sichtfaktors (je Zelle ein Gewicht, Nenner = Summe
+der Gewichte). Drei Varianten:
+
+- `gleich` (heute): 6 Sichtzellen je 1/6.
+- `raumwinkel`: Gewichte von Term A (`_schirmgewichte`, je Schirmhoehe), auf die
+  Sichtzellen renormiert; der Standort bekommt rund 78 % (hoher Schirm).
+- `raumwinkel_abs`: dieselben Gewichte ohne Renormierung, Zellen jenseits
+  60 km zaehlen als frei. So kam die 0,229 der Vorlage zustande; "gleiche
+  Gewichte wie Term A" laesst beide Lesarten zu, deshalb beide gerechnet.
+
+**Gegenproben (jede bricht den Lauf ab, wenn sie reisst):**
+(1) `gleich` reproduziert die gespeicherte `score_berlin_g0.5_2015_2025.json`
+Abend fuer Abend (4018 Abende, groesste Abweichung 2e-16, gleiche Schirmwahl);
+(2) Konstruktionsfall der Vorlage (hoher Schirm 0,9, tiefe Decke nur am
+Standort): `gleich` 0,750, `raumwinkel_abs` 0,229 (Vorlage: 0,75 / 0,229),
+`raumwinkel` renormiert 0,198; (3) die Albumprobe in der Variante `gleich`
+reproduziert die Ausgabe von `skripte/albumtest.py` (43 Abende, Mittelrang
+0,674, z = +3,95, 4 von 43 bei p95).
+
+**Score-Verteilung** (alle 4018 Abende; s\* = 95. Perzentil 2022-2025, so
+entstand 0,7065):
+
+| | Mittel | p50 | p90 | p95 = s\* (2022-25) | p95 (2015-25) | S >= 0,5 (2022-25) |
+|---|---|---|---|---|---|---|
+| gleich (heute) | 0,147 | 0,037 | 0,498 | **0,7065** | 0,630 | 9,9 % |
+| raumwinkel | 0,142 | 0,034 | 0,466 | **0,6928** | 0,626 | 9,4 % |
+| raumwinkel_abs | 0,143 | 0,035 | 0,469 | 0,6930 | 0,628 | 9,4 % |
+
+s\* wandert um -0,014. Der Sichtfaktor selbst aendert sich im Mittel um
++0,002; an 215 von 4018 Abenden (5,4 %) weicht S um mehr als 0,05 ab, an 37
+um mehr als 0,2 (groesste Abweichung 0,735).
+
+**Abende ueber s\* je Jahr** (2015 bis 2025):
+
+| Variante / Schwelle | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | Mittel |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| gleich @ 0,7065 | 8 | 6 | 7 | 8 | 12 | 12 | 10 | 20 | 21 | 16 | 17 | 12,5 |
+| raumwinkel @ 0,6928 | 7 | 5 | 9 | 8 | 12 | 12 | 12 | 18 | 22 | 17 | 17 | 12,6 |
+| raumwinkel @ 0,7065 (s\* nicht neu) | 6 | 5 | 9 | 8 | 12 | 11 | 10 | 18 | 19 | 17 | 17 | 12,0 |
+
+Alarmmengen gegeneinander (s\* je Variante): 125 Abende in beiden, 12 nur bei
+`gleich`, 14 nur bei `raumwinkel`.
+
+**Wie oft kommt der Fall vor?** Definition (Schwellen gesetzt, nicht gefittet;
+"Standort" ist die 0,5-Grad-Zelle, rechnerisch rund 55 x 34 km):
+tiefe Decke in der Standortzelle `low(d=0) >= 0,9`; Umgebung frei = mittlere
+Blockade (`1-(1-low)(1-mid)`) der 5 Zellen bei 60 km `<= 0,2`; Schirm hoch =
+Term A des hohen Schirms `>= 0,7`. "Weit": 0,8 / 0,3 / 0,5. Dazu der Fall mit
+dem mittleren Schirm (blockiert nur die tiefe Schicht): `low(d=0) >= 0,9`,
+Umgebung `low <= 0,2`, Term A des mittleren Schirms `>= 0,7`.
+
+| Fall | Abende in 11 Jahren | davon ueber s\* (gleich) | ueber s\* (raumwinkel) | mittleres S gleich / raumwinkel |
+|---|---|---|---|---|
+| hoher Schirm, streng | 2 (0,05 %) | 0 | 0 | 0,062 / 0,016 |
+| hoher Schirm, weit | 6 (0,15 %) | 0 | 0 | 0,253 / 0,080 |
+| mittlerer Schirm, streng | 25 (0,6 %) | **2** (2022-07-01, 2023-10-10) | 0 | 0,249 / 0,036 |
+| mittlerer Schirm, weit | 45 (1,1 %) | 2 | 0 | 0,222 / 0,040 |
+
+Der Fall aus der Vorlage (hoher Schirm) ist **real, aber sehr selten**: 2 Abende
+in 11 Jahren, keiner davon ueber s\*. Die zwei tatsaechlichen Fehlalarme sind
+die Spielart mit dem mittleren Schirm (Standort 100 % tief, Umgebung frei,
+S = 0,77 und 0,83 bei `gleich`, 0,09 und 0,10 bei `raumwinkel`). Das sind 2 von
+137 Alarmen in 11 Jahren (rund 1,5 %), also etwa ein Fehlalarm alle fuenf
+Jahre. Unter den 12 Abenden, die nur bei `gleich` ueber s\* liegen, haben
+ausserdem 4 Teildeckung am Standort (low 0,28 bis 0,74); die uebrigen 6 liegen
+knapp ueber s\* (S 0,71 bis 0,76) und fallen um 0,03 bis 0,09 darunter.
+Umgekehrt entstehen 14 neue Alarme, alle mit freiem Standort (low <= 0,04),
+meist mit Bewoelkung in der Umgebung (Sichtfaktor steigt meist von 0,86-0,99 auf
+0,96-1,0, Ausreisser 2025-11-12: 0,62 auf 0,85; S vorher 0,53 bis 0,705). Ob diese 14 bessere Abende sind, laesst die Messung
+offen.
+
+**Albumprobe** (Album "Sonnenuntergaenge", ohne die zirkulaeren Abende,
+saisonaler Perzentilrang wie `albumtest.py`):
+
+| Referenz | Variante | n | Mittelrang | z | Treffer bei p95 |
+|---|---|---|---|---|---|
+| 2022-2025 | gleich | 43 | 0,674 | +3,95 | 4 |
+| | raumwinkel | 43 | 0,667 | +3,79 | 4 |
+| | raumwinkel_abs | 43 | 0,666 | +3,77 | 4 |
+| 2015-2025 | gleich | 70 | 0,694 | +5,61 | 10 |
+| | raumwinkel | 70 | 0,691 | +5,54 | 10 |
+| | raumwinkel_abs | 70 | 0,691 | +5,54 | 9 |
+
+Gepaarte Rangdifferenz `raumwinkel` minus `gleich`: -0,007 (95-%-Bootstrap
+-0,037 bis +0,013; 24 Abende besser, 12 schlechter, 7 gleich) bei n = 43 und
+-0,0025 (-0,022 bis +0,011) bei n = 70. Das Intervall schliesst 0 ein; ein
+Gewinn durch die Raumwinkel-Gewichtung ist nicht erkennbar, der Punktwert liegt
+leicht darunter.
+
+**Lesart fuer die Entscheidung** (die Entscheidung bleibt bei dir): Die Messung
+spricht nicht fuer Option B. Der Gewinn waere etwa ein vermiedener Fehlalarm
+alle fuenf Jahre, die Albumprobe wird nicht besser, und s\* verschiebt sich um
+-0,014 (alle Kalibrierzahlen vom 09.10. liefen dann auf einer neuen Basis).
+Das stuetzt eher C: gleich gewichtet lassen und im Code mit "2 Faelle in 11
+Jahren, beide mit mittlerem Schirm" begruenden.
+
+**Grenzen:** (1) Datenbasis sind IFS-Analysen auf 0,5 Grad; im Betrieb rechnen
+68 Member, ein Fall kann dort in einzelnen Membern haeufiger auftreten, ohne
+dass der Median ihn zeigt (nicht gemessen, das Archiv speichert keine
+Zellwerte). (2) Die Fall-Schwellen sind gesetzt; die weite Fassung steht zur
+Gegenprobe daneben. (3) Albumprobe: n = 43 bzw. 70, nur positive Abende.
+(4) Der Betrieb ist nicht abgeglichen: ob `raumwinkel` bei Membern anders
+wirkt als bei Analysen, folgt aus dieser Messung nicht.
+
+**Negativproben des Skripts** (auf einer Kopie des Baums): geaenderter
+Ersetzungsanker in `score.py` bricht ab; geaenderte Produktivrechnung
+(`K_SEGMENT = 2`) reisst die Archiv-Gegenprobe (162 andere Schirmwahlen, 0,249
+Abweichung); `raumwinkel_abs` ohne Nenner-Sonderfall und `gleich` mit
+doppeltem Standortgewicht reissen die Konstruktionsfall-Gegenprobe; eine
+entfernte Zelle, ein `null`-Wert und ein fehlendes Jahr stoppen die
+Abdeckungspruefung; ein ungewichtetes Term A reisst die A-Gegenprobe.
+
+Aufruf: `.venv/bin/python3 skripte/sichtfaktor_messung.py` (2 s, kein Netz).
+
 ---
 
 ## 4. Nachtluecke (T-0087)
