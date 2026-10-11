@@ -158,6 +158,10 @@ Befunde alarm#1, #2, #3, #4, #10, #12, tests#6 in `docs/review-2026-10-09.md`.
   im Monat - es passt") beruht auf 216 Ortsabrufen; er bleibt als
   Zeitdokument stehen, gueltig ist README "Was die Grenze kostet". Die
   Gewichtung selbst bleibt ungemessen (alarm#4).
+Stand 11.10.2026: Pass-2-Deckel von 320 auf 120 gesenkt (Andre, Commit 11b2e25) - ein
+voller Lauf kostete 5.900 Einheiten (Member zaehlen mit) und passte weder in eine
+Stunde noch zweimal in einen Tag; der Waechter (T-0075) hatte die Seite am 10.10. als
+31,7 h alt gemeldet. Wirkung an den naechsten Tagen im alarm.log pruefen.
 
 ### T-0075 Ausfall sichtbar machen (ergaenzt T-0040) - aus Review 09.10.2026
 Kein Melder; `last exit code` wird vom naechsten Leerlauf-Tick mit 0
