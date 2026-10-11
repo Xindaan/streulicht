@@ -92,6 +92,15 @@ je Ort, und das Log folgt dem meist; die offizielle Formel von Open-Meteo ist
 ungeklaert (Review alarm#3/#4). Die Messung vom 14.08. bleibt als Messung
 stehen; "multipliziert nicht" ist als Schluss daraus nicht gesichert.
 
+**Stand 11.10.2026: Die Member zaehlen mit - belegt am Betrieb.** Mit dem
+Blockcache (T-0074) laesst sich jeder Lauf einzeln zaehlen: Am 10.10. riss der
+Vormittagslauf als ERSTER Abruf des Tages das Stundenlimit nach 16 Anfragen
+(357 Orte = 5.462 Einheiten bei 3 Variablen x 51 Member / 10), der Abendlauf
+ebenso, und der Nachhol-Versuch um 16:20 bekam nach einer Anfrage "Daily"
+(zwei Laeufe = rund 11.000 > 10.000). Ein voller Lauf (383 Orte) kostet damit
+rund 5.900 Einheiten: mehr als eine Stunde erlaubt, und zwei davon mehr als
+ein Tag. Folgerung: Der Lauf muss kleiner werden, nicht nur robuster.
+
 **KORREKTUR 14.08.2026 nachmittags: die Limits gelten NICHT
 endpunktuebergreifend.**  Hier stand das Gegenteil.  Zweimal in
 entgegengesetzter Richtung gemessen, was Zufall ausschliesst:
