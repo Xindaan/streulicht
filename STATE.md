@@ -1,13 +1,14 @@
 # STATE
 
-**Stand 09.10.2026 abends: Entscheidungen T-0084 bis T-0087 umgesetzt**
-(`docs/entscheidungen-2026-10-09.md`). Die Stufen "auffaellig"/"selten"
-kommen jetzt aus dem Anteil der Modelllaeufe ("selten" = Push-Bedingung,
-"auffaellig" ab 19 von 51 Membern im obersten Fuenftel; skripte/stufen.py);
-nach einem Ausfalltag rechnet ein Nachtlauf um 02:20 die Folgetage nach,
-ohne nachts zu pushen; das Vorlauf-Versprechen ist abgeschwaecht. Die
-Sichtfaktor-Messung (T-0086) liegt vor und stuetzt "gleich gewichtet lassen"
-- Andres Entscheidung steht aus. Tests: 856 Python-Pruefungen + 64 JS gruen.
+**Stand 13.10.2026: Review-Block abgeschlossen (T-0074 bis T-0087, alle in
+Done).** Der Betrieb laeuft stabil: seit 11.10. jeder Vormittags- und
+Abendlauf durch, kein Kontingentabbruch, Waechter (GitHub-Action) durchgehend
+gruen. Ausschlaggebend war der Pass-2-Deckel (erst 120, seit 13.10. 200): ein
+voller Lauf kostete 5.900 Kontingent-Einheiten, weil die 51 Member mitzaehlen.
+Entschieden: Stufen aus dem Anteil der Modelllaeufe (T-0084), Vorlauf-Text
+abgeschwaecht (T-0085), Sichtfaktor bleibt gleich gewichtet (T-0086),
+Nachtlauf ohne naechtlichen Push (T-0087). Tests: 888 Python-Pruefungen in 29
+Dateien + 64 JS gruen.
 
 **Stand 09.10.2026 nachmittags: Review umgesetzt** (`docs/review-2026-10-09.md`).
 T-0074 bis T-0083 sind gebaut, je mit Gate und Negativproben, und laufen live:
@@ -206,19 +207,17 @@ vor die Tuer und braucht nur zu wissen, ob es gut wird.
 
 ## Next actions
 
-**Ab 09.10.2026 (nach der Umsetzung), alles Andres Schritte:**
-1. **Wirkung messen** (T-0074): ab dem naechsten Abendlauf in daten/alarm.log
-   auf "Cache" und "Sperre" achten; Plattenbedarf von daten/cache/abruf/ nach
-   zwei Tagen ansehen (geschaetzt 70-140 MB).
-2. **Andres Konfiguration** (T-0075, T-0077, T-0081): Repo-Secret
-   NTFY_WAECHTER (optional, sonst meldet der Waechter per GitHub-Mail);
-   neues geheimes Topic als `ntfy_erinnerung` in konfig_geheim.json und in der
-   App abonnieren, altes Bewertungs-Topic abbestellen; `sicherung_ordner` in
-   konfig.json (z. B. iCloud). Waechter einmal von Hand ausloesen.
-3. **Fachliche Entscheidungen** (T-0078): Perzentil-Zonen gegen Median
-   (methodik#F3), Sichtfaktor-Gewichtung (physik#4), Versprechen "2-10 Tage"
-   (F11), Verankerung der Noten (F10), Nachtluecke nach zwei gescheiterten
-   Laeufen (alarm#6), 44-px-Tippziele der Abendachse.
+**Ab 13.10.2026 - nur noch Andres Schritte, sonst Beobachten:**
+1. **Andres Konfiguration** (T-0075, T-0077, T-0081): optional Repo-Secret
+   NTFY_WAECHTER (sonst meldet der Waechter per GitHub-Mail); neues geheimes
+   Topic als `ntfy_erinnerung` in konfig_geheim.json und in der App
+   abonnieren, altes Bewertungs-Topic abbestellen; `sicherung_ordner` in
+   konfig.json (z. B. iCloud); Time-Machine-Netzziel reparieren.
+2. **Beobachten**: daten/alarm.log auf "Kontingent nach" (soll nicht mehr
+   kommen) und "GEDECKELT" (Deckel 200 greift); Platz von daten/cache/abruf/.
+3. **Spaeter messen**: Q fuer "auffaellig" (T-0084) und die Vorlauf-Aussage
+   (T-0085) nach Winter/Fruehjahr neu pruefen; offene Gestaltungsfrage
+   44-px-Tippziele der Abendachse.
 
 Die Punkte darunter sind der Stand vom 08.09.; "Wecken nachsehen" ist
 beantwortet (wirkt, in allen 6 im Energielog sichtbaren Naechten 03.-08.10.,

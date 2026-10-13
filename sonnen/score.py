@@ -183,6 +183,14 @@ def score(hole, weg_agg=None, ohne_tangentensegment=False):
         a = werte / gew
 
         # --- Term B (a): Sichtfaktor - was steht zwischen Dir und dem Schirm
+        # Bewusst GLEICH gewichtet (Standort 1/6), anders als Term A
+        # (Raumwinkel, Standort 75-89 %). Entschieden 13.10.2026 (T-0086,
+        # docs/entscheidungen-2026-10-09.md Abschnitt 3): raumwinkelgewichtet
+        # aendert s* nur von 0,7065 auf 0,6928, die Ausloesungen je Jahr kaum
+        # (12,5 gegen 12,6, 2015-2025) und die Albumprobe nicht. Preis: tiefe
+        # Decke nur ueber dem Standort unter mittlerem Schirm kann einen Member
+        # ueber s* heben - in den Analysen rund einmal in fuenf Jahren
+        # (2022-07-01, 2023-10-10; als Fehlalarm nicht an Fotos geprueft).
         unter = ["low"] if name == "mid" else ["low", "mid"]
         sicht_c, sicht_n = 0.0, 0
         for dv in FAECHER_AZIMUTE:

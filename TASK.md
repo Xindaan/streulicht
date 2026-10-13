@@ -127,119 +127,7 @@ DEM-Freigaengigkeit des Strahls. Ab freier Ortswahl zwingend, nicht optional
 Rangdiagramm des Scores; Korrelation Ensemble-Median gegen Kurzfrist-Score
 je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
 
-### T-0074 Abruf inkrementell und gedeckelt (Kontingent) - aus Review 09.10.2026
-Seit 16.09. gelangen 18 von 76 Fensterlaeufen; an 13 von 38 Abenden seit 01.09.
-fehlt der Abendlauf. Ein 429 (Stunde/Tag) verwirft alles Geholte, jeder
-stuendliche Nachhol-Tick zahlt Pass 1 und Pass 2 erneut. Der Lauf wuchs von 217
-auf 378-383 Ortsabrufe, getrieben vom saisonalen Abstand Sonnenuntergang zu
-Modellschritt (Spitze Anfang Oktober, wieder Maerz/Juni), Pass 2 ohne Deckel.
-Befunde alarm#1, #2, #3, #4, #10, #12, tests#6 in `docs/review-2026-10-09.md`.
-- Blockcache je Modelllauf/Variablen/Zellen: ein Retry holt nur Fehlendes.
-- Nach "Hourly" Sperrvermerk bis zur vollen Stunde, nach "Daily" bis 00 UTC,
-  im Zustand; Ticks davor beenden sich ohne Abruf.
-- Obergrenze fuer Pass 2 mit lauter Logzeile; Kostenzahlen in README, STATE
-  (Abschnitt Kontingent, "Memberzahl multipliziert NICHT") und alarm.py auf die
-  Messung bringen.
-- Akzeptanz: Verhaltenstest "429 mitten in Pass 2, Folge-Tick holt nur die
-  fehlenden Bloecke", mit Negativprobe je Waechter.
-- Stand 09.10.2026: umgesetzt - Blockcache je Modelllauf
-  (`daten/cache/abruf/`), Kontingentsperre im Zustand (`_kontingent`),
-  Pass-2-Deckel `pass2_max_zellen` = 320, eigenes Wartebudget fuer
-  Minutenlimit/concurrent; Test `skripte/test_kontingent.py` mit 18
-  Negativproben (Commit c493481).
-- Stand 09.10.2026: umgesetzt - Gate-Nachbesserung: Cacheschluessel traegt
-  jetzt auch den UTC-Abruftag (`daten/cache/abruf/<Modelllauf>/<JJJJMMTT>/`),
-  weil Open-Meteo die Zeitachse ohne Startdatum am Abruftag beginnt; derselbe
-  Modelllauf nach Mitternacht UTC haette sonst den Windblock vom Vortag
-  bekommen. Test h) in `test_kontingent.py` (Folgecommit zu c493481).
-- STATE.md (Abschnitt Kontingent) sagte "Die Memberzahl multipliziert NICHT" -
-  widerspricht README/alarm.py und dem Log (alarm#3); am 09.10.2026 mit einem
-  datierten Hinweis versehen (Formel ungeklaert). Der Done-Block "Kontingent vollstaendig vermessen" ("210.000
-  im Monat - es passt") beruht auf 216 Ortsabrufen; er bleibt als
-  Zeitdokument stehen, gueltig ist README "Was die Grenze kostet". Die
-  Gewichtung selbst bleibt ungemessen (alarm#4).
-Stand 11.10.2026: Pass-2-Deckel von 320 auf 120 gesenkt (Andre, Commit 11b2e25) - ein
-voller Lauf kostete 5.900 Einheiten (Member zaehlen mit) und passte weder in eine
-Stunde noch zweimal in einen Tag; der Waechter (T-0075) hatte die Seite am 10.10. als
-31,7 h alt gemeldet. Wirkung an den naechsten Tagen im alarm.log pruefen.
-
-### T-0075 Ausfall sichtbar machen (ergaenzt T-0040) - aus Review 09.10.2026
-Kein Melder; `last exit code` wird vom naechsten Leerlauf-Tick mit 0
-ueberschrieben; ein Waechter auf dem Mac faellt mit dem Mac aus. Der
-Altersstreifen entsteht nur beim Bauen - Mac ganz aus heisst alte Seite ohne
-Warnung. Befunde alarm#5, #6, #8, seiten#1, betrieb#3, tests#10.
-- Seite traegt den Abrufzeitpunkt maschinenlesbar, ein kleines Skript
-  vergleicht ihn mit der Uhr der Betrachter:innen.
-- Waechter AUSSERHALB des Macs (Mac-Ausfall ist die haeufigste Ursache).
-- Ein Lauf ohne ein einziges Ergebnis darf nicht als Erfolg gebucht werden
-  (alarm#8); die Nachtluecke nach zwei gescheiterten Laeufen entscheiden
-  (alarm#6).
-Stand 09.10.2026: umgesetzt - Lauf ohne Ergebnis wird nicht gebucht (Exit 1,
-leere Bloecke nicht gecacht, Wind paarweise, Abend ohne Wind uebersprungen);
-Seite traegt `streulicht-geholt` und prueft ihr Alter im Browser; Waechter
-`.github/workflows/waechter.yml` auf GitHub (bb686b7). Offen: Secret
-`NTFY_WAECHTER` (Andre), alarm#6 Nachtluecke nicht entschieden.
-
-### T-0076 Commit-Rueckstand seit 26.08.2026 aufloesen - aus Review 09.10.2026
-22 Dateien geaendert, 5 ungetrackt; die Plists in HEAD zeigen auf das nicht
-mehr vorhandene `/usr/local/bin/python3`, es gibt keinen Rueckfallpunkt; das
-oeffentliche Repo zeigt noch den Advektionsfehler. **Vor dem Push** die private
-E-Mail-Adresse aus dem Messblock von T-0072 entfernen (wn3#F8). Entscheidung
-Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
-
 ## Backlog
-
-- T-0084 Perzentil-Zonen an den Anteil der Member koppeln (Entscheidung Andre
-  09.10.2026 nach Vorlage `docs/entscheidungen-2026-10-09.md`, Option B;
-  ersetzt die erste Wahl "Median neu eichen", methodik#F3). "selten" = mindestens
-  die Haelfte der Member ueber s* (= Push-Bedingung), "auffaellig" = ein Anteil
-  der Member im obersten Fuenftel, Anteil so gewaehlt, dass die Haeufigkeit zur
-  Klimatologie passt. Urspruengliche Notiz: Die Seite ordnet den Member-Median heute in
-  die Verteilung einzelner Analysen ein; "auffaellig"/"selten" trifft der
-  Median nur in 10 % bzw. 0,3 %. Zonen aus der Verteilung archivierter
-  Median-Werte ableiten; vorher pruefen, ob genug Archivtage fuer stabile
-  Schwellen da sind (Saison!). Push-Schwelle s* bleibt unberuehrt.
-  Stand 09.10.2026: umgesetzt - Commit 261cb54. "selten" = p >= p* (dieselbe
-  Funktion wie die Push-Bedingung im Alarm), "auffaellig" = mindestens 37 % der
-  Member im obersten Fuenftel (19,3 % von 440 Vorhersagen ab dem Advektionsfix
-  statt 9,5 %; Tabelle und Vorbehalte in `docs/entscheidungen-2026-10-09.md`
-  Abschnitt 1). Regel in `skripte/stufen.py`; der Alarm speichert
-  `anteil_auffaellig` je Abend, aeltere Zeilen zeigt die Bilanz mit alter Stufe
-  und Vermerk. Offen: Q nach Winter/Fruehjahr neu messen (nah dran 27,5 %,
-  ab Vorlauf 5 Tage nur 10 %).
-- T-0085 Vorlauf-Versprechen abschwaechen (Entscheidung Andre 09.10.2026,
-  methodik#F11). README Z. 3 und Seitentexte: "zwei bis zehn Tage im Voraus"
-  auf "ab etwa 1-3 Tagen belastbar, weiter voraus nur Tendenz" umformulieren.
-  Stand 09.10.2026: umgesetzt - README Z. 3 auf "bis zu zehn Abende voraus
-  gerechnet, belastbar ab etwa 1-3 Tagen, weiter voraus nur Tendenz". Seiten-,
-  Push- und Konfigtexte enthalten kein Zeitversprechen (rg), dort nichts
-  geaendert; Rechenweg unberuehrt. Offen: TASK.md Z. 3 und STATE.md Z. 45
-  tragen noch die alte Formulierung (Steuerdateien, nicht angefasst).
-- T-0086 Sichtfaktor-Gewichtung erst messen (Entscheidung Andre 09.10.2026,
-  physik#4). Im Archiv zaehlen, wie oft tiefe Decke nur am Standort unter hohem
-  Schirm vorkommt; Klimatologie und s* fuer gleich- und raumwinkelgewichteten
-  Sichtfaktor rechnen; Ergebnis Andre zur Entscheidung vorlegen.
-  Stand 09.10.2026: umgesetzt (Messung) - Rohdaten reichen (118 Zellen, 6
-  Sichtzellen, 0 Luecken, kein Abruf). Fall hoher Schirm: 2 Abende in 11 Jahren,
-  keiner ueber s*; Spielart mittlerer Schirm: 25 Abende, 2 Fehlalarme (2022-07-01,
-  2023-10-10). Raumwinkel: s* 0,7065 -> 0,6928, Albumprobe nicht besser (Mittelrang
-  0,674 -> 0,667, Differenz-CI schliesst 0 ein). Nachtrag in
-  docs/entscheidungen-2026-10-09.md Abschnitt 3, Skript skripte/sichtfaktor_messung.py;
-  `score.py` unveraendert. Entscheidung B/C bei Andre offen, Messung stuetzt C.
-- T-0087 Nachtluecke schliessen (Entscheidung Andre 09.10.2026 nach Vorlage,
-  Option A mit Kostenbedingung: kein Nachtlauf bei aktiver Kontingentsperre,
-  bekommener Modelllauf ins Log; ein Nachtlauf kostet einen vollen Abruf, der
-  Blockcache gilt je Modelllauf und UTC-Tag; alarm#6):
-  blieb ein Tag ohne erfolgreichen Lauf, nach 00 UTC (neues Tageskontingent)
-  einen Nachhol-Lauf fuer die Folgetage zulassen; mit Blockcache und Sperre
-  aus T-0074 zusammenspielen, Verhaltenstest mit Negativprobe.
-  Stand 09.10.2026: umgesetzt - Fenster "nachts" ab 02:00 Ortszeit (nie vor
-  00 UTC, bis vor das Vormittagsfenster), nur nach einem Vortag ganz ohne Lauf
-  (ein Nachtlauf zaehlt nicht), einmal je Nacht, Schalter `nachtlauf`, Sperre
-  greift vor dem Abruf; Logzeile "Modelllauf: ... (Fenster nachts)". Kein Push
-  nachts: Abend bleibt ungebucht, der naechste Tageslauf sendet (ab0d4dd,
-  test_nachtlauf.py, 10 Negativproben). Offen bei Andre: zurueckstellen statt
-  leise senden bestaetigen; Cache-Teilung nach zwei Wochen im Log nachzaehlen.
 
 - T-0001 Fotoarchiv-Gate (aus Doing nach Backlog verschoben 09.10.2026,
   Review architektur#1 / T-0082). Vermerk: Der Doing-Text meldete BLOCKIERT
@@ -253,119 +141,6 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   fuer die Terminal-App in den Systemeinstellungen.
   - [ ] n >= 40 komfortabel, n >= 20 grenzwertig, darunter faellt der Test aus
   - Skript: `skripte/fotos_zaehlen.py`
-
-- T-0077 Bewertungskanal haerten (Review 09.10.2026). Das oeffentliche
-  Bewertungs-Topic ist zugleich das abonnierte Erinnerungs-Topic: jede:r kann
-  Pushs mit Titel, Text und Klickziel an Andres Telefon schicken (bewertung#3).
-  Dazu: `plausibel()` nimmt auch 20260915 und 2026-W38-2 (bewertung#2); die
-  Sonnentafel der Bewertungsseite liefert ausserhalb von +-4 Tagen still den
-  letzten Tafeltag (bewertung#1, Randfall mit stillem Datenschaden); die als
-  erledigt gemeldete Umbuchung aus T-0043 fehlt im Zustand (bewertung#4);
-  Quittung nach stillem Nachsenden (bewertung#6).
-  Stand 09.10.2026: umgesetzt - bewertung#1/#2/#3/#6, seiten#3/#14 (aa69201).
-  Erinnerung geht auf ntfy_erinnerung aus konfig_geheim.json (Rueckfall mit
-  Warnzeile aufs oeffentliche Topic), Datum nur noch YYYY-MM-DD, die Seite
-  verweigert ausserhalb ihrer Sonnentafel die Bewertung, die Quittung
-  korrigiert sich nach stillem Nachsenden. OFFEN bei Andre: neues Topic
-  waehlen, in konfig_geheim.json eintragen, abonnieren, altes abbestellen
-  (README "Abenderinnerung empfangen"). bewertung#4 (fehlende Umbuchung
-  18.08. -> 17.08.) ist NICHT Teil dieser Umsetzung und bleibt offen.
-- T-0078 Methodik-Paket (Review 09.10.2026, Befunde methodik#F1-F13,
-  physik#4, physik#13). Die Seite ordnet den Member-MEDIAN in die Verteilung
-  einzelner Analysen ein - "auffaellig"/"selten" treffen der Median nur in 10 %
-  bzw. 0,3 % (F3). Album-Trefferquote gilt fuer S >= 0,630, nicht s* (F4).
-  T-0006 verglich zwei verschieden gewichtete Scores; neu gerechnet: Sommer
-  rho 0,690 statt 0,504, Kernaussage NEIN haelt (physik#13). Sichtfaktor
-  gewichtet den Standort 1/6, Term A 75-89 % (physik#4). WN3-Blocker-Begruendung
-  falsch: das Album reicht bis 2026 (F8). Beide Alarme kamen erst bei Lead 0
-  (F11). Noten bisher ohne Zusammenhang, Abgabe selektiv (F9, F10). Datum des
-  Advektionsfixes in README/alarm.py: 04.09., nicht 02.09. (F6).
-  Stand 09.10.2026: umgesetzt - 59b1773, NUR Doku und Kommentare. Datum des
-  Advektionsfixes (04.09.) in README/alarm.py; datierte Nachtraege zu
-  Album-Trefferquote (befunde-e1), T-0006 (Gewichtung) und T-0072-Blocker;
-  R_eff-Kommentar in geometrie.py; Escape-Sequenz in score_niveaus.py behoben,
-  neu `test_syntax.py`. Score, Schwellen und Anzeige unveraendert. OFFEN bei
-  Andre (fachlich): F3 Seite zeigt Median-Rang gegen Einzelanalyse-Verteilung,
-  physik#4 Sichtfaktor-Gewichtung, F11 Versprechen "2-10 Tage", F10
-  Verankerung durch Prognoseseite und Push. STATE.md bewusst nicht angefasst;
-  offen sind dort nur die F5-Zahlen (Z. 64-67: 18,5 Ausloesungen/Jahr, Januar,
-  r(A,B)); die Album-Begruendung ist am 09.10.2026 nachgezogen. Die zu
-  breite Belastungsaussage (F6) ist dort seit e5a2480 korrigiert (Z. 12-16).
-  (Zeilenangaben Stand 09.10.2026 nach e5a2480; die ersten Fassungen dieser
-  Zeile nannten veraltete Zeilen und die Belastungsaussage faelschlich als
-  offen.)
-  Ebenfalls OFFEN bleiben methodik#F2 (Quantilbruecke s*/p* per Schwanzzaehlung
-  nicht messbar), F7 (WN3-Vergleich: ECMWF-Seite ein 0,5-Grad-Medianfeld, teils
-  vor T-0063), F12 (Gitter: s* stammt vom 0,5-Grad-Gitter der Klimatologie, der
-  Betrieb rechnet auf 0,25; Effekt ungemessen - nur der konfig.json-Kommentar
-  ist am 09.10.2026 korrigiert) und F13 (Albumanreicherung: rho 0,40-0,50 nicht
-  identifiziert).
-- T-0079 Testluecken (Review 09.10.2026): ausliefern.py ungetestet
-  (Allow-Liste, Zweigriegel; tests#9); netz.warte_auf_netz (tests#8);
-  bewertungen_holen.hole() und vier Eingangswaechter (bewertung#8, tests#7);
-  Advektion nur mit Westwind (tests#1); test_ortsfilter jedes Jahr 10.05.-02.08.
-  rot (tests#4); test_seiten haengt an der Wanduhr (tests#5); test_erinnerung
-  liest die Produktiv-Konfig (bewertung#9); test_ortsfilter ersetzt
-  `alarm.sende` nicht - pruefen, ob ein echter ntfy-POST moeglich ist;
-  test_wn3 nicht netzfrei, 13 von 13 Verdrahtungsmutanten ueberleben (wn3#F7).
-  Stand 09.10.2026: umgesetzt - f4b2d8f. Neu `test_netz.py` (Wanduhr-Frist) und
-  `test_bewertungen_holen.py` (hole() echt, vier Eingangswaechter); in
-  `test_ausliefern.py` Allow-Liste und Zweigriegel am lokalen Commit; Advektion
-  in alle Himmelsrichtungen und zirkulaeres Mittel am Produktionslauf;
-  test_ortsfilter (fester Tag, `alarm.sende` aufgezeichnet), test_seiten (Bauzeit
-  der Seite statt Wanduhr) und test_erinnerung (Testkonfig) entkoppelt. NICHT
-  erledigt: wn3#F7 (test_wn3 netzfrei, Verdrahtungsmutanten) bleibt offen.
-- T-0080 UI/UX-Paket (Review 09.10.2026): Bilanz ohne Nenner, ohne die beiden
-  Alarmabende, ohne Laufalter (uiux#5, #6); Hero zeigt nach Sonnenuntergang den
-  vergangenen Abend (uiux#2); Textwidersprueche ("18 im Jahr" gegen
-  "unbekannt", "keine Prozentzahl" neben Prozent, "0 %" bei 0/51; uiux#4);
-  Push-Text und fehlender Deep-Link (uiux#9, #10); Tippziele 31 px, Markenfarbe
-  (uiux#13); Tastatur schluckt Cmd/Alt+Pfeil (uiux#12); SVG-Style ueberschreibt
-  die Hervorhebung (seiten#8); Faecherkarte schneidet den Faecher ab (physik#5).
-  Stand 09.10.2026: umgesetzt - d11b71b. Bilanz mit Nenner, Alarmabenden ohne
-  Note, Laufdatum und Advektionsvermerk; Vorauswahl nach Sonnenuntergang
-  (Bauzeit und Browser), Hash `index.html#TAG` im Push-Klickziel und auf der
-  Seite, Modifikatortasten, Markenfarbe, SVG-Style, "< 6 %", Push-Auskunft bei
-  veraltetem Stand, Umlaute, Push-Text; Faecherkarte richtet den Ausschnitt am
-  Azimut aus. Tests: `test_ui_paket.py` (80). OFFEN: 44-px-Tippziele der
-  Abendachse (31 px bei 11 Abenden, nicht erzwungen) und der Bedienhinweis,
-  der auf dem Telefon fehlt (uiux#13 Teil 1 und 3).
-- T-0081 Betriebsrobustheit (Review 09.10.2026): die 27 Noten liegen nur in
-  `daten/zustand.json`, Time-Machine-Netzziel seit 29.05.2026 ohne Sicherung
-  (betrieb#6); Logs ohne Datum und ohne Rotation (architektur#14);
-  erinnerung.py wartet nicht aufs Netz und endet bei Fehler mit 0 (bewertung#5);
-  git push ohne Timeout (seiten#9); ein Absturz von seite.py stoppt auch
-  Bewertungs- und Bilanzseite (seiten#4, architektur#6).
-  Stand 09.10.2026: umgesetzt - 7690b2f. Logs mit Datum+Uhrzeit und Rotation
-  (`skripte/logbuch.py`), erinnerung.py wartet aufs Netz und endet bei
-  Versandfehler != 0, ausliefern.py baut jede Seite fuer sich und pusht mit
-  Zeitgrenze, Tageskopie der Noten nach `daten/sicherung/` (`skripte/sicherung.py`).
-  OFFEN bei Andre: `sicherung_ordner` in konfig.json setzen (z. B. iCloud).
-- T-0082 Doku und Steuerdateien (Review 09.10.2026): STATE.md 335 Zeilen statt
-  Kurzstand, Next actions doppelt nummeriert und ueberfaellig (architektur#2);
-  Doing mit 5 statt 3 Eintraegen, T-0003/T-0001/T-0006 erledigt bzw.
-  entschieden, T-0014 laengst gebaut (architektur#1); README-Drift: "Ein Cron",
-  Henyey-Greenstein im Betriebsscore, `faecher` optional, "E3 offen",
-  Mehrortliste (architektur#3, #4, #11, #16); Kommentare mit 3-h-Takt (#17).
-  Stand 09.10.2026: umgesetzt - ecf72e1 (ohne STATE.md, architektur#2 macht
-  der Orchestrator). Doing hat zwei Eintraege (T-0072, T-0001b); T-0006,
-  T-0003-alt und T-0014 liegen unter Done 09.10.2026, T-0001 im Backlog mit
-  Vermerk. README: launchd, Henyey-Greenstein nur in score_distanz, `faecher`
-  abgeschafft, Konfigtabelle und Entwicklungstabelle vollstaendig, Testzahl
-  809 Python + 64 JS gemessen. OFFEN: STATE nennt T-0001b "aufgeloest
-  14.08.2026" - in TASK.md steht es noch in Doing; ueber_nacht.sh Z. 12 ruft
-  weiter blankes python3 (Code, kein Docstring, nicht angefasst).
-- T-0083 WN3-Befunde aus dem Review 09.10.2026 (zu T-0072): Windfeld in m/s
-  statt km/h (physik#1); Zielzeit per Gleichheit, echte Sonnenuntergaenge
-  fallen durch (wn3#F4); der Zuschnitt (a) kennt die ~300 Pass-2-Zellen nicht
-  (wn3#F6); Vergleich misst Medianfeld gegen eine Schwelle fuer Memberscores,
-  ECMWF-Seite auf 0,5 Grad vergroebert (wn3#F1, #F2); r = 0,868 bei n = 11
-  traegt "systematisch hoeher" nicht (wn3#F3); Testzahlen veraltet (wn3#F10).
-  Stand 09.10.2026: umgesetzt - 189ad36 (physik#1, wn3#F4, #F5, #F10).
-  geschwindigkeit() liefert km/h (Faktor 3,6, gegen alarm.versatz_km
-  gerechnet), block()/schritt() nehmen die naechste Stunde innerhalb 0,5 h,
-  test_wn3.py ist netzfrei (55 Pruefungen + 14 Negativproben). wn3#F6 und
-  F1-F3 stehen als offene Punkte in T-0072, nicht umgebaut.
 
 - T-0009 Eigene Bewertungsseite und ntfy-Rueckkanal (E2)
 - T-0015 Seiten ausliefern. **ERLEDIGT 15.08.2026.** Repo oeffentlich,
@@ -633,6 +408,254 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   (`skripte/interpolation.py` misst genau diesen Fall).
 
 ## Done
+
+### 13.10.2026 &mdash; Gesamtreview umgesetzt (T-0074 bis T-0087)
+
+Bericht `docs/review-2026-10-09.md`, Entscheidungen `docs/entscheidungen-2026-10-09.md`.
+Bloecke unveraendert aus Next/Backlog hierher verschoben; offene Restpunkte stehen in den
+jeweiligen Stand-Zeilen.
+
+### T-0074 Abruf inkrementell und gedeckelt (Kontingent) - aus Review 09.10.2026
+Seit 16.09. gelangen 18 von 76 Fensterlaeufen; an 13 von 38 Abenden seit 01.09.
+fehlt der Abendlauf. Ein 429 (Stunde/Tag) verwirft alles Geholte, jeder
+stuendliche Nachhol-Tick zahlt Pass 1 und Pass 2 erneut. Der Lauf wuchs von 217
+auf 378-383 Ortsabrufe, getrieben vom saisonalen Abstand Sonnenuntergang zu
+Modellschritt (Spitze Anfang Oktober, wieder Maerz/Juni), Pass 2 ohne Deckel.
+Befunde alarm#1, #2, #3, #4, #10, #12, tests#6 in `docs/review-2026-10-09.md`.
+- Blockcache je Modelllauf/Variablen/Zellen: ein Retry holt nur Fehlendes.
+- Nach "Hourly" Sperrvermerk bis zur vollen Stunde, nach "Daily" bis 00 UTC,
+  im Zustand; Ticks davor beenden sich ohne Abruf.
+- Obergrenze fuer Pass 2 mit lauter Logzeile; Kostenzahlen in README, STATE
+  (Abschnitt Kontingent, "Memberzahl multipliziert NICHT") und alarm.py auf die
+  Messung bringen.
+- Akzeptanz: Verhaltenstest "429 mitten in Pass 2, Folge-Tick holt nur die
+  fehlenden Bloecke", mit Negativprobe je Waechter.
+- Stand 09.10.2026: umgesetzt - Blockcache je Modelllauf
+  (`daten/cache/abruf/`), Kontingentsperre im Zustand (`_kontingent`),
+  Pass-2-Deckel `pass2_max_zellen` = 320, eigenes Wartebudget fuer
+  Minutenlimit/concurrent; Test `skripte/test_kontingent.py` mit 18
+  Negativproben (Commit c493481).
+- Stand 09.10.2026: umgesetzt - Gate-Nachbesserung: Cacheschluessel traegt
+  jetzt auch den UTC-Abruftag (`daten/cache/abruf/<Modelllauf>/<JJJJMMTT>/`),
+  weil Open-Meteo die Zeitachse ohne Startdatum am Abruftag beginnt; derselbe
+  Modelllauf nach Mitternacht UTC haette sonst den Windblock vom Vortag
+  bekommen. Test h) in `test_kontingent.py` (Folgecommit zu c493481).
+- STATE.md (Abschnitt Kontingent) sagte "Die Memberzahl multipliziert NICHT" -
+  widerspricht README/alarm.py und dem Log (alarm#3); am 09.10.2026 mit einem
+  datierten Hinweis versehen (Formel ungeklaert). Der Done-Block "Kontingent vollstaendig vermessen" ("210.000
+  im Monat - es passt") beruht auf 216 Ortsabrufen; er bleibt als
+  Zeitdokument stehen, gueltig ist README "Was die Grenze kostet". Die
+  Gewichtung selbst bleibt ungemessen (alarm#4).
+Stand 11.10.2026: Pass-2-Deckel von 320 auf 120 gesenkt (Andre, Commit 11b2e25) - ein
+voller Lauf kostete 5.900 Einheiten (Member zaehlen mit) und passte weder in eine
+Stunde noch zweimal in einen Tag; der Waechter (T-0075) hatte die Seite am 10.10. als
+31,7 h alt gemeldet. Wirkung an den naechsten Tagen im alarm.log pruefen.
+Stand 13.10.2026: Deckel auf 200 angehoben - mit 120 liefen 11.-13.10. alle Laeufe
+durch, aber schon der uebernaechste Abend verlor die Advektion; 200 = 4.160 Einheiten
+je Lauf, zwei Laeufe 8.320. Seit 11.10. kein Kontingentabbruch, Waechter gruen.
+
+### T-0075 Ausfall sichtbar machen (ergaenzt T-0040) - aus Review 09.10.2026
+Kein Melder; `last exit code` wird vom naechsten Leerlauf-Tick mit 0
+ueberschrieben; ein Waechter auf dem Mac faellt mit dem Mac aus. Der
+Altersstreifen entsteht nur beim Bauen - Mac ganz aus heisst alte Seite ohne
+Warnung. Befunde alarm#5, #6, #8, seiten#1, betrieb#3, tests#10.
+- Seite traegt den Abrufzeitpunkt maschinenlesbar, ein kleines Skript
+  vergleicht ihn mit der Uhr der Betrachter:innen.
+- Waechter AUSSERHALB des Macs (Mac-Ausfall ist die haeufigste Ursache).
+- Ein Lauf ohne ein einziges Ergebnis darf nicht als Erfolg gebucht werden
+  (alarm#8); die Nachtluecke nach zwei gescheiterten Laeufen entscheiden
+  (alarm#6).
+Stand 09.10.2026: umgesetzt - Lauf ohne Ergebnis wird nicht gebucht (Exit 1,
+leere Bloecke nicht gecacht, Wind paarweise, Abend ohne Wind uebersprungen);
+Seite traegt `streulicht-geholt` und prueft ihr Alter im Browser; Waechter
+`.github/workflows/waechter.yml` auf GitHub (bb686b7). Offen: Secret
+`NTFY_WAECHTER` (Andre), alarm#6 Nachtluecke nicht entschieden.
+
+### T-0076 Commit-Rueckstand seit 26.08.2026 aufloesen - aus Review 09.10.2026
+22 Dateien geaendert, 5 ungetrackt; die Plists in HEAD zeigen auf das nicht
+mehr vorhandene `/usr/local/bin/python3`, es gibt keinen Rueckfallpunkt; das
+oeffentliche Repo zeigt noch den Advektionsfehler. **Vor dem Push** die private
+E-Mail-Adresse aus dem Messblock von T-0072 entfernen (wn3#F8). Entscheidung
+Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
+
+- T-0084 Perzentil-Zonen an den Anteil der Member koppeln (Entscheidung Andre
+  09.10.2026 nach Vorlage `docs/entscheidungen-2026-10-09.md`, Option B;
+  ersetzt die erste Wahl "Median neu eichen", methodik#F3). "selten" = mindestens
+  die Haelfte der Member ueber s* (= Push-Bedingung), "auffaellig" = ein Anteil
+  der Member im obersten Fuenftel, Anteil so gewaehlt, dass die Haeufigkeit zur
+  Klimatologie passt. Urspruengliche Notiz: Die Seite ordnet den Member-Median heute in
+  die Verteilung einzelner Analysen ein; "auffaellig"/"selten" trifft der
+  Median nur in 10 % bzw. 0,3 %. Zonen aus der Verteilung archivierter
+  Median-Werte ableiten; vorher pruefen, ob genug Archivtage fuer stabile
+  Schwellen da sind (Saison!). Push-Schwelle s* bleibt unberuehrt.
+  Stand 09.10.2026: umgesetzt - Commit 261cb54. "selten" = p >= p* (dieselbe
+  Funktion wie die Push-Bedingung im Alarm), "auffaellig" = mindestens 37 % der
+  Member im obersten Fuenftel (19,3 % von 440 Vorhersagen ab dem Advektionsfix
+  statt 9,5 %; Tabelle und Vorbehalte in `docs/entscheidungen-2026-10-09.md`
+  Abschnitt 1). Regel in `skripte/stufen.py`; der Alarm speichert
+  `anteil_auffaellig` je Abend, aeltere Zeilen zeigt die Bilanz mit alter Stufe
+  und Vermerk. Offen: Q nach Winter/Fruehjahr neu messen (nah dran 27,5 %,
+  ab Vorlauf 5 Tage nur 10 %).
+
+- T-0085 Vorlauf-Versprechen abschwaechen (Entscheidung Andre 09.10.2026,
+  methodik#F11). README Z. 3 und Seitentexte: "zwei bis zehn Tage im Voraus"
+  auf "ab etwa 1-3 Tagen belastbar, weiter voraus nur Tendenz" umformulieren.
+  Stand 09.10.2026: umgesetzt - README Z. 3 auf "bis zu zehn Abende voraus
+  gerechnet, belastbar ab etwa 1-3 Tagen, weiter voraus nur Tendenz". Seiten-,
+  Push- und Konfigtexte enthalten kein Zeitversprechen (rg), dort nichts
+  geaendert; Rechenweg unberuehrt. Offen: TASK.md Z. 3 und STATE.md Z. 45
+  tragen noch die alte Formulierung (Steuerdateien, nicht angefasst).
+
+- T-0086 Sichtfaktor-Gewichtung erst messen (Entscheidung Andre 09.10.2026,
+  physik#4). Im Archiv zaehlen, wie oft tiefe Decke nur am Standort unter hohem
+  Schirm vorkommt; Klimatologie und s* fuer gleich- und raumwinkelgewichteten
+  Sichtfaktor rechnen; Ergebnis Andre zur Entscheidung vorlegen.
+  Stand 09.10.2026: umgesetzt (Messung) - Rohdaten reichen (118 Zellen, 6
+  Sichtzellen, 0 Luecken, kein Abruf). Fall hoher Schirm: 2 Abende in 11 Jahren,
+  keiner ueber s*; Spielart mittlerer Schirm: 25 Abende, 2 Fehlalarme (2022-07-01,
+  2023-10-10). Raumwinkel: s* 0,7065 -> 0,6928, Albumprobe nicht besser (Mittelrang
+  0,674 -> 0,667, Differenz-CI schliesst 0 ein). Nachtrag in
+  docs/entscheidungen-2026-10-09.md Abschnitt 3, Skript skripte/sichtfaktor_messung.py;
+  `score.py` unveraendert. Entscheidung B/C bei Andre offen, Messung stuetzt C.
+  Stand 13.10.2026: ENTSCHIEDEN C (gleich gewichtet lassen, Begruendung als
+  Kommentar in sonnen/score.py, Term B (a)); Messung stuetzt C.
+
+- T-0087 Nachtluecke schliessen (Entscheidung Andre 09.10.2026 nach Vorlage,
+  Option A mit Kostenbedingung: kein Nachtlauf bei aktiver Kontingentsperre,
+  bekommener Modelllauf ins Log; ein Nachtlauf kostet einen vollen Abruf, der
+  Blockcache gilt je Modelllauf und UTC-Tag; alarm#6):
+  blieb ein Tag ohne erfolgreichen Lauf, nach 00 UTC (neues Tageskontingent)
+  einen Nachhol-Lauf fuer die Folgetage zulassen; mit Blockcache und Sperre
+  aus T-0074 zusammenspielen, Verhaltenstest mit Negativprobe.
+  Stand 09.10.2026: umgesetzt - Fenster "nachts" ab 02:00 Ortszeit (nie vor
+  00 UTC, bis vor das Vormittagsfenster), nur nach einem Vortag ganz ohne Lauf
+  (ein Nachtlauf zaehlt nicht), einmal je Nacht, Schalter `nachtlauf`, Sperre
+  greift vor dem Abruf; Logzeile "Modelllauf: ... (Fenster nachts)". Kein Push
+  nachts: Abend bleibt ungebucht, der naechste Tageslauf sendet (ab0d4dd,
+  test_nachtlauf.py, 10 Negativproben). Offen bei Andre: zurueckstellen statt
+  leise senden bestaetigen; Cache-Teilung nach zwei Wochen im Log nachzaehlen.
+  Stand 13.10.2026: Push-Behandlung ENTSCHIEDEN - nachts kein Push, der
+  naechste Tageslauf rechnet neu und sendet laut (wie gebaut).
+
+- T-0077 Bewertungskanal haerten (Review 09.10.2026). Das oeffentliche
+  Bewertungs-Topic ist zugleich das abonnierte Erinnerungs-Topic: jede:r kann
+  Pushs mit Titel, Text und Klickziel an Andres Telefon schicken (bewertung#3).
+  Dazu: `plausibel()` nimmt auch 20260915 und 2026-W38-2 (bewertung#2); die
+  Sonnentafel der Bewertungsseite liefert ausserhalb von +-4 Tagen still den
+  letzten Tafeltag (bewertung#1, Randfall mit stillem Datenschaden); die als
+  erledigt gemeldete Umbuchung aus T-0043 fehlt im Zustand (bewertung#4);
+  Quittung nach stillem Nachsenden (bewertung#6).
+  Stand 09.10.2026: umgesetzt - bewertung#1/#2/#3/#6, seiten#3/#14 (aa69201).
+  Erinnerung geht auf ntfy_erinnerung aus konfig_geheim.json (Rueckfall mit
+  Warnzeile aufs oeffentliche Topic), Datum nur noch YYYY-MM-DD, die Seite
+  verweigert ausserhalb ihrer Sonnentafel die Bewertung, die Quittung
+  korrigiert sich nach stillem Nachsenden. OFFEN bei Andre: neues Topic
+  waehlen, in konfig_geheim.json eintragen, abonnieren, altes abbestellen
+  (README "Abenderinnerung empfangen"). bewertung#4 (fehlende Umbuchung
+  18.08. -> 17.08.) ist NICHT Teil dieser Umsetzung und bleibt offen.
+
+- T-0078 Methodik-Paket (Review 09.10.2026, Befunde methodik#F1-F13,
+  physik#4, physik#13). Die Seite ordnet den Member-MEDIAN in die Verteilung
+  einzelner Analysen ein - "auffaellig"/"selten" treffen der Median nur in 10 %
+  bzw. 0,3 % (F3). Album-Trefferquote gilt fuer S >= 0,630, nicht s* (F4).
+  T-0006 verglich zwei verschieden gewichtete Scores; neu gerechnet: Sommer
+  rho 0,690 statt 0,504, Kernaussage NEIN haelt (physik#13). Sichtfaktor
+  gewichtet den Standort 1/6, Term A 75-89 % (physik#4). WN3-Blocker-Begruendung
+  falsch: das Album reicht bis 2026 (F8). Beide Alarme kamen erst bei Lead 0
+  (F11). Noten bisher ohne Zusammenhang, Abgabe selektiv (F9, F10). Datum des
+  Advektionsfixes in README/alarm.py: 04.09., nicht 02.09. (F6).
+  Stand 09.10.2026: umgesetzt - 59b1773, NUR Doku und Kommentare. Datum des
+  Advektionsfixes (04.09.) in README/alarm.py; datierte Nachtraege zu
+  Album-Trefferquote (befunde-e1), T-0006 (Gewichtung) und T-0072-Blocker;
+  R_eff-Kommentar in geometrie.py; Escape-Sequenz in score_niveaus.py behoben,
+  neu `test_syntax.py`. Score, Schwellen und Anzeige unveraendert. OFFEN bei
+  Andre (fachlich): F3 Seite zeigt Median-Rang gegen Einzelanalyse-Verteilung,
+  physik#4 Sichtfaktor-Gewichtung, F11 Versprechen "2-10 Tage", F10
+  Verankerung durch Prognoseseite und Push. STATE.md bewusst nicht angefasst;
+  offen sind dort nur die F5-Zahlen (Z. 64-67: 18,5 Ausloesungen/Jahr, Januar,
+  r(A,B)); die Album-Begruendung ist am 09.10.2026 nachgezogen. Die zu
+  breite Belastungsaussage (F6) ist dort seit e5a2480 korrigiert (Z. 12-16).
+  (Zeilenangaben Stand 09.10.2026 nach e5a2480; die ersten Fassungen dieser
+  Zeile nannten veraltete Zeilen und die Belastungsaussage faelschlich als
+  offen.)
+  Ebenfalls OFFEN bleiben methodik#F2 (Quantilbruecke s*/p* per Schwanzzaehlung
+  nicht messbar), F7 (WN3-Vergleich: ECMWF-Seite ein 0,5-Grad-Medianfeld, teils
+  vor T-0063), F12 (Gitter: s* stammt vom 0,5-Grad-Gitter der Klimatologie, der
+  Betrieb rechnet auf 0,25; Effekt ungemessen - nur der konfig.json-Kommentar
+  ist am 09.10.2026 korrigiert) und F13 (Albumanreicherung: rho 0,40-0,50 nicht
+  identifiziert).
+
+- T-0079 Testluecken (Review 09.10.2026): ausliefern.py ungetestet
+  (Allow-Liste, Zweigriegel; tests#9); netz.warte_auf_netz (tests#8);
+  bewertungen_holen.hole() und vier Eingangswaechter (bewertung#8, tests#7);
+  Advektion nur mit Westwind (tests#1); test_ortsfilter jedes Jahr 10.05.-02.08.
+  rot (tests#4); test_seiten haengt an der Wanduhr (tests#5); test_erinnerung
+  liest die Produktiv-Konfig (bewertung#9); test_ortsfilter ersetzt
+  `alarm.sende` nicht - pruefen, ob ein echter ntfy-POST moeglich ist;
+  test_wn3 nicht netzfrei, 13 von 13 Verdrahtungsmutanten ueberleben (wn3#F7).
+  Stand 09.10.2026: umgesetzt - f4b2d8f. Neu `test_netz.py` (Wanduhr-Frist) und
+  `test_bewertungen_holen.py` (hole() echt, vier Eingangswaechter); in
+  `test_ausliefern.py` Allow-Liste und Zweigriegel am lokalen Commit; Advektion
+  in alle Himmelsrichtungen und zirkulaeres Mittel am Produktionslauf;
+  test_ortsfilter (fester Tag, `alarm.sende` aufgezeichnet), test_seiten (Bauzeit
+  der Seite statt Wanduhr) und test_erinnerung (Testkonfig) entkoppelt. NICHT
+  erledigt: wn3#F7 (test_wn3 netzfrei, Verdrahtungsmutanten) bleibt offen.
+
+- T-0080 UI/UX-Paket (Review 09.10.2026): Bilanz ohne Nenner, ohne die beiden
+  Alarmabende, ohne Laufalter (uiux#5, #6); Hero zeigt nach Sonnenuntergang den
+  vergangenen Abend (uiux#2); Textwidersprueche ("18 im Jahr" gegen
+  "unbekannt", "keine Prozentzahl" neben Prozent, "0 %" bei 0/51; uiux#4);
+  Push-Text und fehlender Deep-Link (uiux#9, #10); Tippziele 31 px, Markenfarbe
+  (uiux#13); Tastatur schluckt Cmd/Alt+Pfeil (uiux#12); SVG-Style ueberschreibt
+  die Hervorhebung (seiten#8); Faecherkarte schneidet den Faecher ab (physik#5).
+  Stand 09.10.2026: umgesetzt - d11b71b. Bilanz mit Nenner, Alarmabenden ohne
+  Note, Laufdatum und Advektionsvermerk; Vorauswahl nach Sonnenuntergang
+  (Bauzeit und Browser), Hash `index.html#TAG` im Push-Klickziel und auf der
+  Seite, Modifikatortasten, Markenfarbe, SVG-Style, "< 6 %", Push-Auskunft bei
+  veraltetem Stand, Umlaute, Push-Text; Faecherkarte richtet den Ausschnitt am
+  Azimut aus. Tests: `test_ui_paket.py` (80). OFFEN: 44-px-Tippziele der
+  Abendachse (31 px bei 11 Abenden, nicht erzwungen) und der Bedienhinweis,
+  der auf dem Telefon fehlt (uiux#13 Teil 1 und 3).
+
+- T-0081 Betriebsrobustheit (Review 09.10.2026): die 27 Noten liegen nur in
+  `daten/zustand.json`, Time-Machine-Netzziel seit 29.05.2026 ohne Sicherung
+  (betrieb#6); Logs ohne Datum und ohne Rotation (architektur#14);
+  erinnerung.py wartet nicht aufs Netz und endet bei Fehler mit 0 (bewertung#5);
+  git push ohne Timeout (seiten#9); ein Absturz von seite.py stoppt auch
+  Bewertungs- und Bilanzseite (seiten#4, architektur#6).
+  Stand 09.10.2026: umgesetzt - 7690b2f. Logs mit Datum+Uhrzeit und Rotation
+  (`skripte/logbuch.py`), erinnerung.py wartet aufs Netz und endet bei
+  Versandfehler != 0, ausliefern.py baut jede Seite fuer sich und pusht mit
+  Zeitgrenze, Tageskopie der Noten nach `daten/sicherung/` (`skripte/sicherung.py`).
+  OFFEN bei Andre: `sicherung_ordner` in konfig.json setzen (z. B. iCloud).
+
+- T-0082 Doku und Steuerdateien (Review 09.10.2026): STATE.md 335 Zeilen statt
+  Kurzstand, Next actions doppelt nummeriert und ueberfaellig (architektur#2);
+  Doing mit 5 statt 3 Eintraegen, T-0003/T-0001/T-0006 erledigt bzw.
+  entschieden, T-0014 laengst gebaut (architektur#1); README-Drift: "Ein Cron",
+  Henyey-Greenstein im Betriebsscore, `faecher` optional, "E3 offen",
+  Mehrortliste (architektur#3, #4, #11, #16); Kommentare mit 3-h-Takt (#17).
+  Stand 09.10.2026: umgesetzt - ecf72e1 (ohne STATE.md, architektur#2 macht
+  der Orchestrator). Doing hat zwei Eintraege (T-0072, T-0001b); T-0006,
+  T-0003-alt und T-0014 liegen unter Done 09.10.2026, T-0001 im Backlog mit
+  Vermerk. README: launchd, Henyey-Greenstein nur in score_distanz, `faecher`
+  abgeschafft, Konfigtabelle und Entwicklungstabelle vollstaendig, Testzahl
+  809 Python + 64 JS gemessen. OFFEN: STATE nennt T-0001b "aufgeloest
+  14.08.2026" - in TASK.md steht es noch in Doing; ueber_nacht.sh Z. 12 ruft
+  weiter blankes python3 (Code, kein Docstring, nicht angefasst).
+
+- T-0083 WN3-Befunde aus dem Review 09.10.2026 (zu T-0072): Windfeld in m/s
+  statt km/h (physik#1); Zielzeit per Gleichheit, echte Sonnenuntergaenge
+  fallen durch (wn3#F4); der Zuschnitt (a) kennt die ~300 Pass-2-Zellen nicht
+  (wn3#F6); Vergleich misst Medianfeld gegen eine Schwelle fuer Memberscores,
+  ECMWF-Seite auf 0,5 Grad vergroebert (wn3#F1, #F2); r = 0,868 bei n = 11
+  traegt "systematisch hoeher" nicht (wn3#F3); Testzahlen veraltet (wn3#F10).
+  Stand 09.10.2026: umgesetzt - 189ad36 (physik#1, wn3#F4, #F5, #F10).
+  geschwindigkeit() liefert km/h (Faktor 3,6, gegen alarm.versatz_km
+  gerechnet), block()/schritt() nehmen die naechste Stunde innerhalb 0,5 h,
+  test_wn3.py ist netzfrei (55 Pruefungen + 14 Negativproben). wn3#F6 und
+  F1-F3 stehen als offene Punkte in T-0072, nicht umgebaut.
+
 
 ### 09.10.2026 &mdash; Aus Doing und Next hierher verschoben (Review architektur#1, T-0082)
 
