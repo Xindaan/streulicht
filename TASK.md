@@ -110,14 +110,14 @@ stehen im Backlog-Block T-0072.
       - wn3#F3: r = 0,868 bei n = 11 (95-%-Intervall 0,56 bis 0,97) und
         "8 von 11" (einseitig p = 0,11) tragen "systematisch hoeher" nicht.
 
-### T-0001b Absichtssignal fuer den Abbruchtest
-Der Presence-Only-Test scheiterte an einem konfundierten Label (siehe STATE).
-Favoriten und Minutenabstand extrahieren, dann INNERHALB der Draussen-Abende
-vergleichen statt gegen alle Abende.
-- [ ] `skripte/fotos_detail.py` aus Terminal.app
-- [ ] Test: Favoritenabende gegen Nicht-Favoritenabende, beide "draussen"
-
 ## Next
+
+### T-0088 Restpunkte aus dem Review-Block ohne eigene Task-ID (21.10.2026)
+Beim STATE-Snapshot gesammelt; bisher standen sie nur in STATE-Stand-Zeilen.
+- [ ] 44-px-Tippziele der Abendachse (Rest von T-0080)
+- [ ] bewertung#4: fehlende Umbuchung 18.08. -> 17.08. (T-0077)
+- [ ] Q fuer "auffaellig" neu messen, Winter/Fruehjahr 2026/27 (T-0084)
+- [ ] Cache-Teilung des Nachtlaufs im `alarm.log` nachzaehlen, ab ca. 23.10. (T-0087)
 
 ### T-0007 Gelaende in den Fensterterm
 DEM-Freigaengigkeit des Strahls. Ab freier Ortswahl zwingend, nicht optional
@@ -408,6 +408,20 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   (`skripte/interpolation.py` misst genau diesen Fall).
 
 ## Done
+
+### 14.08.2026 &mdash; T-0001b entschieden (aus Doing nachgetragen 21.10.2026)
+
+Erledigt mit 1d7bb27: Absichtssignal zeigt richtig, ist aber zu schwach (innerhalb der 768
+Draussen-Abende A = 0.545, nicht signifikant; Nachweisgrenze A = 0.593). Das Album ist das
+schaerfere Instrument. Ergebnis wortgleich im STATE-Archiv `docs/state_archiv_2026-10-21.md`
+(Abschnitt "Abbruchtest"). Der Block stand bis 21.10. irrtuemlich noch in Doing:
+
+#### T-0001b Absichtssignal fuer den Abbruchtest
+Der Presence-Only-Test scheiterte an einem konfundierten Label (siehe STATE).
+Favoriten und Minutenabstand extrahieren, dann INNERHALB der Draussen-Abende
+vergleichen statt gegen alle Abende.
+- [x] `skripte/fotos_detail.py` aus Terminal.app
+- [x] Test: Favoritenabende gegen Nicht-Favoritenabende, beide "draussen"
 
 ### 13.10.2026 &mdash; Gesamtreview umgesetzt (T-0074 bis T-0087)
 
