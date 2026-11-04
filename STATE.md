@@ -44,8 +44,8 @@ der Waechter es meldet.
 
 - T-0089: Betriebsbezeichner (Home-Pfade in Plists, Labels, Datendateiname)
   umstellen oder lassen. (Historie bleibt, entschieden 04.11.)
-- T-0072: Block 2 der Klimatologie 2026 am 05.11. vor 09:50 Uhr anstossen
-  (Befehl in TASK.md T-0072); Planen per Aufgabe war hier nicht erlaubt.
+- T-0072: Block 2 der Klimatologie 2026 laeuft automatisch
+  (geplante Aufgabe "streulicht-klima2026-block2", 05.11. 08:40).
 - Optional Repo-Secret `NTFY_WAECHTER` (T-0075); neues Topic `ntfy_erinnerung`
   (T-0077); `sicherung_ordner` und Time-Machine-Ziel (T-0081).
 - Erfolgskriterium oben bestaetigen oder korrigieren.
