@@ -777,6 +777,7 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 | `skripte/waechter.py` | prueft auf GitHub, ob die ausgelieferte Seite frisch ist (T-0075) |
 | `skripte/wn3.py` | WeatherNext-3-Leser, laeuft in us-east1, nicht im Betrieb (T-0072) |
 | `skripte/wn3_vergleich.py` | Vorfrage: weicht WN3 ueberhaupt von ECMWF ab? Nur Auswertung, nicht im Betrieb |
+| `skripte/wn3_quantil.py` | s* fuer WN3 per Quantilabbildung an denselben Abenden (T-0072); `--holen` holt p50-Scores kostenlos in `daten/wn3_p50/` |
 | `skripte/icond2.py` | ICON-D2-Abruf fuer den Aufloesungstest (`test_phantomnullen.py` braucht seinen Cache) |
 | `skripte/interpolation.py` | T-0005: Messung, ob lineare Zeitinterpolation taugt oder Advektion noetig ist |
 | `skripte/ausliefern.py` | baut die Seiten und pusht nach `gh-pages` |
@@ -799,6 +800,7 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 .venv/bin/python3 skripte/test_nachtlauf.py   # Nachtlauf nach Ausfalltag, ohne Push (T-0087)
 .venv/bin/python3 skripte/test_abruf.py       # Wind nur am Ort, Advektion trotzdem aktiv
 .venv/bin/python3 skripte/test_wn3.py         # WeatherNext-3-Leser, Zeitachse, Negativproben
+.venv/bin/python3 skripte/test_wn3_quantil.py # Quantilabbildung fuer s*_WN3 (T-0072)
 .venv/bin/python3 skripte/test_zustandsdatei.py    # atomarer Schreibvorgang (T-0051)
 .venv/bin/python3 skripte/test_bewertung_nutzlast.py  # Notenvalidierung (T-0052)
 .venv/bin/python3 skripte/test_alarm_versand.py    # Versandfehler kippt den Lauf nicht (T-0055)

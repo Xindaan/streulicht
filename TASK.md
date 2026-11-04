@@ -83,9 +83,31 @@ stehen im Backlog-Block T-0072.
       Klimatologie nur 40 Abende; der Kontingentbedarf zum Nachholen ist
       UNBELEGT. (Gleiche Begruendung in STATE.md "Album (2014-2022)"; dort am 09.10.2026
       nachgezogen.)
-- [ ] Ab sofort je Lauf das WN3-Medianfeld mitschreiben (kostenlos), damit
-      die Ueberlappung waechst statt zu warten. Dieselbe Lehre wie in
-      Befund E1: "jeder Tag Wartezeit ist ein verlorener Kalibrierungstag".
+- [x] **s* fuer WN3: Verfahren geklaert und gebaut (04.11.2026).**
+      `skripte/wn3_quantil.py`: q = Anteil der Referenzabende unter s*,
+      s*_WN3 = Quantil der WN3-Scores bei q, an DENSELBEN Abenden; gepaarter
+      Bootstrap (90 %); unter 10 Referenzereignissen ueber s* wird die Zahl
+      als PLATZHALTER ausgegeben. WN3-Seite: Score des p50-Feldes, Lauf 6 h
+      vor der Sonnenuntergangsstunde (analysenah wie die Referenz), Cache
+      `daten/wn3_p50/berlin.json`. `skripte/test_wn3_quantil.py` 8 Pruefungen,
+      vier Mutanten (q mit <=, Quantil aus der Referenz, q umgedreht, ohne
+      Laengenpruefung) je rot genau an ihrer Pruefung.
+      Gemessen: 75 MB und ~27 s je Abend, kostenlos; Vollabruf 01.01.-02.11.
+      laeuft (Log `daten/wn3_quantil.log`).
+- [ ] **Referenzseite 2026 nachholen - der eigentliche Engpass.** Die
+      Klimatologie hat fuer 2026 nur 40 Abende (gemessen 04.11.). Nachholen
+      ueber `klimatologie.py` (118 Zellen, `archive-api`): braucht ein
+      Enddatum vor heute (heute nur ganze Jahre) und kostet geschaetzt
+      770-2.570 Kontingent-Einheiten (Gewicht je Ort 3 Variablen/10 bzw.
+      Tage/14, Formel unbelegt). Zwei Alarmlaeufe brauchen 8.320 von 10.000
+      am Tag: oberer Wert reisst das Tageslimit. Deshalb je Tag hoechstens ein
+      60-Zellen-Block, nicht in einer Laufstunde - Entscheidung Maintainer.
+- [x] ~~Je Lauf das WN3-Medianfeld mitschreiben~~ - **Praemisse widerlegt
+      04.11.2026:** das Statistik-Bucket haelt alle Laeufe seit 01.01.2026,
+      stuendlich, 7.368 Laeufe bis 03.11. (gemessen per Listing). Die
+      Ueberlappung waechst auf der WN3-Seite von selbst; der Engpass ist die
+      Referenz (siehe oben). Restrisiko: Aufbewahrungsregel des Buckets
+      unbekannt - der Cache von `wn3_quantil.py` sichert die Scores.
 - [ ] Betriebsvehikel - nur falls der Vergleich dafuer spricht: e2-micro
       (Freikontingent nach Instanzstunden, langsam) gegen Cloud Run Job
       (schnell, Freikontingent knapp). Compute Engine ist in
