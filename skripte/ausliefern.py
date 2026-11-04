@@ -251,7 +251,7 @@ def veroeffentliche(trocken, immer=False):
         fern = lauf("git", "remote", "get-url", "origin").stdout.strip()
         lauf("git", "add", "-A", cwd=tmp)
         lauf("git", "-c", "user.name=streulicht",
-             "-c", "user.email=noreply@greatbelow.de",
+             "-c", "user.email=noreply@streulicht.invalid",
              "commit", "-q", "-m", "Seiten", cwd=tmp)
         pushe(fern, tmp)
         with open(stempel, "w") as f:

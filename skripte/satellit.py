@@ -178,7 +178,7 @@ def main():
     with open(os.path.join(BASIS, "daten",
                            "score_berlin_g0.5_2015_2025.json")) as f:
         klima = json.load(f)
-    with open(os.path.join(BASIS, "daten", "bewertung_andre.json")) as f:
+    with open(os.path.join(BASIS, "daten", "bewertung_maintainer.json")) as f:
         noten = json.load(f)
 
     print("%-12s %4s %8s %8s %8s   %s"

@@ -62,7 +62,7 @@ from fensterterm import (albumabende, hole_modell,  # noqa: E402
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 KLIMA = os.path.join(BASIS, "daten", "score_berlin_g0.5_2015_2025.json")
-NOTEN = os.path.join(BASIS, "daten", "bewertung_andre.json")
+NOTEN = os.path.join(BASIS, "daten", "bewertung_maintainer.json")
 ZIEL = os.path.join(BASIS, "daten", "wegterm_varianten.json")
 FENSTER_TOT = 0.10
 FENSTER_TAGE = 21

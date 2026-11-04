@@ -22,8 +22,9 @@ der Waechter es meldet.
   `.github/workflows/waechter.yml` (alle 6 h). Pass-2-Deckel 200, ein Lauf
   ca. 4.160 Kontingent-Einheiten; Betrieb seit 13.10. nicht erneut geprueft.
 - Repo ist PUBLIC: Klarname im aktuellen Stand ersetzt, pre-push-Guard aktiv
-  (`tools/install_push_guard.sh`, Marker lokal in `.private/`). Historie bleibt
-  unveraendert (entschieden 04.11.); Betriebsbezeichner offen (T-0089).
+  (`tools/install_push_guard.sh`, Marker lokal in `.private/`). T-0089 erledigt:
+  Historie bleibt, Notendatei und Commit-Adresse ersetzt, Plist-Pfade und
+  launchd-Labels bewusst belassen.
 - WN3 (T-0072): s*-Verfahren gebaut (`skripte/wn3_quantil.py`,
   Quantilabbildung an denselben Abenden); WN3-Seite holt sich kostenlos,
   Vollabruf 2026 laeuft (`daten/wn3_quantil.log`). Referenz 2026: Block 1
@@ -42,8 +43,6 @@ der Waechter es meldet.
 
 ## Bei Dir
 
-- T-0089: Betriebsbezeichner (Home-Pfade in Plists, Labels, Datendateiname)
-  umstellen oder lassen. (Historie bleibt, entschieden 04.11.)
 - T-0072: Block 2 der Klimatologie 2026 laeuft automatisch
   (geplante Aufgabe "streulicht-klima2026-block2", 05.11. 08:40).
 - Optional Repo-Secret `NTFY_WAECHTER` (T-0075); neues Topic `ntfy_erinnerung`
@@ -54,8 +53,7 @@ der Waechter es meldet.
 
 1. T-0072: Block 2 Klimatologie 2026 (05.11.), dann `wn3_quantil.py`
    auswerten und s*_WN3 mit Intervall festhalten.
-2. T-0089 nach Entscheidung umsetzen.
-3. T-0008 Dispersion und Skill ueber Vorlauf (nach Winter/Fruehjahr).
+2. T-0008 Dispersion und Skill ueber Vorlauf (nach Winter/Fruehjahr).
 
 ## Termine
 
@@ -65,7 +63,7 @@ der Waechter es meldet.
 
 ## Letzte Done
 
-- 04.11.2026 T-0089 (Teil): Klarname aus dem aktuellen Stand, pre-push-Guard.
+- 04.11.2026 T-0089: Klarname aus dem Stand, pre-push-Guard, Option B (Notendatei, Commit-Adresse).
 - 04.11.2026 T-0072 (Teil): s*-Verfahren fuer WN3, Mitschreib-Praemisse widerlegt.
 - 13.10.2026 T-0074 bis T-0087 Review-Block (Blockcache, Deckel 200, Waechter, Stufen).
 - 09.10.2026 T-0077/T-0079/T-0080/T-0081/T-0083: Topic, Tests, UI, Logrotation, WN3-Leser.

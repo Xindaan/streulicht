@@ -157,7 +157,7 @@ def main():
     with open(os.path.join(BASIS, "daten",
                            "score_berlin_g0.5_2015_2025.json")) as f:
         era5 = json.load(f)
-    with open(os.path.join(BASIS, "daten", "bewertung_andre.json")) as f:
+    with open(os.path.join(BASIS, "daten", "bewertung_maintainer.json")) as f:
         noten = json.load(f)
 
     # ICON-D2 hat ZWEI verschiedene Verfuegbarkeitsgrenzen, gemessen am

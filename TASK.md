@@ -149,10 +149,16 @@ Offen, je eine Entscheidung des Maintainers:
       tragen den Klarnamen. **ENTSCHIEDEN 04.11.2026 (Maintainer): bleibt wie
       sie ist** - kein Rewrite, kein force-push, keine Neuanlage. Umschreiben
       haette alte SHAs bei GitHub ohnehin abrufbar gelassen.
-- [ ] Betriebsbezeichner: Home-Pfade in `betrieb/*.plist`, launchd-Labels mit
-      Privatdomain, Datendateiname `daten/bewertung_<name>.json` (vier
-      Skripte), noreply-Adresse der Privatdomain in `skripte/ausliefern.py`.
-      Umstellen heisst Agenten neu laden (bootout/bootstrap) - Betriebseingriff.
+- [x] Betriebsbezeichner: **ENTSCHIEDEN 04.11.2026 (Maintainer): B.**
+      Ersetzt: Notendatei heisst `daten/bewertung_maintainer.json` (Datei
+      umbenannt, Lesepfade in fensterterm.py, icond2_test.py, satellit.py,
+      wegterm.py; kein Schreiber im Code, Datei seit 14.08. unveraendert);
+      Commit-Adresse der Pages-Auslieferung `noreply@streulicht.invalid`
+      (`.invalid` ist reserviert, kann keinem GitHub-Konto zufallen).
+      **Bewusst belassen:** Home-Pfade in `betrieb/*.plist` und die
+      launchd-Labels mit Privatdomain - Umstellen hiesse Agenten neu laden
+      (bootout/bootstrap). Der Guard duldet Home-Pfade nur dort und blockt
+      den Klarnamen jetzt auch in Bezeichnern (`_name`).
 
 ### T-0088 Restpunkte aus dem Review-Block ohne eigene Task-ID (21.10.2026)
 Beim STATE-Snapshot gesammelt; bisher standen sie nur in STATE-Stand-Zeilen.
