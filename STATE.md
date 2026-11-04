@@ -22,8 +22,8 @@ der Waechter es meldet.
   `.github/workflows/waechter.yml` (alle 6 h). Pass-2-Deckel 200, ein Lauf
   ca. 4.160 Kontingent-Einheiten; Betrieb seit 13.10. nicht erneut geprueft.
 - Repo ist PUBLIC: Klarname im aktuellen Stand ersetzt, pre-push-Guard aktiv
-  (`tools/install_push_guard.sh`, Marker lokal in `.private/`). Historie und
-  Betriebsbezeichner offen (T-0089).
+  (`tools/install_push_guard.sh`, Marker lokal in `.private/`). Historie bleibt
+  unveraendert (entschieden 04.11.); Betriebsbezeichner offen (T-0089).
 - WN3 (T-0072): s*-Verfahren gebaut (`skripte/wn3_quantil.py`,
   Quantilabbildung an denselben Abenden); WN3-Seite holt sich kostenlos,
   Vollabruf 2026 laeuft (`daten/wn3_quantil.log`). Referenzseite fehlt:
@@ -42,8 +42,8 @@ der Waechter es meldet.
 
 ## Bei Dir
 
-- T-0089: Git-Historie umschreiben (force-push) oder lassen; Betriebs-
-  bezeichner (Home-Pfade in Plists, Labels, Datendateiname) umstellen oder lassen.
+- T-0089: Betriebsbezeichner (Home-Pfade in Plists, Labels, Datendateiname)
+  umstellen oder lassen. (Historie bleibt, entschieden 04.11.)
 - T-0072: Klimatologie 2026 nachholen (770-2.570 Einheiten geschaetzt,
   ein Block je Tag) - ja/nein.
 - Optional Repo-Secret `NTFY_WAECHTER` (T-0075); neues Topic `ntfy_erinnerung`

@@ -138,9 +138,10 @@ stehen im Backlog-Block T-0072.
 Aktueller Stand bereinigt (Klarname -> "Maintainer", Home-Pfad -> `~`), Guard
 `tools/public_push_guard.sh` als pre-push aktiv (README "Pre-Push-Guard").
 Offen, je eine Entscheidung des Maintainers:
-- [ ] Historie: 146 Commits, 38 Pfade in alten Commits und 48 Message-Zeilen
-      tragen den Klarnamen. Umschreiben = filter-repo + force-push; alte SHAs
-      bleiben bei GitHub per SHA abrufbar, sauber nur per Neuanlage des Repos.
+- [x] Historie: 146 Commits, 38 Pfade in alten Commits und 48 Message-Zeilen
+      tragen den Klarnamen. **ENTSCHIEDEN 04.11.2026 (Maintainer): bleibt wie
+      sie ist** - kein Rewrite, kein force-push, keine Neuanlage. Umschreiben
+      haette alte SHAs bei GitHub ohnehin abrufbar gelassen.
 - [ ] Betriebsbezeichner: Home-Pfade in `betrieb/*.plist`, launchd-Labels mit
       Privatdomain, Datendateiname `daten/bewertung_<name>.json` (vier
       Skripte), noreply-Adresse der Privatdomain in `skripte/ausliefern.py`.
