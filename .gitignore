@@ -30,3 +30,6 @@ konfig_geheim.json
 # Angelegt ueber den unversionierten Pfad /opt/homebrew/opt/python@3.13,
 # damit brew-Minorupdates die Symlinks nicht brechen.
 .venv/
+
+# Lokale Leak-Marker und Instanzdaten des Public-Guards. NIE committen.
+.private/

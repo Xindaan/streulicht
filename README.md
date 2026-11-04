@@ -861,6 +861,22 @@ beurteilt er gegen den Zeitpunkt, an dem `seite.py` sie geschrieben hat
 Messwerte und Begruendungen: `docs/befunde-e1.md`. Jede Zahl dort ist mit
 ihrem Pruefbefehl belegt, auch die drei, bei denen die erste Annahme falsch war.
 
+### Pre-Push-Guard (dieses Repo ist oeffentlich)
+
+`tools/public_push_guard.sh` laeuft als `.git/hooks/pre-push` und prueft jeden
+Commit im Push-Bereich: Inhalt, Dateinamen, Commit-Message und Autor-Daten.
+Die Suchmuster liegen lokal in `.private/leak_markers.sh` (gitignoriert, weil
+sie genau die Werte enthalten, die nicht ins Repo gehoeren), dazu kommen
+wertbasiert alle Eintraege aus `konfig_geheim.json`. Fehlt eine der beiden
+Dateien, verweigert der Guard jeden Push (fail-closed).
+
+```bash
+tools/install_push_guard.sh   # nach jedem Klon und jeder Aenderung an Guard oder Markern
+```
+
+`.git/hooks` wird nicht versioniert: ein frischer Klon hat keinen Guard, bis
+dieses Skript gelaufen ist. Kein `git push --no-verify`.
+
 ## Architektur
 
 Der Score ist ein Produkt zweier Terme, ausgewertet je Ensemble-Member:

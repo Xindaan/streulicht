@@ -112,6 +112,18 @@ stehen im Backlog-Block T-0072.
 
 ## Next
 
+### T-0089 Namens-Leak im public Repo: Rest und Historie (04.11.2026)
+Aktueller Stand bereinigt (Klarname -> "Maintainer", Home-Pfad -> `~`), Guard
+`tools/public_push_guard.sh` als pre-push aktiv (README "Pre-Push-Guard").
+Offen, je eine Entscheidung des Maintainers:
+- [ ] Historie: 146 Commits, 38 Pfade in alten Commits und 48 Message-Zeilen
+      tragen den Klarnamen. Umschreiben = filter-repo + force-push; alte SHAs
+      bleiben bei GitHub per SHA abrufbar, sauber nur per Neuanlage des Repos.
+- [ ] Betriebsbezeichner: Home-Pfade in `betrieb/*.plist`, launchd-Labels mit
+      Privatdomain, Datendateiname `daten/bewertung_<name>.json` (vier
+      Skripte), noreply-Adresse der Privatdomain in `skripte/ausliefern.py`.
+      Umstellen heisst Agenten neu laden (bootout/bootstrap) - Betriebseingriff.
+
 ### T-0088 Restpunkte aus dem Review-Block ohne eigene Task-ID (21.10.2026)
 Beim STATE-Snapshot gesammelt; bisher standen sie nur in STATE-Stand-Zeilen.
 - [ ] 44-px-Tippziele der Abendachse (Rest von T-0080)
