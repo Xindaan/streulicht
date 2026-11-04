@@ -194,7 +194,7 @@ async function lauf(opt) {
   pruefe(/auf Nachfrage/.test(g._text || ""),
          "erste Zeile nennt den Anlass in Worten");
   // Prioritaet 1 = min: die Quittung geht an dasselbe Geraet zurueck, von
-  // dem sie kommt, solange Andre dieses Topic noch abonniert hat (bis
+  // dem sie kommt, solange Maintainer dieses Topic noch abonniert hat (bis
   // T-0077 lief die Abenderinnerung darueber). Bei min stellt ntfy zu, ohne zu
   // benachrichtigen - der Poller liest weiter, das Telefon schweigt.
   pruefe(g._prio === 1, "Quittung mit min-Prioritaet (ist: " + g._prio + ")");

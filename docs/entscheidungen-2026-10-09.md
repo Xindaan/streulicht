@@ -1,7 +1,7 @@
 # Entscheidungsvorlagen zum Review 09.10.2026 (T-0084 bis T-0087)
 
 Stand 09.10.2026. Grundlage: `docs/review-2026-10-09.md` (gegengepruefte
-Befunde). Andre hat am 09.10. per Kurzfrage schon gewaehlt; diese Vorlage
+Befunde). Maintainer hat am 09.10. per Kurzfrage schon gewaehlt; diese Vorlage
 liefert die Begruendung nach und **korrigiert zwei Punkte meiner Kurzfrage**
 (bei 1 eine fehlende Option, bei 4 eine falsche Kostenaussage). Die vier
 Entscheidungen sind getrennt entscheidbar; nur 1 und 3 beruehren beide die
@@ -9,7 +9,7 @@ Klimatologie und sollten nicht gleichzeitig umgebaut werden.
 
 ## Kurzfassung
 
-| # | Entscheidung | Andres Wahl 09.10. | Empfehlung jetzt | Umkehrbar | Aufwand |
+| # | Entscheidung | Maintainers Wahl 09.10. | Empfehlung jetzt | Umkehrbar | Aufwand |
 |---|---|---|---|---|---|
 | 1 | Wie werden "auffaellig"/"selten" auf der Seite bestimmt? | A: aus Median-Verteilung neu eichen | **B: an die Member-Anteile koppeln** (neue Option) | ja, Konstanten | 2-3 h |
 | 2 | "Zwei bis zehn Tage im Voraus" abschwaechen? | A: abschwaechen | **A** (unveraendert) | ja, Text | 30 min |
@@ -399,5 +399,5 @@ schon der normale Tageslauf das Kontingent knapp ausreizt - dann B.
 
 ## Nach der Entscheidung
 
-Andres Antworten zu 1 und 4 bitte in TASK.md bei T-0084 und T-0087 nachtragen
+Maintainers Antworten zu 1 und 4 bitte in TASK.md bei T-0084 und T-0087 nachtragen
 (oder mir sagen); 2 und 3 stehen dort schon. Kein Beschluss bleibt nur im Chat.

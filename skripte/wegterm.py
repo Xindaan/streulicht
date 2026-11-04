@@ -27,7 +27,7 @@ A = 0.02 bis 0.27 - dort hilft kein Fenster der Welt.  Retten koennte nur der
 WORAN GEMESSEN WIRD.  Jede Variante bekommt IHRE eigene Schwelle (95.
 Perzentil ihrer Klimatologie, also dieselbe Alarmrate 18/Jahr), dann:
 
-  * Trefferquote im Album (Andres benotete Abende) bei 18/25/37 Alarmen
+  * Trefferquote im Album (Maintainers benotete Abende) bei 18/25/37 Alarmen
     pro Jahr, mit Wilson-Intervall, plus die gepaarte Bilanz gegen produkt
     (wie viele Albumabende gewinnt/verliert die Variante bei 18/Jahr).
   * Anreicherung: mittlerer saisonaler Perzentilrang von S im Album (wie
@@ -246,7 +246,7 @@ def bericht(erg, klima, noten, referenz):
                   name, ta, len(album), 100 * ta / len(album),
                   tr, len(ref), 100 * tr / len(ref) if ref else 0, ma, mr))
 
-    print("\n=== Spearman innerhalb des Albums: S bzw. B gegen Andres Note")
+    print("\n=== Spearman innerhalb des Albums: S bzw. B gegen Maintainers Note")
     for name in namen:
         s, b = werte(erg, name), werte(erg, name, "B")
         rs = _rangkorrelation([noten[t] for t in album], [s[t] for t in album])

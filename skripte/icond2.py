@@ -4,7 +4,7 @@ WARUM (14.08.2026):
 Abschnitt 25 von docs/befunde-e1.md hat die Saettigungshypothese widerlegt:
 ueber Berlin allein traegt die Feuchtediagnostik deutlich mehr Wolke als das
 Bedeckungsfeld, ueber den ganzen Faecher aber nicht.  Beide Darstellungen
-DESSELBEN Modells verfehlen Andres beste Abende.  Offen blieb damit die
+DESSELBEN Modells verfehlen Maintainers beste Abende.  Offen blieb damit die
 Frage, die eine Ebene tiefer liegt: liegt es an der AUFLOESUNG?  GFS und ERA5
 rechnen auf 25-30 km und mitteln Strukturen weg, die genau das Ereignis sind -
 eine Wolkenbank mit scharfer Westkante, ein Loch im Stratocumulus.

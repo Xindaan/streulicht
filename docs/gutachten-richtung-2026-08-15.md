@@ -176,7 +176,7 @@ Zwei Dinge sind keine Modellarbeit und trotzdem faellig:
 2. **Alarmrate fuer die Saison sichern.**  Bei p\* = 0.5 auf 50 Membern und
    einer 95.-Perzentil-Schwelle im Tail werden Pushs selten sein (Trockenlauf
    heute, 10 Tage: Maximum 18 %).  Fuer die Saison als Messinstrument ist das
-   zu wenig.  Entscheidung fuer Andre: gestufter Push (z. B. ab p >= 0.25 mit
+   zu wenig.  Entscheidung fuer Maintainer: gestufter Push (z. B. ab p >= 0.25 mit
    Prozentzahl im Text, wie er ohnehin drinsteht) - Produktentscheidung, kein
    Modell.  Alternative ohne Produktaenderung: taegliche Bewertung (2.2 a),
    dann braucht es die Alarme als Label-Trigger gar nicht.
@@ -244,7 +244,7 @@ Aber er ist **keine Voraussetzung fuer den Livegang** und aendert bis zur
 Quantilbruecke keine Handlung: solange der Betrieb auf ENS 25 km laeuft, ist
 ein bezifferter Modellfehler nur beziffert.  Empfehlung: **nach** dem
 Livegang, in der Wartezeit, parallel.  Aufwand: EUMETSAT Data Store
-(kostenlos, Anmeldung durch Andre), MSG-SEVIRI/MTG-FCI IR 10.8 um
+(kostenlos, Anmeldung durch Maintainer), MSG-SEVIRI/MTG-FCI IR 10.8 um
 Sonnenuntergang fuer 80 Abende + Kontrollen, Ausschnitt Faecher; 1-2 Tage.
 Ausserdem der einzige Pfad, der bei freier Ortswahl weiterhilft (MSG deckt
 Europa/Afrika, GOES/Himawari den Rest) - ICON-D2 nicht.
@@ -286,7 +286,7 @@ sind es Daten"), aufsteigend nach Schaden:
   soweit derselbe Datenstand vorliegt.
 - Keine weitere saisonale Konfundierung.
 - Keine Zirkularitaet jenseits der vier ausgeschlossenen Abende.
-- Kein Hinweis, dass Andres Album-Auswahl vom Score beeinflusst war
+- Kein Hinweis, dass Maintainers Album-Auswahl vom Score beeinflusst war
   (Projektstart nach dem letzten Albumabend).
 
 ## 4 Annahmen, an denen Aussagen haengen

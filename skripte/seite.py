@@ -1,4 +1,4 @@
-"""Die eigentliche Produktseite: was Andre abends anschaut.
+"""Die eigentliche Produktseite: was Maintainer abends anschaut.
 
 Bewusst KEINE Prozentzahl als Hauptaussage.  Nach allem, was gemessen ist,
 kann der Score aussergewoehnliche Abende von gewoehnlichen trennen
@@ -47,7 +47,7 @@ docs/entwurf/handoff-ux-2026-08-16.md; die vier tragenden Entscheidungen:
    Defekt.
 
 VORAUSWAHL, entschieden gegen den Entwurf (T-0033).  Der Entwurf waehlt den
-besten Abend im Fenster vor.  Andre hat am 16.08.2026 ausdruecklich das
+besten Abend im Fenster vor.  Maintainer hat am 16.08.2026 ausdruecklich das
 Gegenteil verlangt ("das ausgewaehlte Datum ist nicht heute, sondern ein Tag
 eher weit in der Zukunft - sollte natuerlich umgekehrt sein"), und das ist
 auch die richtige Antwort auf die Frage, mit der man die Seite aufmacht:
@@ -248,7 +248,7 @@ def pushauskunft(hoechste, schwelle_p, kfg, rueckschau=False, veraltet=False,
     mit; ein zweiter Ort mit anderem Sonnenuntergang bekommt sie automatisch
     richtig.
 
-    WARUM DER HINWEIS AUF "SELTEN" DAZUGEHOERT (26.08.2026).  Andre hat am
+    WARUM DER HINWEIS AUF "SELTEN" DAZUGEHOERT (26.08.2026).  Maintainer hat am
     25.08. einen als "auffaellig" vorhergesagten Abend gesehen und auf einen
     Push gewartet, der nicht kam.  Er kam zu Recht nicht - aber nicht nur,
     weil 12 % unter 50 % liegen, sondern weil "auffaellig" die Schwelle gar
@@ -492,7 +492,7 @@ def prognose_eintraege(ort_name, perzentil, s_stern, schwelle_p=None):
 
     Die Achse der Seite ist auf den Perzentilrang gebaut (Zonen bei 80. und
     95.), also steht der Punkt dort.  Die Wahrscheinlichkeit ist die Zahl,
-    nach der Andre gefragt hat, und steht als Text daneben.
+    nach der Maintainer gefragt hat, und steht als Text daneben.
 
     DIE STUFE kommt seit T-0084 NICHT mehr aus dem Rang (skripte/stufen.py):
     "selten" = p >= p* (die Push-Bedingung), "auffaellig" = Memberanteil im

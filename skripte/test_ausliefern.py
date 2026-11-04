@@ -346,7 +346,7 @@ finally:
 # Benennung hielten:
 #   (a) was auf gh-pages landet.  Regression, die den Test rot macht: jemand
 #       vereinfacht die Auswahl zu "jede .html im Ordner" (der erste Anlauf
-#       war genau das) - dann gehen diagnose.html (Andres Albumabende) und
+#       war genau das) - dann gehen diagnose.html (Maintainers Albumabende) und
 #       rueckschau.html (9,5 MB) ins Netz.  Kein anderer Test laedt
 #       veroeffentliche() mit echter Auswahl; Abschnitt 4 hat nur EINE Seite.
 #   (b) dass der Wegwerfzweig nie main/master/HEAD sein kann.  Regression:

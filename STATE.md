@@ -9,8 +9,8 @@ aussergewoehnlichen Sonnenuntergang in Berlin melden (belastbar ab etwa ein
 bis drei Tagen, weiter voraus nur Tendenz; T-0085) — und den Abend danach
 zeigen.
 
-Erfolgskriterium (Vorschlag, von Andre unbestaetigt): Nach 6-8 Wochen
-Livebetrieb zeigt die Bilanzseite Trefferquote und Alarmrate gegen Andres
+Erfolgskriterium (Vorschlag, vom Maintainer unbestaetigt): Nach 6-8 Wochen
+Livebetrieb zeigt die Bilanzseite Trefferquote und Alarmrate gegen Maintainers
 Noten; die Alarmrate liegt in der Naehe der geeichten 18,5 Ausloesungen/Jahr
 (T-0020, T-0035), und kein Tag bleibt ohne Lauf, ohne dass der Waechter es meldet.
 

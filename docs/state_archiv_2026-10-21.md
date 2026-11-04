@@ -23,7 +23,7 @@ mehr als Erfolg, die Seite merkt selbst, wenn sie alt ist, und ein Waechter
 als GitHub-Action prueft sie von aussen (T-0075), Logs mit Datum und Rotation,
 Tageskopie der Noten (T-0081), geheimes Erinnerungs-Topic vorbereitet
 (T-0077). Tests: 821 Python-Pruefungen in 27 Dateien + 64 JS, alle gruen.
-Offen sind nur noch Andres Schritte (siehe Next actions). Der Rest dieses
+Offen sind nur noch Maintainers Schritte (siehe Next actions). Der Rest dieses
 Kopfes ist der Stand vom 04.09.
 
 Stand: 04.09.2026 abends. **Der Betrieb laeuft; ein Fremdreview hat einen
@@ -151,7 +151,7 @@ Notbehelf.**  `python3 skripte/absicht.py`
 
 ## Oberflaeche: E3 gestalterisch fertig (14.08.2026)
 
-Die Produktseite laeuft auf Andres Hausstandard aus `poisson-dor` und
+Die Produktseite laeuft auf Maintainers Hausstandard aus `poisson-dor` und
 `rezept-grid`. Neu: `stil/tokens.css` als einzige Farb- und Massquelle, von
 `seite.py` in die Seite inlined; `schnitt.py` hat danach keine feste Farbe
 mehr. Entscheidungen und Herleitung in `docs/ui-referenz.md`, Ergebnis in
@@ -208,13 +208,13 @@ Satelliten bestaetigt; einer hat keinen Schirm im Modell; einer ist T-0018.
 Kein Umbau.  `python3 skripte/wegterm.py`.
 
 Entscheidung 14.08.: kein kommerzielles Kontingent, es dauert eben laenger.
-Ebenfalls gestrichen: die Sichtbarkeitszeile im Alarm - Andre geht zur Not
+Ebenfalls gestrichen: die Sichtbarkeitszeile im Alarm - Maintainer geht zur Not
 vor die Tuer und braucht nur zu wissen, ob es gut wird.
 
 ## Next actions
 
-**Ab 13.10.2026 - nur noch Andres Schritte, sonst Beobachten:**
-1. **Andres Konfiguration** (T-0075, T-0077, T-0081): optional Repo-Secret
+**Ab 13.10.2026 - nur noch Maintainers Schritte, sonst Beobachten:**
+1. **Maintainers Konfiguration** (T-0075, T-0077, T-0081): optional Repo-Secret
    NTFY_WAECHTER (sonst meldet der Waechter per GitHub-Mail); neues geheimes
    Topic als `ntfy_erinnerung` in konfig_geheim.json und in der App
    abonnieren, altes Bewertungs-Topic abbestellen; `sicherung_ordner` in
@@ -300,7 +300,7 @@ betrieb#8).
 - **30.08.2026 T-0062: Automationen auf Homebrew python@3.13 umgestellt.**
   Die vier Agenten liefen auf dem python.org-3.10, das im Oktober 2026 aus
   der Sicherheitsunterstuetzung faellt. Jetzt
-  `/Users/Andre/src/wetter/.venv/bin/python3` (3.13.15), venv ueber den
+  `~/src/wetter/.venv/bin/python3` (3.13.15), venv ueber den
   unversionierten brew-Pfad angelegt, damit Minorupdates sie nicht brechen.
   Acht Plists geaendert (je Agent Repo-Kopie und installierte). Der
   Automationspfad braucht **keine** Fremdbibliothek - gemessen am
@@ -373,7 +373,7 @@ betrieb#8).
   neue Bilanzseite `bisher.html`. Neue Module `faecher.py`, `band.py`,
   `bisher.py`; `schnitt_neu()` in `schnitt.py`.
 - **16.08.2026 Echo-Pushs behoben.** Die Bewertungsquittung ging als Push an
-  dasselbe Geraet zurueck, von dem sie kam - Andre ist auf das
+  dasselbe Geraet zurueck, von dem sie kam - Maintainer ist auf das
   Bewertungstopic abonniert, weil die Abenderinnerung darueber laeuft. Sie
   geht jetzt mit Prioritaet 1 (min) raus: der Poller liest weiter, das
   Telefon schweigt. Ausserdem: der Alarm-Push hat ein Klickziel bekommen

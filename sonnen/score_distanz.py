@@ -1,6 +1,6 @@
 """Score mit Schirm in Entfernung - Verallgemeinerung von score.py.
 
-WARUM (14.08.2026, aus Andres Album):
+WARUM (14.08.2026, aus Maintainers Album):
 Die zehn schlechtesten Albumabende waren ueber Berlin nahezu wolkenfrei, aber
 8 von 10 hatten ueber 50 % Bewoelkung im Band 180-360 km West.  250 km
 westlich geht die Sonne rund 15 min spaeter unter; die Bank steht dort noch

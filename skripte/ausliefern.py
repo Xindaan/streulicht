@@ -88,7 +88,7 @@ def baue(trocken):
     JEDER Seitenbauer laeuft fuer sich (T-0081, seiten#4/architektur#6).
     Frueher brach ein Fehler von seite.py per SystemExit ab, bevor
     Bewertungs- und Bilanzseite gebaut und veroeffentlicht wurden - ein Fehler
-    in der Prognoseseite fror so auch die Seite ein, auf der Andre seine
+    in der Prognoseseite fror so auch die Seite ein, auf der Maintainer seine
     Noten abgibt.  Jetzt wird weitergebaut, der Fehler steht im Log, und
     main() beendet den Lauf am Ende mit Exitcode != 0.  Eine Seite, deren
     Bauer scheitert, bleibt in der alten Fassung stehen (der Fingerabdruck in
@@ -192,7 +192,7 @@ def sichere_zustand():
 
 def veroeffentliche(trocken, immer=False):
     # AUSDRUECKLICHE Liste, kein "alles ausser ...".  Der erste Anlauf nahm
-    # jede .html im Ordner - und haette damit `diagnose.html` (Andres
+    # jede .html im Ordner - und haette damit `diagnose.html` (Maintainers
     # Albumabende neben meinen Bewertungen) und `rueckschau.html` (9.5 MB)
     # ins Netz gestellt.  Beide sind lokale Diagnosen und gitignoriert; dass
     # sie nicht im Repo stehen, hat sie hier NICHT geschuetzt, weil hier aus
@@ -205,7 +205,7 @@ def veroeffentliche(trocken, immer=False):
               if n in ("index.html", "bisher.html")
               or (n.startswith("bewerten-") and n.endswith(".html"))]
     # ACHTUNG beim Ergaenzen: `rueckschau.html` ist die LOKALE Diagnose ueber
-    # vier Jahre (9,5 MB, Andres Albumabende).  Die ausgelieferte Bilanzseite
+    # vier Jahre (9,5 MB, Maintainers Albumabende).  Die ausgelieferte Bilanzseite
     # heisst `bisher.html`.  Wer die beiden verwechselt, veroeffentlicht
     # Privates - deshalb heissen sie verschieden (siehe skripte/bisher.py).
     if not seiten:

@@ -2,7 +2,7 @@
 
 DAS PROBLEM, das dieser Test loest.  Der urspruengliche Presence-Only-Test
 verglich Abende MIT Fotos gegen alle uebrigen - und mass damit vor allem, ob
-Andre an dem Abend draussen war.  Ein konfundiertes Label: Wochenende,
+Maintainer an dem Abend draussen war.  Ein konfundiertes Label: Wochenende,
 Urlaub, Wetterlust und Sonnenuntergangsqualitaet sind vermischt.
 
 DIE IDEE.  Nur Abende betrachten, an denen er nachweislich draussen war und

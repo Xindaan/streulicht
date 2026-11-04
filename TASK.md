@@ -239,7 +239,7 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   eintritt.
 - T-0040 **Der Betrieb meldet seinen eigenen Ausfall nicht.** Am 17.08.2026
   sind vier Agenten am fehlenden Netz gestorben, jeder mit Exitcode 1 - und
-  aufgefallen ist es erst, weil Andre auf die Seite geschaut hat. `launchctl
+  aufgefallen ist es erst, weil Maintainer auf die Seite geschaut hat. `launchctl
   list` fuehrt den Code, niemand liest ihn. Denkbar: ein sechster Agent, der
   einmal taeglich die Exitcodes und das Alter von `daten/zustand.json`
   prueft und bei Auffaelligkeit EINEN Push schickt. Vorsicht bei der
@@ -268,7 +268,7 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
   (3-h-Raster; WN2 nur 6 h). WN3 laeuft stuendlich, 64 Member, Wolken auf
   0.1 Grad, Druckflaechen auf 0.25 Grad, 15 Tage.
 
-  **Zugang ist da** (Google-Freischaltung 14.08.2026, Andres Google-Konto;
+  **Zugang ist da** (Google-Freischaltung 14.08.2026, Maintainers Google-Konto;
   gcloud lokal angemeldet, Projekt `gardena-wetter`). Die Freischaltung deckt
   auch WN3, obwohl sie aelter ist als das Modell — geprueft 08.09.2026:
   anonym HTTP 401, mit Konto lesbar.
@@ -448,7 +448,7 @@ Befunde alarm#1, #2, #3, #4, #10, #12, tests#6 in `docs/review-2026-10-09.md`.
   im Monat - es passt") beruht auf 216 Ortsabrufen; er bleibt als
   Zeitdokument stehen, gueltig ist README "Was die Grenze kostet". Die
   Gewichtung selbst bleibt ungemessen (alarm#4).
-Stand 11.10.2026: Pass-2-Deckel von 320 auf 120 gesenkt (Andre, Commit 11b2e25) - ein
+Stand 11.10.2026: Pass-2-Deckel von 320 auf 120 gesenkt (Maintainer, Commit 11b2e25) - ein
 voller Lauf kostete 5.900 Einheiten (Member zaehlen mit) und passte weder in eine
 Stunde noch zweimal in einen Tag; der Waechter (T-0075) hatte die Seite am 10.10. als
 31,7 h alt gemeldet. Wirkung an den naechsten Tagen im alarm.log pruefen.
@@ -471,7 +471,7 @@ Stand 09.10.2026: umgesetzt - Lauf ohne Ergebnis wird nicht gebucht (Exit 1,
 leere Bloecke nicht gecacht, Wind paarweise, Abend ohne Wind uebersprungen);
 Seite traegt `streulicht-geholt` und prueft ihr Alter im Browser; Waechter
 `.github/workflows/waechter.yml` auf GitHub (bb686b7). Offen: Secret
-`NTFY_WAECHTER` (Andre), alarm#6 Nachtluecke nicht entschieden.
+`NTFY_WAECHTER` (Maintainer), alarm#6 Nachtluecke nicht entschieden.
 
 ### 09.10.2026 &mdash; Aus Doing und Next hierher verschoben (Review architektur#1, T-0082)
 

@@ -1,5 +1,5 @@
 """Die Stufe eines Abends - EINE Regel fuer Prognoseseite, Bewertungsseite,
-Bilanz und Alarm (T-0084, Entscheidung Andre 09.10.2026, Option B).
+Bilanz und Alarm (T-0084, Entscheidung Maintainer 09.10.2026, Option B).
 
 WAS SICH GEAENDERT HAT.  Bis dahin ordnete jede Seite den MEDIAN der 51
 Member in die Verteilung einzelner Analyse-Abende ein und las die Stufe an

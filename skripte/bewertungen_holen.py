@@ -75,7 +75,7 @@ def _nutzlast(text):
     """Die Maschinendaten aus einer Bewertungsnachricht.
 
     Seit 15.08.2026 traegt die Nachricht ZWEI Leser: Zeile 1 ist der Text,
-    den Andre auf dem Sperrbildschirm sieht, Zeile 2 das JSON fuer dieses
+    den Maintainer auf dem Sperrbildschirm sieht, Zeile 2 das JSON fuer dieses
     Skript.  Vorher war die ganze Nachricht JSON - deshalb wird von hinten
     nach vorn probiert, damit alte Eintraege im Topic weiter gelesen werden.
     """
@@ -216,7 +216,7 @@ def main():
                 # Selbsttests gehoeren nicht in die Messdaten.  Zweimal am
                 # 15./16.08. habe ich beim Vorfuehren echte Noten ins
                 # Produktivtopic geschickt - einmal mit heutigem Datum, was
-                # Andres eigene Bewertung ueberschrieben haette.  ntfy haelt
+                # Maintainers eigene Bewertung ueberschrieben haette.  ntfy haelt
                 # rund 12 h vor, ein Loeschen im Zustand allein reicht also
                 # nicht: der naechste Abruf holt sie zurueck.
                 if m.get("anlass") == "selbsttest":
@@ -227,7 +227,7 @@ def main():
                 # also immer wieder neu.  Nur ein spaeterer Widerruf kommt dagegen
                 # an.  Gebraucht am 16.08., als ein Selbsttest mit heutigem Datum
                 # im Produktivtopic landete; taugt aber auch fuer den Fall, dass
-                # Andre sich vertippt.
+                # Maintainer sich vertippt.
                 if m.get("anlass") == "widerruf":
                     ab = eintrag["abende"].get(m.get("tag"))
                     if ab:

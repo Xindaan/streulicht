@@ -21,9 +21,9 @@ vergleichen statt gegen alle Abende.
 mehr vorhandene `/usr/local/bin/python3`, es gibt keinen Rueckfallpunkt; das
 oeffentliche Repo zeigt noch den Advektionsfehler. **Vor dem Push** die private
 E-Mail-Adresse aus dem Messblock von T-0072 entfernen (wn3#F8). Entscheidung
-Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
+Maintainer (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
 
-- T-0084 Perzentil-Zonen an den Anteil der Member koppeln (Entscheidung Andre
+- T-0084 Perzentil-Zonen an den Anteil der Member koppeln (Entscheidung Maintainer
   09.10.2026 nach Vorlage `docs/entscheidungen-2026-10-09.md`, Option B;
   ersetzt die erste Wahl "Median neu eichen", methodik#F3). "selten" = mindestens
   die Haelfte der Member ueber s* (= Push-Bedingung), "auffaellig" = ein Anteil
@@ -42,7 +42,7 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   und Vermerk. Offen: Q nach Winter/Fruehjahr neu messen (nah dran 27,5 %,
   ab Vorlauf 5 Tage nur 10 %).
 
-- T-0085 Vorlauf-Versprechen abschwaechen (Entscheidung Andre 09.10.2026,
+- T-0085 Vorlauf-Versprechen abschwaechen (Entscheidung Maintainer 09.10.2026,
   methodik#F11). README Z. 3 und Seitentexte: "zwei bis zehn Tage im Voraus"
   auf "ab etwa 1-3 Tagen belastbar, weiter voraus nur Tendenz" umformulieren.
   Stand 09.10.2026: umgesetzt - README Z. 3 auf "bis zu zehn Abende voraus
@@ -51,21 +51,21 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   geaendert; Rechenweg unberuehrt. Offen: TASK.md Z. 3 und STATE.md Z. 45
   tragen noch die alte Formulierung (Steuerdateien, nicht angefasst).
 
-- T-0086 Sichtfaktor-Gewichtung erst messen (Entscheidung Andre 09.10.2026,
+- T-0086 Sichtfaktor-Gewichtung erst messen (Entscheidung Maintainer 09.10.2026,
   physik#4). Im Archiv zaehlen, wie oft tiefe Decke nur am Standort unter hohem
   Schirm vorkommt; Klimatologie und s* fuer gleich- und raumwinkelgewichteten
-  Sichtfaktor rechnen; Ergebnis Andre zur Entscheidung vorlegen.
+  Sichtfaktor rechnen; Ergebnis Maintainer zur Entscheidung vorlegen.
   Stand 09.10.2026: umgesetzt (Messung) - Rohdaten reichen (118 Zellen, 6
   Sichtzellen, 0 Luecken, kein Abruf). Fall hoher Schirm: 2 Abende in 11 Jahren,
   keiner ueber s*; Spielart mittlerer Schirm: 25 Abende, 2 Fehlalarme (2022-07-01,
   2023-10-10). Raumwinkel: s* 0,7065 -> 0,6928, Albumprobe nicht besser (Mittelrang
   0,674 -> 0,667, Differenz-CI schliesst 0 ein). Nachtrag in
   docs/entscheidungen-2026-10-09.md Abschnitt 3, Skript skripte/sichtfaktor_messung.py;
-  `score.py` unveraendert. Entscheidung B/C bei Andre offen, Messung stuetzt C.
+  `score.py` unveraendert. Entscheidung B/C bei Maintainer offen, Messung stuetzt C.
   Stand 13.10.2026: ENTSCHIEDEN C (gleich gewichtet lassen, Begruendung als
   Kommentar in sonnen/score.py, Term B (a)); Messung stuetzt C.
 
-- T-0087 Nachtluecke schliessen (Entscheidung Andre 09.10.2026 nach Vorlage,
+- T-0087 Nachtluecke schliessen (Entscheidung Maintainer 09.10.2026 nach Vorlage,
   Option A mit Kostenbedingung: kein Nachtlauf bei aktiver Kontingentsperre,
   bekommener Modelllauf ins Log; ein Nachtlauf kostet einen vollen Abruf, der
   Blockcache gilt je Modelllauf und UTC-Tag; alarm#6):
@@ -77,14 +77,14 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   (ein Nachtlauf zaehlt nicht), einmal je Nacht, Schalter `nachtlauf`, Sperre
   greift vor dem Abruf; Logzeile "Modelllauf: ... (Fenster nachts)". Kein Push
   nachts: Abend bleibt ungebucht, der naechste Tageslauf sendet (ab0d4dd,
-  test_nachtlauf.py, 10 Negativproben). Offen bei Andre: zurueckstellen statt
+  test_nachtlauf.py, 10 Negativproben). Offen bei Maintainer: zurueckstellen statt
   leise senden bestaetigen; Cache-Teilung nach zwei Wochen im Log nachzaehlen.
   Stand 13.10.2026: Push-Behandlung ENTSCHIEDEN - nachts kein Push, der
   naechste Tageslauf rechnet neu und sendet laut (wie gebaut).
 
 - T-0077 Bewertungskanal haerten (Review 09.10.2026). Das oeffentliche
   Bewertungs-Topic ist zugleich das abonnierte Erinnerungs-Topic: jede:r kann
-  Pushs mit Titel, Text und Klickziel an Andres Telefon schicken (bewertung#3).
+  Pushs mit Titel, Text und Klickziel an Maintainers Telefon schicken (bewertung#3).
   Dazu: `plausibel()` nimmt auch 20260915 und 2026-W38-2 (bewertung#2); die
   Sonnentafel der Bewertungsseite liefert ausserhalb von +-4 Tagen still den
   letzten Tafeltag (bewertung#1, Randfall mit stillem Datenschaden); die als
@@ -94,7 +94,7 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   Erinnerung geht auf ntfy_erinnerung aus konfig_geheim.json (Rueckfall mit
   Warnzeile aufs oeffentliche Topic), Datum nur noch YYYY-MM-DD, die Seite
   verweigert ausserhalb ihrer Sonnentafel die Bewertung, die Quittung
-  korrigiert sich nach stillem Nachsenden. OFFEN bei Andre: neues Topic
+  korrigiert sich nach stillem Nachsenden. OFFEN bei Maintainer: neues Topic
   waehlen, in konfig_geheim.json eintragen, abonnieren, altes abbestellen
   (README "Abenderinnerung empfangen"). bewertung#4 (fehlende Umbuchung
   18.08. -> 17.08.) ist NICHT Teil dieser Umsetzung und bleibt offen.
@@ -114,7 +114,7 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   Album-Trefferquote (befunde-e1), T-0006 (Gewichtung) und T-0072-Blocker;
   R_eff-Kommentar in geometrie.py; Escape-Sequenz in score_niveaus.py behoben,
   neu `test_syntax.py`. Score, Schwellen und Anzeige unveraendert. OFFEN bei
-  Andre (fachlich): F3 Seite zeigt Median-Rang gegen Einzelanalyse-Verteilung,
+  Maintainer (fachlich): F3 Seite zeigt Median-Rang gegen Einzelanalyse-Verteilung,
   physik#4 Sichtfaktor-Gewichtung, F11 Versprechen "2-10 Tage", F10
   Verankerung durch Prognoseseite und Push. STATE.md bewusst nicht angefasst;
   offen sind dort nur die F5-Zahlen (Z. 64-67: 18,5 Ausloesungen/Jahr, Januar,
@@ -172,7 +172,7 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
   (`skripte/logbuch.py`), erinnerung.py wartet aufs Netz und endet bei
   Versandfehler != 0, ausliefern.py baut jede Seite fuer sich und pusht mit
   Zeitgrenze, Tageskopie der Noten nach `daten/sicherung/` (`skripte/sicherung.py`).
-  OFFEN bei Andre: `sicherung_ordner` in konfig.json setzen (z. B. iCloud).
+  OFFEN bei Maintainer: `sicherung_ordner` in konfig.json setzen (z. B. iCloud).
 
 - T-0082 Doku und Steuerdateien (Review 09.10.2026): STATE.md 335 Zeilen statt
   Kurzstand, Next actions doppelt nummeriert und ueberfaellig (architektur#2);
@@ -206,7 +206,7 @@ Andre (oeffentliches Repo). Befunde betrieb#7, architektur#5, wn3#F8.
 
 Ein fremdes Modell (Fable 5.1) hat die Codebase gelesen und zehn Befunde
 gemeldet. Neun sind hier abgearbeitet, einer braucht eine Entscheidung von
-Andre. **Stand danach: 310 Python-Pruefungen + 41 JS, alle gruen.**
+Maintainer. **Stand danach: 310 Python-Pruefungen + 41 JS, alle gruen.**
 
 Jeder neue Waechter hat eine EIGENE Negativprobe bekommen &mdash; die Regel
 aus T-0054 (ein Waechter ohne eigenen Fall ist ungeprueft) ist hier viermal
@@ -306,10 +306,10 @@ laengste 724 Minuten** &mdash; knapp unter der 12-h-Grenze, aber eben knapp.
 
 - [x] `betrieb/de.greatbelow.streulicht.bewertung.plist` auf 24 stuendliche
       Termine, `plutil -lint` sauber
-- [x] **Geladen am 04.09.2026** (bootout + bootstrap durch Andre).
+- [x] **Geladen am 04.09.2026** (bootout + bootstrap durch Maintainer).
       Gegenprobe: 24 Kalendertermine, alle 24 Stunden belegt, installierte
       plist identisch mit der im Repo.
-- [x] **Geplantes Aufwecken gesetzt am 04.09.2026** (Andre, mit Passwort).
+- [x] **Geplantes Aufwecken gesetzt am 04.09.2026** (Maintainer, mit Passwort).
       Erst 08:00, nach der Rechnung unten korrigiert auf **02:00**.
       Gegenprobe `pmset -g sched`: `wakepoweron at 2:00AM every day`.
 
@@ -477,7 +477,7 @@ Die vier Agenten liefen auf `/usr/local/bin/python3` &mdash; einem Symlink auf
 das python.org-Framework **3.10.11**, dessen Sicherheitsunterstuetzung im
 Oktober 2026 endet. Ziel war Homebrew `python@3.13` (3.13.15).
 
-**Umgestellt auf `/Users/Andre/src/wetter/.venv/bin/python3`** &mdash; acht
+**Umgestellt auf `~/src/wetter/.venv/bin/python3`** &mdash; acht
 Dateien, je Agent die Repo-Kopie in `betrieb/` UND die installierte in
 `~/Library/LaunchAgents/` (beide waren byteweise identisch und sind es
 wieder). Danach je `launchctl bootout` + `bootstrap`; `launchctl print`
@@ -700,7 +700,7 @@ Tests: 192 Python-Pruefungen + 42 JS, alle gruen (vorher 153).
   Er schreibt jetzt nach jedem erfolgreichen Durchlauf
   `daten/archiv/<ort>/<tag>_<fenster>.json` - je Abend eine Zeile pro Member
   (Score, Schirm, A, B, Sicht, Weg) und das Medianfeld. 60 kB je Lauf, rund
-  44 MB im Jahr, **null zusaetzliche Abrufe**. Umfang nach Andres
+  44 MB im Jahr, **null zusaetzliche Abrufe**. Umfang nach Maintainers
   Entscheidung (Variante 1+2); Rohfelder je Member bleiben draussen, das
   waere ueber ein Gigabyte im Jahr fuer den Fall, dass die Score-Formel
   rueckwirkend geaendert wird.
@@ -729,7 +729,7 @@ Tests: 192 Python-Pruefungen + 42 JS, alle gruen (vorher 153).
   genau wie vorhergesagt. Die Seite zeigte trotzdem bis 17:50 den
   Vormittagsstand, weil der Auslieferungsagent stuendlich zur 50. Minute
   lief. 27 Minuten lang war alles richtig gerechnet und nichts davon
-  sichtbar; Andre hat es um 17:30 gemeldet.
+  sichtbar; Maintainer hat es um 17:30 gemeldet.
   Ein Bauen ohne Push kostet **0,27 s** (gemessen), und gepusht wird nur bei
   geaendertem Fingerabdruck - alle zehn Minuten kostet also praktisch
   nichts und senkt die Obergrenze fuer veraltete Seiten von 59 auf 10 min.
@@ -738,7 +738,7 @@ Tests: 192 Python-Pruefungen + 42 JS, alle gruen (vorher 153).
   **Braucht ein `launchctl bootout`/`bootstrap` des Seiten-Agenten.**
 
 ### 20.08.2026 &mdash; Der Verzug des Ensembles war zu guenstig gerechnet (T-0049)
-- T-0049 **8,7 h waren eine Einzelprobe, nicht der Verzug.** Andre ist ueber
+- T-0049 **8,7 h waren eine Einzelprobe, nicht der Verzug.** Maintainer ist ueber
   die Standzeile gestolpert: "Modelllauf 19.08., 18 UTC &#183; geholt 20.08.,
   11:20 Uhr" - 15,3 Stunden. Nachgemessen am 20.08. um 15:15 UTC:
 
@@ -906,7 +906,7 @@ Tests: 192 Python-Pruefungen + 42 JS, alle gruen (vorher 153).
   Minutenlimit-Pausen, 13 Abende im Zustand. T-0042 wirkt also im Betrieb.
 - T-0043 **Bewertung datiert nach dem letzten Sonnenuntergang.** Die Seite
   entschied bis heute nach der Uhr: "vor 04:00 zaehlt der Abend als
-  gestern". Am 18.08.2026 um 04:26 hat Andre den Sonnenuntergang des 17.
+  gestern". Am 18.08.2026 um 04:26 hat Maintainer den Sonnenuntergang des 17.
   bewertet - die Regel hat daraus den 18. gemacht, also einen Abend, der
   noch gar nicht stattgefunden hatte. Jede feste Uhrzeit liegt irgendwann
   schief: SU 21:33 im Juni, 15:53 im Dezember.
@@ -1023,7 +1023,7 @@ Tests: 192 Python-Pruefungen + 42 JS, alle gruen (vorher 153).
   jetzt beide Faelle: "Kein Abend im Fenster reisst die Schwelle von 50 %
   (hoechstens 12 %). Es kommt kein Push." bzw. den Alarmfall mit Uhrzeit.
 - T-0033 **Vorauswahl: entschieden fuer den naechsten Abend** (16.08.2026).
-  Andres Meldung wiegt schwerer als der Entwurf: wer die Seite aufmacht,
+  Maintainers Meldung wiegt schwerer als der Entwurf: wer die Seite aufmacht,
   fragt zuerst "wie wird es heute abend". Vom Entwurf uebernommen ist sein
   Eyebrow-Text - faellt die Vorauswahl auf den besten Abend im Fenster,
   sagt die Seite "Bester Abend im Fenster" statt "Gewaehlter Abend".
@@ -1046,7 +1046,7 @@ Tests: 192 Python-Pruefungen + 42 JS, alle gruen (vorher 153).
   T-0028; Termumbau als T-0029 notiert.
 
 - **T-0010 Produktseite auf den Hausstandard** (14.08.2026) — Portierung
-  von Andres Designsprache aus `poisson-dor` und `rezept-grid`, Werte und
+  von der Designsprache des Maintainers aus `poisson-dor` und `rezept-grid`, Werte und
   Herleitung in `docs/ui-referenz.md`. Neu: `stil/tokens.css` als einzige
   Farb- und Massquelle, von `skripte/tokens.py` gelesen und von `seite.py`
   in die Seite inlined; `schnitt.py` enthaelt danach keine feste Farbe mehr

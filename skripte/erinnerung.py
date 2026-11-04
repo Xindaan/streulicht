@@ -133,7 +133,7 @@ def erinnerungs_topic(ort, geheim):
 
     T-0077 (Review bewertung#3).  Das Bewertungs-Topic steht im Klartext in
     der ausgelieferten Seite; wer den Quelltext liest, kann ueber ein
-    abonniertes Topic beliebige Pushs mit Klickziel auf Andres Telefon
+    abonniertes Topic beliebige Pushs mit Klickziel auf Maintainers Telefon
     schicken, die wie die eigene Erinnerung aussehen.  Die Erinnerung geht
     deshalb auf ein eigenes, geheimes Topic: `ntfy_erinnerung` in
     konfig_geheim.json, je Ortsname - dieselbe Form wie `ntfy_alarm`.  Die
@@ -227,7 +227,7 @@ def main():
         # VOR dem Sonnenuntergang raus (seit T-0041 sonnenuntergangsrelativ,
         # davor fest um 7:30) - zu beiden Zeitpunkten bewertet niemand einen
         # Sonnenuntergang, der noch nicht stattgefunden hat.  Die
-        # Unterscheidung ist aber der Kern der Auswertung: bewertet Andre
+        # Unterscheidung ist aber der Kern der Auswertung: bewertet Maintainer
         # nach einem Alarm systematisch anders als an einem gewoehnlichen
         # Abend, ist die Bewertungsreihe verzerrt und muss getrennt
         # ausgewertet werden.

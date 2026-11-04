@@ -2,7 +2,7 @@
 
 Zwei Quellen, klar gewichtet.
 
-**Primaer: Andres eigene Designsprache.** Sie existiert bereits, ist
+**Primaer: Maintainers eigene Designsprache.** Sie existiert bereits, ist
 dokumentiert und ueber zwei Projekte konsistent — `poisson-dor` (oeffentlich,
 github.com/Xindaan/poisson-dor) und `rezept-grid` (~/src/rezept-grid, dessen
 `css/stil.css` ausdruecklich auf `poisson-dor/assets/tokens.css` als Herkunft
@@ -25,7 +25,7 @@ Zeile), `rezept-grid/css/stil.css`.
 
 ## 1.1 Der entscheidende Befund: es ist ein System, keine Optik
 
-Die Produktseite benutzt heute **denselben Schriftstack** wie Andres
+Die Produktseite benutzt heute **denselben Schriftstack** wie Maintainers
 Projekte. Sie sieht trotzdem generisch aus. Der Unterschied ist nicht die
 Schrift, sondern die Disziplin dahinter:
 
@@ -249,7 +249,7 @@ siehe 2.1). Gesehen wurde also die **degradierte** Mobilansicht, nicht ihre
 normale. Ueber deren eigentliches Telefonverhalten ist weiterhin nichts
 gesagt.
 
-**Was daraus folgt:** Andres Punkt "man kann sich gut bewegen" beschreibt
+**Was daraus folgt:** Maintainers Punkt "man kann sich gut bewegen" beschreibt
 eine Breitbild-Erfahrung. Ihre Struktur — Ereignisse an ihrer echten
 Himmelsposition, freie Umsicht — auf 375 px zu uebertragen, reproduziert
 genau diese Kollision. Das ist der zweite, unabhaengige Grund gegen das

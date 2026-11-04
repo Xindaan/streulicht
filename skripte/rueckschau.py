@@ -1,6 +1,6 @@
 """Erzeugt eine Rueckschau-Seite: was haette der Score an vergangenen Abenden gesagt?
 
-Der direkteste verfuegbare Test von "funktioniert es": Andre schlaegt Abende
+Der direkteste verfuegbare Test von "funktioniert es": Maintainer schlaegt Abende
 nach, an die er sich erinnert, und vergleicht mit dem Score.  Kein Kontingent
 noetig - alles kommt aus dem Klimatologie-Blockcache.
 

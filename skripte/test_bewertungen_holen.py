@@ -22,7 +22,7 @@ Wert-Huerde je Block (welche Regression macht ihn rot):
   kein ISO-Datum) wird in die Zustandsdatei geholt - und weil ntfy 12 h
   vorhaelt, bei JEDEM Abruf wieder.  Der Abend VOR dem Projektstart ist der
   Fall, den Waechter 1 NICHT faengt (er liegt in der Vergangenheit).
-* Waechter 3 Selbsttest-Filter: eine Probe-Note ueberschreibt Andres echte.
+* Waechter 3 Selbsttest-Filter: eine Probe-Note ueberschreibt Maintainers echte.
 * Waechter 4 Ort-Filter: die Note eines Ortes landet beim anderen.
 
 Lauf:  .venv/bin/python3 skripte/test_bewertungen_holen.py

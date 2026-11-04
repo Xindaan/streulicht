@@ -1,7 +1,7 @@
 """Der eigentliche Validierungstest: kuratiertes Album gegen die Klimatologie.
 
 Presence-Only, und das ist Absicht.  Ein fehlendes Foto heisst nicht
-"schlechter Abend" - Andre war vielleicht nicht in Berlin oder hat nicht
+"schlechter Abend" - Maintainer war vielleicht nicht in Berlin oder hat nicht
 hingesehen.  Die offene Frage ist aber einseitig: haette der Alarm an den
 Abenden gefeuert, die er als gut erinnert?  Dafuer reichen Positive.  Die
 Gegenseite, wie oft der Alarm daneben feuert, steht per Konstruktion fest -

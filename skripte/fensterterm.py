@@ -516,13 +516,13 @@ def bericht(erg, noten, referenz):
             print("  %-9s n=%d  B_hyb - B_mod: Mittel %+.3f, Median %+.3f, "
                   "Anteil > 0.1: %.0f %%" % (name, h[0], h[1], h[2], 100 * h[3]))
 
-    # Rangkorrelation mit Andres Noten
+    # Rangkorrelation mit Maintainers Noten
     paare = [(noten[t], erg[t]["B"], erg[t]["B_hyb"], erg[t]["B_sat"])
              for t in album if erg[t].get("B_hyb") is not None]
     if len(paare) >= 5:
         r = [_rangkorrelation([p[0] for p in paare], [p[i] for p in paare])
              for i in (1, 2, 3)]
-        print("\nSpearman gegen Andres Note (n=%d):  B_modell %s   B_hybrid %s"
+        print("\nSpearman gegen Maintainers Note (n=%d):  B_modell %s   B_hybrid %s"
               "   B_sat %s" % (len(paare), _f(r[0]), _f(r[1]), _f(r[2])))
 
     # Wo sitzt der Toeter?  Fuer Abende mit engem Weg (weg_hyb < 0.5): das

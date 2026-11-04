@@ -3,7 +3,7 @@
 WARUM SIE "BISHER" HEISST UND NICHT "RUECKSCHAU".  Der Entwurf nennt sie
 Rueckschau; der Name ist aber schon vergeben.  `skripte/rueckschau.py`
 erzeugt seit Wochen eine lokale DIAGNOSE ueber vier Jahre Klimatologie
-(9,5 MB, gitignoriert, nie ausgeliefert - sie zeigt Andres Albumabende neben
+(9,5 MB, gitignoriert, nie ausgeliefert - sie zeigt Maintainers Albumabende neben
 meinen Bewertungen).  Zwei Dinge im selben Projekt gleich zu nennen ist
 genau der Weg, auf dem am 15.08.2026 beinahe die falsche Datei
 veroeffentlicht worden waere.  Also: Diagnose = Rueckschau, Produkt = Bisher.

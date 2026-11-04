@@ -282,7 +282,7 @@ Der Abruf laeuft seit dem 04.09.2026 **stuendlich** statt alle drei Stunden.
 Das verkleinert das Fenster, schliesst es aber nicht: gegen einen Schlaf von
 mehr als 12 h hilft nur ein geplantes Aufwecken
 (`pmset repeat wakeorpoweron ...`), und das ist eine Systemeinstellung, die
-Andre selbst setzen muss.
+Maintainer selbst setzen muss.
 
 ## Konfiguration
 
@@ -335,7 +335,7 @@ das braucht ein Alarm, dessen Fenster einmal am Tag offen steht.
 
 Vier Agenten in `~/Library/LaunchAgents/`, alle mit `WorkingDirectory` und
 absolutem Interpreterpfad (launchd hat kein PATH). Der Interpreter ist seit
-dem 30.08.2026 `/Users/Andre/src/wetter/.venv/bin/python3` (Homebrew 3.13);
+dem 30.08.2026 `~/src/wetter/.venv/bin/python3` (Homebrew 3.13);
 die Vorlagen dazu liegen versioniert in `betrieb/`. `ausliefern.py` startet
 seine Kindprozesse ueber `sys.executable`, der Wechsel erbt sich also von
 selbst auf `seite.py`, `bewertungsseite.py` und `bisher.py`:

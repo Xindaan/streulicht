@@ -17,7 +17,7 @@ Zustand, `sende` durch eine Attrappe ersetzt.
 KONFIGURATION (T-0079, Review bewertung#9): der Test liest NICHT die
 Produktiv-`konfig.json`, sondern TESTKONFIG weiter unten.  Vorher uebernahm er
 sie samt `bewertung_tage_pro_woche`; jeder Wert unter 7 (die Wochenstichprobe,
-die Andre jederzeit einstellen darf) machte die Suite rot, obwohl
+die Maintainer jederzeit einstellen darf) machte die Suite rot, obwohl
 erinnerung.py stimmte - bei 2 bis 6 Tagen fielen 2 Pruefungen durch, bei 1 Tag
 sechs.  Wert-Huerde: eine Aenderung an der Betriebskonfiguration (Wochen-
 stichprobe, Vorlauf, Fenster, Topic-Name) darf diesen Test nicht mehr
@@ -193,7 +193,7 @@ pruefe(n == 1 and ENDE[0] is None,
 
 print("\n8. Erinnerung geht auf das GEHEIME Topic (T-0077, bewertung#3)")
 # Das oeffentliche Bewertungs-Topic steht im Klartext in der Seite; wer es
-# kennt, kann Pushs mit Klickziel auf Andres Telefon schicken.  Die Erinnerung
+# kennt, kann Pushs mit Klickziel auf Maintainers Telefon schicken.  Die Erinnerung
 # soll deshalb ueber `ntfy_erinnerung` in konfig_geheim.json laufen.
 oeffentlich = TESTKONFIG["orte"][0]["ntfy_bewertung"]   # steht im Klartext in der Seite
 GEHEIM = "sl-erinnerung-testtopic-geheim"

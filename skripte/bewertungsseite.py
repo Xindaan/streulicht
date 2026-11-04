@@ -77,7 +77,7 @@ def sonnentafel(ort, tage=4):
 
     WOZU (18.08.2026).  Die Seite muss wissen, WELCHEN Abend eine Bewertung
     meint.  Sie hat das bis heute an einer festen Uhrzeit entschieden: "vor
-    04:00 zaehlt der Abend als gestern".  Am 18.08. um 04:26 hat Andre den
+    04:00 zaehlt der Abend als gestern".  Am 18.08. um 04:26 hat Maintainer den
     Sonnenuntergang des 17. bewertet - die Regel hat daraus den 18. gemacht,
     also einen Abend, der noch gar nicht stattgefunden hatte.
 

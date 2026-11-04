@@ -324,7 +324,7 @@ behalten, nicht A - das Gegenteil der Intuition.
 
 ## 9 Validierung gegen kuratierte Sonnenuntergaenge (14.08.2026)
 
-Andre hat per semantischer Suche ("sonnenuntergang berlin") in der iOS-Fotos-App
+Maintainer hat per semantischer Suche ("sonnenuntergang berlin") in der iOS-Fotos-App
 eine Liste echter Sonnenuntergangsaufnahmen geliefert.  Das ist ein
 Absichtslabel, das jede Heuristik schlaegt.
 
@@ -369,7 +369,7 @@ Damit ist das E0-Abbruchkriterium bestanden.
 Der Score hebt gute Abende von Rang 0.50 auf 0.68.  Ein 5-%-Alarm braucht sie
 bei 0.95.  Obere 95-%-Grenze der wahren Trefferquote bei 0 von 11: **24 %**.
 
-**Andres 29.03.2025** ("spektakulaer"): absolut S = 0.212, saisonal aber
+**Maintainers 29.03.2025** ("spektakulaer"): absolut S = 0.212, saisonal aber
 Rang 0.81.  Der Score hat den Abend erkannt; versenkt hat ihn Entscheidung D1
 (absoluter Schwellwert) - im Maerz sind alle Scores niedrig.
 
@@ -400,7 +400,7 @@ wuerde es auf n = 50-80 bringen und die Produktentscheidung tragfaehig machen.
 
 ## 10 Raumwinkelgewichtung des Schirmterms (14.08.2026)
 
-**Ausgeloest durch einen Gegenfall von Andre:** der 29.03.2025 war
+**Ausgeloest durch einen Gegenfall vom Maintainer:** der 29.03.2025 war
 "spektakulaer", der Score gab 0.212.  Was ERA5 sah:
 
 | d [km] | hoch | mittel | tief |
@@ -458,7 +458,7 @@ exakter Gegenprobe machte den Vergleich belastbar.
 
 ## 11 Albumtest, n = 43 (14.08.2026)
 
-Andre hat die semantische Suche "sonnenuntergang" in ein Album gelegt.
+Maintainer hat die semantische Suche "sonnenuntergang" in ein Album gelegt.
 80 Abende in Berlin, 43 davon in der Klimatologie 2022-2025.  Drei Abende
 aus der Score-Balken-Durchsicht sind als zirkulaer ausgeschlossen.
 
@@ -567,7 +567,7 @@ neue Klimatologie.
 
 ## 13 Nachglut-Geometrie und tiefe Wolken als Schirm (14.08.2026)
 
-Andres Einwand: "Ich muss die Sonne nicht sehen koennen.  Spektakulaer
+Maintainers Einwand: "Ich muss die Sonne nicht sehen koennen.  Spektakulaer
 leuchtende Wolken gehen auch ohne.  Dafuer kann die Sonne sogar schon
 untergegangen sein."
 
@@ -597,7 +597,7 @@ Mittelrang nicht (0.683 / 0.675 / 0.678), die Trefferquote wackelt zwischen
 
 **Die zeitliche Haelfte ist damit NICHT getestet.**  Das Wolkenfeld im Cache
 ist das zur Sonnenuntergangsstunde; wie der Himmel 15 Minuten spaeter
-aussieht, steht dort nicht.  Genau darin liegt Andres Beobachtung.  Ein
+aussieht, steht dort nicht.  Genau darin liegt Maintainers Beobachtung.  Ein
 echter Test braucht Wolkenfelder zur Folgestunde - neue Klimatologie.
 
 ### 13.3 Nebenbefund: tiefe Wolken taugen nicht als Schirm
@@ -619,7 +619,7 @@ ist ueberall ersetzt.
 
 ### 13.5 Grenze des Albums als Messlatte
 
-Andre wohnt mit Blick nach NNW (rund 337 Grad).  Der Sonnenuntergangsazimut
+Maintainer wohnt mit Blick nach NNW (rund 337 Grad).  Der Sonnenuntergangsazimut
 laeuft von 229 Grad (Dez) bis 312 Grad (Jun) - im Dezember also 108 Grad
 neben dem Fenster.  Die Albumverteilung zeigt das direkt:
 
@@ -634,7 +634,7 @@ Feinschliff.
 
 ## 14 Drei Hypothesen offline getestet, alle widerlegt (14.08.2026)
 
-Ausgangspunkt: Andres 03.05.2024.  Foto zeigt einen angeleuchteten
+Ausgangspunkt: Maintainers 03.05.2024.  Foto zeigt einen angeleuchteten
 Makrelenhimmel mit orangem Horizontband, das Modell HAT die hohen Wolken -
 und der Score gibt S = 0.000, Rang 0.14.  Also kein Datenfehler.
 
@@ -827,11 +827,11 @@ keine Verblindung.  Sie ist ein Warnsignal, kein Befund.*
 
 ## 19 Blindbewertung der Albumfotos (14.08.2026)
 
-Andre bat um eine eigene Bewertung.  Durchgefuehrt **blind**: die 41 Bilder
+Maintainer bat um eine eigene Bewertung.  Durchgefuehrt **blind**: die 41 Bilder
 wurden gemischt, nummeriert und als Kontaktboegen bewertet; die Zuordnung
 Nummer->Datum wurde erst nach der letzten Note geoeffnet.  Ohne das haette
 die Kenntnis des Scores die Noten geankert - dieselbe Disziplin, die die
-Bewertungsseite fuer Andre erzwingt.
+Bewertungsseite fuer Maintainer erzwingt.
 
 Notenverteilung: 1x0, 2x13, 3x15, 4x11, 5x2.
 
@@ -870,20 +870,20 @@ Score-Verbesserung.
 - Ein Bewerter, konservative Skala (2 von 41 bekamen die Hoechstnote).
 - Blind gegenueber dem Score, aber nicht gegenueber dem Projektziel.
 
-Sie ersetzt Andres eigenes Urteil nicht - sie liefert eine zweite, unabhaengige
+Sie ersetzt Maintainers eigenes Urteil nicht - sie liefert eine zweite, unabhaengige
 Ordnung, und ihre Uebereinstimmung mit seiner waere selbst eine Messung wert.
 
 ## 20 Zwei Bewerter, ein Score - und die eigentliche Obergrenze (14.08.2026)
 
-Andre hat 80 Abende selbst benotet (2014-2026), 46 davon liegen in der
+Maintainer hat 80 Abende selbst benotet (2014-2026), 46 davon liegen in der
 Klimatologie, 40 ueberlappen mit meiner Blindbewertung.
 
 ### 20.1 Die Betrachter sind sich uneinig
 
-    rho(ich, Andre) = +0.243   n = 40   z = +1.52   NICHT signifikant
+    rho(ich, Maintainer) = +0.243   n = 40   z = +1.52   NICHT signifikant
     exakt gleiche Note: 14 von 40 (35 %)
     hoechstens 1 daneben: 34 von 40 (85 %)
-    Mittel: ich 3.00, Andre 3.55 - ich benote strenger
+    Mittel: ich 3.00, Maintainer 3.55 - ich benote strenger
 
 **Das ist der wichtigste Wert des ganzen Projekts.**  Zwei Betrachter, dieselben
 Fotos, kein Zeitdruck - und die Rangfolge stimmt kaum ueberein.
@@ -892,10 +892,10 @@ Fotos, kein Zeitdruck - und die Rangfolge stimmt kaum ueberein.
 
 | Gegen | alle | ohne belegte Datenfehler |
 |---|---|---|
-| Andre | rho +0.106 (n=46) | **rho +0.205** (n=43) |
+| Maintainer | rho +0.106 (n=46) | **rho +0.205** (n=43) |
 | ich | rho +0.074 (n=41) | **rho +0.257** (n=37) |
 
-Keiner signifikant.  Aber: **der Score sagt Andres Urteil fast so gut vorher
+Keiner signifikant.  Aber: **der Score sagt Maintainers Urteil fast so gut vorher
 wie ich es tue** (0.205 gegen 0.243) - und ich hatte die Fotos vor Augen.
 
 ### 20.3 Die Obergrenze
@@ -906,7 +906,7 @@ erreichen.  Der Score liegt bei 0.205, also bei **42 % des theoretisch
 Moeglichen**.
 
 Minderungskorrigiert waere rho gegen ein rauschfreies Ziel etwa 0.42.
-*Vorsicht:* rho(ich, Andre) ist selbst nur mit n = 40 geschaetzt und nicht
+*Vorsicht:* rho(ich, Maintainer) ist selbst nur mit n = 40 geschaetzt und nicht
 signifikant (KI etwa −0.07 bis +0.52).  Die Korrektur ist eine
 Groessenordnung, keine Zahl.  Und der Vergleich zweier nicht signifikanter
 Korrelationen traegt wenig - was traegt, ist das Argument ueber die
@@ -930,17 +930,17 @@ fangen 23 % der Albumabende, und mehr Trennschaerfe gibt das Ziel nicht her.
 
 ### 20.5 Der Nachtlauf ist wieder wertvoller geworden
 
-Andres Noten in der jetzigen Klimatologie (2022-2025): 46.
+Maintainers Noten in der jetzigen Klimatologie (2022-2025): 46.
 Im Bereich des Nachtlaufs (2015-2025): **72** - plus 57 %.
 
 ## 21 Die Obergrenzen-Rechnung aus 20.3 ist ungueltig (14.08.2026)
 
-Andre vermutete einen Reihenfolgeneffekt in seiner eigenen Bewertung (er ging
+Maintainer vermutete einen Reihenfolgeneffekt in seiner eigenen Bewertung (er ging
 von neu nach alt und koennte strenger geworden sein).  **Nicht bestaetigt:**
 rho(Position, Note) = −0.047, z = −0.42.  Viertel-Mittelwerte 3.65 / 3.55 /
 3.60 / 3.40.
 
-Die groessten Deltas sind dagegen einseitig: Andre hoeher in 20 Faellen, ich
+Die groessten Deltas sind dagegen einseitig: Maintainer hoeher in 20 Faellen, ich
 in 6, gleich in 14.  Die zwei groessten (Delta +3):
 
 - **2025-05-26** - graue Decke mit hellem Spalt, und **Strahlenbuescheln**,
@@ -952,7 +952,7 @@ in 6, gleich in 14.  Die zwei groessten (Delta +3):
 Wolkenflaeche - also Term A, woertlich.**  Ich hatte in Abschnitt 19.3
 befuerchtet, nach den Kriterien des Modells zu bewerten; an diesen beiden
 Bildern ist es belegt.  Strahlenbuescheln, Lichtstruktur und Kontrast kommen
-in meinem Maszstab nicht vor, in Andres offensichtlich schon.
+in meinem Maszstab nicht vor, in Maintainers offensichtlich schon.
 
 ### 21.1 Was das entwertet
 
@@ -962,7 +962,7 @@ Score liegt bei 42 % davon."
 
 **Diese Rechnung setzt voraus, dass ich ein UNABHAENGIGER zweiter Betrachter
 bin.  Bin ich nicht.**  Meine Noten sind die Modellkriterien von Hand
-angewandt.  Dass rho(ich, Andre) = 0.243 und rho(Score, Andre) = 0.205 so
+angewandt.  Dass rho(ich, Maintainer) = 0.243 und rho(Score, Maintainer) = 0.205 so
 dicht beieinander liegen, ist deshalb kein Zufall, sondern der Beleg: beide
 Zahlen messen ungefaehr dasselbe.
 
@@ -973,13 +973,13 @@ wohldefinierte Frage") nicht mehr getragen.
 
 ### 21.2 Was einen echten Wert liefern wuerde
 
-- **Test-Retest:** Andre benotet in einigen Wochen dieselben Fotos noch
+- **Test-Retest:** Maintainer benotet in einigen Wochen dieselben Fotos noch
   einmal, blind gegenueber seiner ersten Liste.  Die Uebereinstimmung mit
   sich selbst ist die obere Schranke fuer jede Vorhersage.  Billig und sauber.
 - **Zweiter Mensch:** jemand, der das Projekt nicht kennt.
 - **Nicht geeignet:** ich - solange ich weiss, worauf der Score schaut.
 
-## 22 Andres Kriterium "Varianz im Himmel" (14.08.2026)
+## 22 Maintainers Kriterium "Varianz im Himmel" (14.08.2026)
 
 Auf die Frage, was seine 3 von seiner 5 unterscheidet, wenn beide zur Familie
 "goldenes Licht bricht unter einer Decke durch" gehoeren:
@@ -997,7 +997,7 @@ Mittelwert haben.
 **Erste Fassung** - Verteilung der WOLKE ueber Elevationsbaender
 (0-5, 5-15, 15-35, 35-90 Grad), gemessen als 1 minus Herfindahl:
 
-    Andre  Score bisher rho +0.205  ->  x Ausdehnung rho +0.193
+    Maintainer  Score bisher rho +0.205  ->  x Ausdehnung rho +0.193
     ich    Score bisher rho +0.257  ->  x Ausdehnung rho +0.197
 
 Und bei zwei der drei Paare **identisch** (0.66 gegen 0.66, 0.51 gegen 0.51).
@@ -1014,7 +1014,7 @@ score_distanz, also Wolke x Raumwinkel x Sicht x Weg):
 | 2022-06-20 / 2022-08-03 | **0.15 / 0.31** richtig |
 
 Zwei von drei Paaren in der richtigen Richtung - aber ueber alle 43 Abende
-kein Gewinn (rho +0.205 -> +0.200 bei Andre, +0.257 -> +0.182 bei mir).
+kein Gewinn (rho +0.205 -> +0.200 bei Maintainer, +0.257 -> +0.182 bei mir).
 
 ### 22.2 Warum hier Schluss ist
 
@@ -1027,12 +1027,12 @@ trotzdem getan haette.
 **Das Kriterium bleibt notiert und unerledigt.**  Es ist artikuliert,
 physikalisch sinnvoll und trifft zwei von drei Testfaellen - aber mit n = 43
 an einem Ziel dieser Reliabilitaet nicht entscheidbar.  Wieder aufnehmen,
-wenn (a) der Nachtlauf n auf 72 hebt und (b) Andres Test-Retest die
+wenn (a) der Nachtlauf n auf 72 hebt und (b) Maintainers Test-Retest die
 Reliabilitaet des Ziels kennt.
 
 ## 23 Varianzeinschraenkung - die Frage war falsch gestellt (14.08.2026)
 
-Andre: *"Vielleicht ist es aber so, dass ALLE Sonnenuntergaenge schon ganz gut
+Maintainer: *"Vielleicht ist es aber so, dass ALLE Sonnenuntergaenge schon ganz gut
 sind.  Sonst haette ich sie nicht ausgewaehlt (oder fotografiert)."*
 
 Das ist Varianzeinschraenkung, und sie erklaert die niedrigen Korrelationen
@@ -1089,13 +1089,13 @@ derselben Groessenordnung.
 Bivariat normal angenommen.  Die Auswahl erfolgte nicht rein nach Qualitaet
 (Verfuegbarkeit, Blickrichtung NNW, ueberhaupt zu Hause sein) - unreine
 Auswahl schwaecht den Einschraenkungseffekt, das wahre rho laege dann
-niedriger als geschaetzt.  Und rho ist gegen ANDRES Note gemessen, die ihre
+niedriger als geschaetzt.  Und rho ist gegen die Note des MAINTAINERS gemessen, die ihre
 eigene Unzuverlaessigkeit hat; gegen ein rauschfreies Ziel waere es hoeher.
 
 ## 24 Elf Jahre Klimatologie: alles neu gerechnet (14.08.2026)
 
 Der Nachtlauf ist durch - `score_berlin_g0.5_2015_2025.json`, 4018 Abende.
-Andres Noten darin: **72** statt 46.  Albumabende: **70** statt 43.
+Maintainers Noten darin: **72** statt 46.  Albumabende: **70** statt 43.
 
 ### 24.1 Anreicherung, deutlich staerker
 
@@ -1146,13 +1146,13 @@ ueber alle Noten (2/2/2/3) - keine Rosinenpickerei.
 rho(Note, Rang) steigt von +0.133 auf **+0.207** (z +1.63, p 0.10) - immer
 noch nicht signifikant, aber passend zur Varianzeinschraenkung aus 23.
 
-### 24.4 Warum Andres Fuenfen einbrechen
+### 24.4 Warum Maintainers Fuenfen einbrechen
 
 Die 14 Fuenfen zerfallen sauber:
 
 **Acht mit Rang 0.73 bis 0.99** - bei allen sieht das Modell substantielle
 Bewoelkung (A = 0.35 bis 0.99).  Wenn die Daten stimmen, setzt der Score
-Andres Fuenfen ganz nach oben.
+Maintainers Fuenfen ganz nach oben.
 
 **Fuenf mit Rang 0.10 bis 0.58**, und die Ursachen sind benannt:
 
@@ -1168,7 +1168,7 @@ Das Foto vom 09.07.2018 zeigt intensiv rosa angeleuchtete Wolken unter einer
 grauen Decke - und das Modell HATTE 85 % hohe Bewoelkung ueber Berlin.  Kein
 Datenfehler, sondern der Fensterterm.
 
-**Datenfehlerquote unter Andres Fuenfen: 3 von 14 = 21 %**, deutlich hoeher
+**Datenfehlerquote unter Maintainers Fuenfen: 3 von 14 = 21 %**, deutlich hoeher
 als die 12.5 % ueber alle bewerteten Abende.  Gerade bei den besten Abenden
 sieht ERA5 am haeufigsten nichts.
 
@@ -1223,7 +1223,7 @@ eine andere Variable desselben Modells zu schliessen.  Sie braucht
   kostenlos.  Damit waere pruefbar, ob die Wolke ueberhaupt da war.
 
 Der Hybrid (nur die Zelle ueber Berlin aus der Feuchte, Rest wie bisher)
-bringt marginal: Album-Anreicherung 0.674 -> 0.690, rho gegen Andres Noten
+bringt marginal: Album-Anreicherung 0.674 -> 0.690, rho gegen Maintainers Noten
 unveraendert.  Nicht uebernommen.
 
 ## 26 Die harten Nullen sind Signal, kein Fehler (14.08.2026)
@@ -1240,7 +1240,7 @@ dass gute Abende daran sterben.  **Gemessen, bevor gebaut wurde:**
 
 **KORREKTUR am selben Abend, im Selbstreview gefunden.**  Der Vergleich oben
 stellt das Album ALLEN uebrigen Abenden gegenueber - auch den Winterabenden.
-Andres Album reicht aber nur von Maerz bis Oktober, Schwerpunkt Juni, und
+Maintainers Album reicht aber nur von Maerz bis Oktober, Schwerpunkt Juni, und
 zwischen November und Februar liegt **kein einziger** Abend darin.  Genau
 dort wird der Score am haeufigsten null.  Der Vergleich mass also zu einem
 grossen Teil Jahreszeit.
@@ -1330,7 +1330,7 @@ Bedingung.
 ## 28 T-0001b: das Absichtssignal traegt in die richtige Richtung, aber zu schwach
 
 Der urspruengliche Presence-Only-Test verglich Abende MIT Fotos gegen alle
-uebrigen - und mass damit vor allem, ob Andre draussen war.  Konfundiert.
+uebrigen - und mass damit vor allem, ob Maintainer draussen war.  Konfundiert.
 
 Sauberer Aufbau: nur die **768 Draussen-Abende** in Berlin (Fotos innerhalb
 +/- 45 min um den Sonnenuntergang, 2015-2025).  Innerhalb dieser Menge ist
@@ -1413,7 +1413,7 @@ die Differenz braeuchte es 177 Bloecke statt 35: 885 Abende, rund 32 000
 Abfragen, etwa 3.2 Tagesbudgets.
 
 **Gegenlaeufiger Nebenbefund.**  Innerhalb des Albums ordnet ICON-D2
-schlechter (Spearman gegen Andres Noten +0.259 gegen +0.411 bei ERA5).  Es
+schlechter (Spearman gegen Maintainers Noten +0.259 gegen +0.411 bei ERA5).  Es
 trennt Album von Kontrolle besser und ordnet innerhalb des Albums schlechter.
 Bei n = 34 und der bekannten Varianzeinschraenkung ist dieser Unterschied
 nicht belastbar - aber er passt zu Befund 22: Anreicherung und Ordnung sind
@@ -1421,7 +1421,7 @@ verschiedene Faehigkeiten.
 
 **Und der Punkt, der den Rest erledigt:** ICON-D2 hat **48 h Vorlauf** und
 existiert nur ueber Mitteleuropa.  Der Alarm braucht 2 bis 10 Tage, und
-Andre will die App fuer Freundinnen und Freunde an beliebigen Orten.  Selbst
+Maintainer will die App fuer Freundinnen und Freunde an beliebigen Orten.  Selbst
 ein klar positives Ergebnis haette den Betriebsscore nicht ersetzen koennen,
 sondern nur als Validierungswerkzeug getaugt.  Die 3.2 Tagesbudgets fuer den
 Nachweis lohnen sich damit nur, wenn man wissen will, WARUM es klemmt - nicht,
@@ -1734,7 +1734,7 @@ DATEN auf dem Lichtweg (Modell setzt Wolken nach Westen, die nicht da waren)
 oder im TERM (die Wolken waren da, das Licht kam trotzdem durch)?  Die
 Wolkenmaske sieht den ganzen Faecher bis 420 km und entscheidet das je Abend.
 
-**Aufbau.**  Alle 79 Albumabende mit Andres Note (2018-2026) plus je ein
+**Aufbau.**  Alle 79 Albumabende mit Maintainers Note (2018-2026) plus je ein
 Referenzabend - gleicher Kalendertag, anderes Jahr, nicht im Album, damit die
 Daemmerung und damit die Entscheidbarkeit der Maske gleich verteilt ist.  Der
 Fensterterm wird dreimal mit derselben Formel gerechnet (Nachbildung von
@@ -1808,7 +1808,7 @@ Phantomwolken auf dem Weg gibt es, aber sie sind ein leichter allgemeiner
 Hang des Modells und **keine Eigenart der guten Abende**.
 
 Innerhalb des Albums korreliert das Fenster nicht mit der Note, egal woher
-es kommt: Spearman gegen Andres Note B_mod -0.01, B_hyb -0.01, B_sat -0.20
+es kommt: Spearman gegen Maintainers Note B_mod -0.01, B_hyb -0.01, B_sat -0.20
 (n = 79).  Das ist kein neuer Befund (Abschnitt 20-23), aber jetzt auch fuer
 das satellitenkorrigierte Fenster gemessen.
 
@@ -1845,7 +1845,7 @@ verschiedenen Umbauten:
 
 Zwei Nebenbefunde: (1) Die vier bestaetigten Abende haben in der Maske
 89-100 % Saeule auch im Sichtbereich bis 60 km - "voller Himmel" ist fuer
-Andre kein Hindernis, sondern der Stoff.  Der Sichtterm zaehlt genau das als
+Maintainer kein Hindernis, sondern der Stoff.  Der Sichtterm zaehlt genau das als
 Blockade (Abschnitt 15.3).  (2) Tote Fenster sind an Referenzabenden fast
 fuenfmal haeufiger (14 gegen 3) - das Fenster traegt Signal, es ist nur an
 den Toeter-Abenden zu hart.
@@ -2004,7 +2004,7 @@ ist T-0018 (beleuchtete tiefe Decke): `kurz` und `mittel` heben B von 0.03 auf
 0.45, weil das Segment jenseits der Tangente (240-300 km, 93 %) wegfaellt oder
 untergeht - S = 0.39 bleibt trotzdem unter jeder Schwelle.
 
-**Trefferquote bei gleicher Alarmrate, Album n = 79 (Andres benotete Abende):**
+**Trefferquote bei gleicher Alarmrate, Album n = 79 (Maintainers benotete Abende):**
 
 | Variante | 18/Jahr | 25/Jahr | 37/Jahr | gepaart gegen produkt bei 18/Jahr |
 |---|---|---|---|---|

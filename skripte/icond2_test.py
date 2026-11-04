@@ -1,7 +1,7 @@
 """Werte den Aufloesungstest aus: ICON-D2 (2.2 km) gegen ERA5 (25 km).
 
 FRAGE.  Abschnitt 25 der Befunde zeigte, dass beide Darstellungen desselben
-grobmaschigen Modells Andres beste Abende verfehlen.  Bleibt die Aufloesung.
+grobmaschigen Modells Maintainers beste Abende verfehlen.  Bleibt die Aufloesung.
 Sieht ein 2.2-km-Modell die Wolkenstrukturen, die 25 km wegmitteln?
 
 AUFBAU.  Gepaart, nicht gegen eine Klimatologie.  Jeder Albumabend bildet
@@ -283,7 +283,7 @@ def main():
     mit_note = [b for b in bloecke if b["ziel"] in noten]
     if r_aufl is not None and len(mit_note) >= 12:
         print()
-        print("=== Ordnung: Spearman gegen Andres Noten (n = %d)" % len(mit_note))
+        print("=== Ordnung: Spearman gegen Maintainers Noten (n = %d)" % len(mit_note))
         no = [noten[b["ziel"]] for b in mit_note]
         for v in ("era5_3s", "icon_3s"):
             r = spearman([b["werte"][b["ziel"]][v] for b in mit_note], no)

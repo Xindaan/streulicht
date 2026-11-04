@@ -158,7 +158,7 @@ def schreibe_archiv(name, tag, fenster, init, jetzt, kfg, abende):
     Medianfeld (fuer Bilder im Nachhinein).  Nicht archiviert werden die
     Rohfelder je Member: das waeren ueber ein Gigabyte im Jahr, und
     gebraucht wuerden sie nur, um die Score-Formel rueckwirkend zu aendern.
-    Entscheidung Andres am 20.08.2026.
+    Entscheidung Maintainers am 20.08.2026.
     """
     ordner = os.path.join(BASIS, "daten", "archiv", name)
     os.makedirs(ordner, exist_ok=True)
@@ -1091,7 +1091,7 @@ def gelaufen(zustand, ort, tag):
     return set(e) if isinstance(e, dict) else set()
 
 
-# T-0087 (Review alarm#6, Entscheidung Andre 09.10.2026, Option A): der
+# T-0087 (Review alarm#6, Entscheidung Maintainer 09.10.2026, Option A): der
 # NACHTLAUF nach einem Ausfalltag.
 #
 # WARUM.  Scheiterten Vormittags- und Abendlauf, wurde bis zum naechsten
