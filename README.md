@@ -801,6 +801,7 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 .venv/bin/python3 skripte/test_abruf.py       # Wind nur am Ort, Advektion trotzdem aktiv
 .venv/bin/python3 skripte/test_wn3.py         # WeatherNext-3-Leser, Zeitachse, Negativproben
 .venv/bin/python3 skripte/test_wn3_quantil.py # Quantilabbildung fuer s*_WN3 (T-0072)
+.venv/bin/python3 skripte/test_klima_teiljahr.py # Teiljahr und Blockdeckel der Klimatologie (T-0072)
 .venv/bin/python3 skripte/test_zustandsdatei.py    # atomarer Schreibvorgang (T-0051)
 .venv/bin/python3 skripte/test_bewertung_nutzlast.py  # Notenvalidierung (T-0052)
 .venv/bin/python3 skripte/test_alarm_versand.py    # Versandfehler kippt den Lauf nicht (T-0055)

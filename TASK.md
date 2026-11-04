@@ -95,13 +95,20 @@ stehen im Backlog-Block T-0072.
       Gemessen: 75 MB und ~27 s je Abend, kostenlos; Vollabruf 01.01.-02.11.
       laeuft (Log `daten/wn3_quantil.log`).
 - [ ] **Referenzseite 2026 nachholen - der eigentliche Engpass.** Die
-      Klimatologie hat fuer 2026 nur 40 Abende (gemessen 04.11.). Nachholen
-      ueber `klimatologie.py` (118 Zellen, `archive-api`): braucht ein
-      Enddatum vor heute (heute nur ganze Jahre) und kostet geschaetzt
-      770-2.570 Kontingent-Einheiten (Gewicht je Ort 3 Variablen/10 bzw.
-      Tage/14, Formel unbelegt). Zwei Alarmlaeufe brauchen 8.320 von 10.000
-      am Tag: oberer Wert reisst das Tageslimit. Deshalb je Tag hoechstens ein
-      60-Zellen-Block, nicht in einer Laufstunde - Entscheidung Maintainer.
+      Klimatologie hatte fuer 2026 nur 40 Abende. **Freigegeben 04.11.2026
+      (Maintainer): ein Block je Tag.** `klimatologie.py` kann jetzt
+      `--bis-datum` (Teiljahr, eigene Cache- und Teil-Dateinamen) und
+      `--max-bloecke` (Blockdeckel, gleicher Ausstieg wie beim Kontingent);
+      `test_klima_teiljahr.py` 7 Pruefungen, drei Mutanten je rot.
+      116 Zellen = zwei Bloecke, geschaetzt je hoechstens 1.310 Einheiten
+      (Formel unbelegt); Alarmlaeufe 03.11. je 208 Orte = rund 3.200.
+      - [x] Block 1 am 04.11. 08:39 (vor dem Lauf 10:20): 60 Zellen,
+            305 Tage, keine Luecke.
+      - [ ] Block 2 am 05.11. vor 09:50 Uhr, nicht wenn `alarm.log` heute
+            "Kontingent"/429 zeigt:
+            `.venv/bin/python3 -B skripte/klimatologie.py --von 2026 --bis 2026 --bis-datum 2026-11-01 --max-bloecke 1`
+            -> `daten/score_berlin_g0.5_2026_2026_bis20261101.json`, dann
+            `skripte/wn3_quantil.py` ohne Optionen auswerten.
 - [x] ~~Je Lauf das WN3-Medianfeld mitschreiben~~ - **Praemisse widerlegt
       04.11.2026:** das Statistik-Bucket haelt alle Laeufe seit 01.01.2026,
       stuendlich, 7.368 Laeufe bis 03.11. (gemessen per Listing). Die

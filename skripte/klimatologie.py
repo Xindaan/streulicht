@@ -64,6 +64,16 @@ class KontingentErschoepft(Exception):
     pass
 
 
+class Blockdeckel(KontingentErschoepft):
+    """Bewusst gesetzte Obergrenze an Netzbloecken je Aufruf (--max-bloecke).
+
+    Erbt von KontingentErschoepft, damit derselbe Ausstieg greift: der
+    Blockcache haelt den Fortschritt, der naechste Aufruf setzt dort an.
+    Zweck: Nachholen in Tagesportionen, ohne das Tageslimit zu reissen, das
+    sich Alarmlaeufe und Gardena teilen (T-0072).
+    """
+
+
 # Open-Meteo drosselt gewichtet (Orte x Variablen x Zeitraum), und ich habe die
 # Formel zweimal falsch geschaetzt - erst 400 Calls je Request, dann 2500, beides
 # unvereinbar mit dem beobachteten Verhalten.  Also nicht mehr modellieren:
@@ -91,7 +101,7 @@ def _hole(u, versuche=4):
     raise KontingentErschoepft("Minutenlimit blieb bestehen")
 
 
-def hole_jahr(zellen, jahr, gesucht, block=60):
+def hole_jahr(zellen, jahr, gesucht, block=60, ende=None, max_bloecke=None):
     """{Zelle: {schicht: {Tag: Wert}}} - nur die gesuchten Stunden.
 
     gesucht: {Tag(str): "YYYY-MM-DDTHH:00"}.  Ein Jahr fuer 235 Zellen sind
@@ -100,13 +110,18 @@ def hole_jahr(zellen, jahr, gesucht, block=60):
     Jeder Block wird gecacht - ein Abbruch am Kontingent kostet dann nur den
     laufenden Block, nicht alles Vorherige.
     """
+    ende = ende or date(jahr, 12, 31)
+    # Teiljahr: eigener Cachename, sonst laese ein spaeterer Ganzjahreslauf
+    # den gekappten Block als vollstaendig.
+    zusatz = "" if ende == date(jahr, 12, 31) else "_bis%s" % ende.strftime("%Y%m%d")
+    geholt = 0
     aus = {}
     liste = sorted(zellen)
     cachedir = os.path.join(BASIS, "daten", "roh")
     os.makedirs(cachedir, exist_ok=True)
     for i in range(0, len(liste), block):
         teil = liste[i:i + block]
-        cache = os.path.join(cachedir, "g%g_%d_%04d.json" % (GITTER, jahr, i))
+        cache = os.path.join(cachedir, "g%g_%d_%04d%s.json" % (GITTER, jahr, i, zusatz))
         if os.path.exists(cache):
             with open(cache) as f:
                 for k, v in json.load(f).items():
@@ -115,6 +130,9 @@ def hole_jahr(zellen, jahr, gesucht, block=60):
             print("      %d/%d Zellen (Cache)" % (min(i + block, len(liste)),
                                                   len(liste)), flush=True)
             continue
+        if max_bloecke is not None and geholt >= max_bloecke:
+            raise Blockdeckel("Blockdeckel %d erreicht" % max_bloecke)
+        geholt += 1
         mitten = [zellmitte(z) for z in teil]
         # MODELL EXPLIZIT, seit 15.08.2026.  Vorher stand hier kein `models=`,
         # und das ganze Projekt nannte das Ergebnis "ERA5".  Es ist keins:
@@ -130,9 +148,10 @@ def hole_jahr(zellen, jahr, gesucht, block=60):
         # s* ungueltig machen.
         u = ("https://archive-api.open-meteo.com/v1/archive?latitude=%s&longitude=%s"
              "&models=ecmwf_ifs"
-             "&hourly=%s&start_date=%d-01-01&end_date=%d-12-31"
+             "&hourly=%s&start_date=%d-01-01&end_date=%s"
              % (",".join("%.4f" % m[0] for m in mitten),
-                ",".join("%.4f" % m[1] for m in mitten), VARIABLEN, jahr, jahr))
+                ",".join("%.4f" % m[1] for m in mitten), VARIABLEN, jahr,
+                ende.isoformat()))
         d = _hole(u)
         if isinstance(d, dict):
             d = [d]
@@ -164,14 +183,24 @@ def main():
     p.add_argument("--breite", type=float, default=52.52)
     p.add_argument("--laenge", type=float, default=13.405)
     p.add_argument("--name", default="berlin")
+    p.add_argument("--bis-datum", type=date.fromisoformat, default=None,
+                   help="Teiljahr: letzter Abend (archive-api kennt keine Zukunft)")
+    p.add_argument("--max-bloecke", type=int, default=None,
+                   help="hoechstens so viele Netzbloecke je Aufruf (Rest beim naechsten)")
     a = p.parse_args()
 
     von, bis = date(a.von, 1, 1), date(a.bis, 12, 31)
+    zusatz = ""
+    if a.bis_datum is not None:
+        if a.bis_datum.year != a.bis or a.bis_datum >= date.today():
+            raise SystemExit("--bis-datum muss im Jahr --bis und vor heute liegen")
+        bis, zusatz = a.bis_datum, "_bis%s" % a.bis_datum.strftime("%Y%m%d")
     zellen, proTag = punktbedarf(von, bis, a.breite, a.laenge)
     print("Zeitraum %s..%s, %d Abende" % (von, bis, len(proTag)))
     print("Gitter %g Grad, benoetigte Zellen: %d" % (GITTER, len(zellen)))
 
-    ziel = os.path.join(BASIS, "daten", "score_%s_g%g_%d_%d.json" % (a.name, GITTER, a.von, a.bis))
+    ziel = os.path.join(BASIS, "daten", "score_%s_g%g_%d_%d%s.json"
+                        % (a.name, GITTER, a.von, a.bis, zusatz))
     if os.path.exists(ziel):
         print("bereits vorhanden: %s" % ziel)
         return
@@ -181,14 +210,16 @@ def main():
     ohne_daten = []                  # T-0060, siehe unten
     for jahr in range(a.von, a.bis + 1):
         gesucht = {}
-        for t in tage(date(jahr, 1, 1), date(jahr, 12, 31)):
+        for t in tage(date(jahr, 1, 1), min(date(jahr, 12, 31), bis)):
             if t not in proTag:
                 continue
             std, _ = sonnenuntergang(t, a.breite, a.laenge)
             gesucht[str(t)] = "%sT%02d:00" % (t, int(round(std)) % 24)
         print("   %d laden (%d Abende) ..." % (jahr, len(gesucht)), flush=True)
         try:
-            feld = hole_jahr(zellen, jahr, gesucht)
+            feld = hole_jahr(zellen, jahr, gesucht,
+                             ende=min(date(jahr, 12, 31), bis),
+                             max_bloecke=a.max_bloecke)
         except KontingentErschoepft as e:
             print("   Kontingent erschoepft (%s).  %d Jahre fertig, Rest beim "
                   "naechsten Lauf - der Blockcache bleibt." % (e, jahr - a.von),
@@ -196,7 +227,7 @@ def main():
             break
 
         for tag, karte in ((str(t), proTag[t]) for t in tage(
-                date(jahr, 1, 1), date(jahr, 12, 31)) if t in proTag):
+                date(jahr, 1, 1), min(date(jahr, 12, 31), bis)) if t in proTag):
 
             def hole(d, dv, schicht, _t=tag, _k=karte):
                 z = _k.get((d, dv))
@@ -235,7 +266,9 @@ def main():
     if not ergebnis:
         print("nichts gerechnet - Kontingent war sofort erschoepft.")
         return
-    teil = os.path.join(BASIS, "daten", "score_%s_g%g_teil.json" % (a.name, GITTER))
+    # Teiljahr bekommt eine eigene Teil-Datei: die gemeinsame
+    # score_<name>_g<g>_teil.json traegt einen frueheren Lauf (2015).
+    teil = os.path.join(BASIS, "daten", "score_%s_g%g_teil%s.json" % (a.name, GITTER, zusatz))
     fertig = len(ergebnis) >= len(proTag) * 0.99
     # T-0051: atomar.  Diese Datei lesen SIEBZEHN Module, darunter alle drei
     # Seitenbauer, die der 10-Minuten-Agent startet - eine halbe Klimatologie

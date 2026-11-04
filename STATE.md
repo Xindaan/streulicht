@@ -26,9 +26,9 @@ der Waechter es meldet.
   unveraendert (entschieden 04.11.); Betriebsbezeichner offen (T-0089).
 - WN3 (T-0072): s*-Verfahren gebaut (`skripte/wn3_quantil.py`,
   Quantilabbildung an denselben Abenden); WN3-Seite holt sich kostenlos,
-  Vollabruf 2026 laeuft (`daten/wn3_quantil.log`). Referenzseite fehlt:
-  Klimatologie hat fuer 2026 nur 40 Abende.
-- Teststand 04.11.: 905 Python-Pruefungen in 30 Dateien + 64 JS gruen.
+  Vollabruf 2026 laeuft (`daten/wn3_quantil.log`). Referenz 2026: Block 1
+  von 2 geholt (04.11.), Block 2 am 05.11.
+- Teststand 04.11.: 912 Python-Pruefungen in 31 Dateien + 64 JS gruen.
 
 ## Live-Risiken / Stolpersteine
 
@@ -44,16 +44,16 @@ der Waechter es meldet.
 
 - T-0089: Betriebsbezeichner (Home-Pfade in Plists, Labels, Datendateiname)
   umstellen oder lassen. (Historie bleibt, entschieden 04.11.)
-- T-0072: Klimatologie 2026 nachholen (770-2.570 Einheiten geschaetzt,
-  ein Block je Tag) - ja/nein.
+- T-0072: Block 2 der Klimatologie 2026 am 05.11. vor 09:50 Uhr anstossen
+  (Befehl in TASK.md T-0072); Planen per Aufgabe war hier nicht erlaubt.
 - Optional Repo-Secret `NTFY_WAECHTER` (T-0075); neues Topic `ntfy_erinnerung`
   (T-0077); `sicherung_ordner` und Time-Machine-Ziel (T-0081).
 - Erfolgskriterium oben bestaetigen oder korrigieren.
 
 ## Next actions
 
-1. T-0072: Vollabruf WN3 auswerten (`wn3_quantil.py` ohne Optionen), nach
-   Freigabe Referenz 2026 nachholen, dann s*_WN3 mit Intervall festhalten.
+1. T-0072: Block 2 Klimatologie 2026 (05.11.), dann `wn3_quantil.py`
+   auswerten und s*_WN3 mit Intervall festhalten.
 2. T-0089 nach Entscheidung umsetzen.
 3. T-0008 Dispersion und Skill ueber Vorlauf (nach Winter/Fruehjahr).
 
