@@ -94,7 +94,7 @@ stehen im Backlog-Block T-0072.
       Laengenpruefung) je rot genau an ihrer Pruefung.
       Gemessen: 75 MB und ~27 s je Abend, kostenlos; Vollabruf 01.01.-02.11.
       laeuft (Log `daten/wn3_quantil.log`).
-- [ ] **Referenzseite 2026 nachholen - der eigentliche Engpass.** Die
+- [x] **Referenzseite 2026 nachholen - der eigentliche Engpass.** Die
       Klimatologie hatte fuer 2026 nur 40 Abende. **Freigegeben 04.11.2026
       (Maintainer): ein Block je Tag.** `klimatologie.py` kann jetzt
       `--bis-datum` (Teiljahr, eigene Cache- und Teil-Dateinamen) und
@@ -104,11 +104,19 @@ stehen im Backlog-Block T-0072.
       (Formel unbelegt); Alarmlaeufe 03.11. je 208 Orte = rund 3.200.
       - [x] Block 1 am 04.11. 08:39 (vor dem Lauf 10:20): 60 Zellen,
             305 Tage, keine Luecke.
-      - [ ] Block 2 am 05.11. vor 09:50 Uhr, nicht wenn `alarm.log` heute
-            "Kontingent"/429 zeigt:
-            `.venv/bin/python3 -B skripte/klimatologie.py --von 2026 --bis 2026 --bis-datum 2026-11-01 --max-bloecke 1`
-            -> `daten/score_berlin_g0.5_2026_2026_bis20261101.json`, dann
-            `skripte/wn3_quantil.py` ohne Optionen auswerten.
+      - [x] Block 2 am 05.11. 09:00 (geplante Aufgabe; `alarm.log` heute
+            ohne "Kontingent"/429): 56 Zellen nachgeholt, 116/116.
+            `daten/score_berlin_g0.5_2026_2026_bis20261101.json`: 305 von 305
+            Abenden (01.01.-01.11.), 305 `s`-Werte, keine Teildatei.
+            Auswertung `skripte/wn3_quantil.py` (WN3-Cache 306 Abende):
+            305 gepaarte Abende, 14 Referenzabende ueber s* = 0,7065,
+            q = 0,9541, **s*_WN3 = 0,7144, 90-%-Intervall [0,6293; 0,8364]**
+            (kein PLATZHALTER, Mindestzahl 10). Zum Vergleich: am 08.09.2026
+            lag WN3 im Mittel +0,135 hoeher (n = 11); im oberen Quantil
+            liegt die Schwelle nur +0,008 ueber ECMWF.
+- [ ] **Entscheidung Maintainer: traegt s*_WN3 = 0,7144?** 14 Ereignisse,
+      Intervall 0,63-0,84 (Breite 0,21). Erst danach Betriebsvehikel und
+      zweiter Weg in `alarm.py` (unten).
 - [x] ~~Je Lauf das WN3-Medianfeld mitschreiben~~ - **Praemisse widerlegt
       04.11.2026:** das Statistik-Bucket haelt alle Laeufe seit 01.01.2026,
       stuendlich, 7.368 Laeufe bis 03.11. (gemessen per Listing). Die

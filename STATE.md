@@ -1,6 +1,6 @@
 # STATE
 
-Stand 04.11.2026. Langtext bis 13.10.: `docs/state_archiv_2026-10-21.md` (wortgleich).
+Stand 05.11.2026. Langtext bis 13.10.: `docs/state_archiv_2026-10-21.md` (wortgleich).
 
 ## Ziel
 
@@ -25,11 +25,10 @@ der Waechter es meldet.
   (`tools/install_push_guard.sh`, Marker lokal in `.private/`). T-0089 erledigt:
   Historie bleibt, Notendatei und Commit-Adresse ersetzt, Plist-Pfade und
   launchd-Labels bewusst belassen.
-- WN3 (T-0072): s*-Verfahren gebaut (`skripte/wn3_quantil.py`,
-  Quantilabbildung an denselben Abenden); WN3-Seite holt sich kostenlos,
-  Vollabruf 2026 laeuft (`daten/wn3_quantil.log`). Referenz 2026: Block 1
-  von 2 geholt (04.11.), Block 2 am 05.11.
-- Teststand 04.11.: 912 Python-Pruefungen in 31 Dateien + 64 JS gruen.
+- WN3 (T-0072): s*_WN3 = 0,7144, 90-%-Intervall [0,6293; 0,8364], aus
+  305 gepaarten Abenden 2026 mit 14 Ereignissen ueber ECMWF s* = 0,7065
+  (`skripte/wn3_quantil.py`). Referenz 2026 vollstaendig (305/305 Abende).
+- Teststand 05.11.: 912 Python-Pruefungen in 31 Dateien + 64 JS gruen.
 
 ## Live-Risiken / Stolpersteine
 
@@ -43,16 +42,16 @@ der Waechter es meldet.
 
 ## Bei Dir
 
-- T-0072: Block 2 der Klimatologie 2026 laeuft automatisch
-  (geplante Aufgabe "streulicht-klima2026-block2", 05.11. 08:40).
+- T-0072: Traegt s*_WN3 = 0,7144? Nur 14 Ereignisse, Intervall 0,63-0,84.
+  Davon haengen Betriebsvehikel und der WN3-Weg in `alarm.py` ab.
 - Optional Repo-Secret `NTFY_WAECHTER` (T-0075); neues Topic `ntfy_erinnerung`
   (T-0077); `sicherung_ordner` und Time-Machine-Ziel (T-0081).
 - Erfolgskriterium oben bestaetigen oder korrigieren.
 
 ## Next actions
 
-1. T-0072: Block 2 Klimatologie 2026 (05.11.), dann `wn3_quantil.py`
-   auswerten und s*_WN3 mit Intervall festhalten.
+1. T-0072: nach der Entscheidung zu s*_WN3 Betriebsvehikel und Uebergabe
+   klaeren, dann zweiter Weg in `alarm.py`.
 2. T-0008 Dispersion und Skill ueber Vorlauf (nach Winter/Fruehjahr).
 
 ## Termine
@@ -63,9 +62,9 @@ der Waechter es meldet.
 
 ## Letzte Done
 
+- 05.11.2026 T-0072 (Teil): Referenz 2026 komplett, s*_WN3 = 0,7144 [0,63; 0,84].
 - 04.11.2026 T-0089: Klarname aus dem Stand, pre-push-Guard, Option B (Notendatei, Commit-Adresse).
 - 04.11.2026 T-0072 (Teil): s*-Verfahren fuer WN3, Mitschreib-Praemisse widerlegt.
 - 13.10.2026 T-0074 bis T-0087 Review-Block (Blockcache, Deckel 200, Waechter, Stufen).
-- 09.10.2026 T-0077/T-0079/T-0080/T-0081/T-0083: Topic, Tests, UI, Logrotation, WN3-Leser.
 - 04.09.2026 T-0063 bis T-0071 Fremdreview (Advektion, Median statt Bestmember).
 <!-- snapshot-ende -->
