@@ -291,7 +291,21 @@ def main():
     # oder Pfeiltaste wechselte die ganze Seite, ohne dass etwas angekuendigt
     # wurde; die aktive Marke war allein ueber eine CSS-Klasse markiert.
     # Geprueft wird die ERZEUGTE Seite, nicht die Vorlage.
-    ph = open(os.path.join(BASIS, "web", "index.html")).read()
+    p8 = os.path.join(BASIS, "web", "index.html")
+    if not os.path.exists(p8):
+        pruefe(False, "web/index.html fehlt - erst skripte/seite.py laufen")
+    else:
+        abendwahl(open(p8).read())
+
+    print("")
+    if fehler:
+        print("FEHLGESCHLAGEN: %d" % len(fehler))
+        raise SystemExit(1)
+    print("alle Pruefungen bestanden")
+
+
+def abendwahl(ph):
+    """Abschnitt 8 auf der erzeugten Seite `ph` (nur, wenn es sie gibt)."""
     # Kommentare raus, sonst zaehlen die eigenen Erklaerungen mit.
     sichtbar = re.sub(r"<!--.*?-->", "", ph, flags=re.S)
 
@@ -305,7 +319,6 @@ def main():
 
     pruefe('role="tablist"' in sichtbar, "die Achse ist eine Tabliste")
     n_tab = sichtbar.count('role="tab"')
-    n_abende = len(eintraege) if "eintraege" in dir() else n_tab
     pruefe(n_tab > 0, "die Marken sind Tabs (%d)" % n_tab)
     pruefe(sichtbar.count('aria-selected="true"') == 1,
            "genau eine Marke ist ausgewaehlt (%d)"
@@ -343,12 +356,6 @@ def main():
            "die Pfeiltasten nehmen den Fokus mit")
     pruefe('e.key==="Home"' in ph and 'e.key==="End"' in ph,
            "Home/End springen an die Raender (in einer Tabliste erwartet)")
-
-    print("")
-    if fehler:
-        print("FEHLGESCHLAGEN: %d" % len(fehler))
-        raise SystemExit(1)
-    print("alle Pruefungen bestanden")
 
 
 if __name__ == "__main__":
