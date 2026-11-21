@@ -781,7 +781,7 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 | `skripte/logbuch.py` | Logzeilen mit Datum und Uhrzeit, Rotation unter launchd (T-0081) |
 | `skripte/sicherung.py` | Tageskopie der Zustandsdatei, optional zusaetzlich in `sicherung_ordner` (T-0081) |
 | `skripte/waechter.py` | prueft auf GitHub, ob die ausgelieferte Seite frisch ist (T-0075) |
-| `skripte/wn3.py` | WeatherNext-3-Leser, laeuft in us-east1, nicht im Betrieb (T-0072) |
+| `skripte/wn3.py` | WeatherNext-3-Leser, laeuft in us-east1, nicht im Betrieb (T-0072); Abrechnungsprojekt Pflicht per `--projekt` oder `WN3_PROJEKT` |
 | `skripte/wn3_vergleich.py` | Vorfrage: weicht WN3 ueberhaupt von ECMWF ab? Nur Auswertung, nicht im Betrieb |
 | `skripte/wn3_quantil.py` | s* fuer WN3 per Quantilabbildung an denselben Abenden (T-0072); `--holen` holt p50-Scores kostenlos in `daten/wn3_p50/` |
 | `skripte/icond2.py` | ICON-D2-Abruf fuer den Aufloesungstest (`test_phantomnullen.py` braucht seinen Cache) |

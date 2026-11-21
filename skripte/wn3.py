@@ -29,7 +29,9 @@ Modul ist eine zusaetzliche Quelle, kein Ersatzteil.
 Lauf:   python3 skripte/wn3.py --probe          # ein Chunk, zum Nachsehen
 Argumente: --lauf (z.B. 20260908_00hr, sonst der juengste fertige Lauf),
 --probe, --budget-mb (Obergrenze ausserhalb us-east1), --aus (wird
-angenommen, aber nicht ausgewertet).  Ohne --probe zeigt `main()` Lauf, Ort
+angenommen, aber nicht ausgewertet), --projekt (Abrechnungsprojekt, sonst
+Umgebungsvariable WN3_PROJEKT; ohne beides bricht der Lauf vor dem ersten
+gcloud-Aufruf ab).  Ohne --probe zeigt `main()` Lauf, Ort
 und Init an und bricht dann mit "Voller Lauf noch nicht verdrahtet" ab.
 """
 import argparse
@@ -40,7 +42,21 @@ import os
 import subprocess
 
 BUCKET = "gs://weathernext3_spatial/weathernext_3_0_0/zarr/2026_to_present"
-ABRECHNUNG = os.environ.get("WN3_PROJEKT", "gardena-wetter")
+# Abrechnungsprojekt fuer den requester-pays-Bucket (gcloud
+# --billing-project). Bewusst ohne Vorgabe im Repo (T-0094): wer liest,
+# nennt das Projekt, das zahlt - per --projekt oder WN3_PROJEKT.
+ABRECHNUNG = None
+
+
+def abrechnung():
+    """Abrechnungsprojekt oder klarer Abbruch, bevor gcloud startet."""
+    projekt = ABRECHNUNG or os.environ.get("WN3_PROJEKT", "").strip()
+    if not projekt:
+        raise SystemExit(
+            "wn3: kein Abrechnungsprojekt angegeben. --projekt <gcp-projekt> "
+            "setzen oder die Umgebungsvariable WN3_PROJEKT; der Bucket ist "
+            "requester-pays, die Kosten landen auf diesem Projekt.")
+    return projekt
 
 # Namen bei uns -> Namen bei Google.  Unsere Schichten heissen wie bei
 # Open-Meteo, Googles `medium` heisst bei uns `mid`.
@@ -161,9 +177,9 @@ def _lies(pfad, entpacken=True):
     """
     if not entpacken:
         return _lauf(["gcloud", "storage", "cat",
-                      "--billing-project=" + ABRECHNUNG, pfad], roh=True)
+                      "--billing-project=" + abrechnung(), pfad], roh=True)
     p1 = subprocess.Popen(["gcloud", "storage", "cat",
-                           "--billing-project=" + ABRECHNUNG, pfad],
+                           "--billing-project=" + abrechnung(), pfad],
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p2 = subprocess.Popen(["zstd", "-q", "-d", "-c"],
                           stdin=p1.stdout, stdout=subprocess.PIPE,
@@ -548,13 +564,13 @@ def abfrage(quelle, zellen, ziele, schichten=("low", "mid", "high"),
 def neuester_lauf(lies=None):
     """Juengster Lauf, der einen `success`-Marker traegt."""
     zeilen = _lauf(["gcloud", "storage", "ls",
-                    "--billing-project=" + ABRECHNUNG, BUCKET + "/"])
+                    "--billing-project=" + abrechnung(), BUCKET + "/"])
     laeufe = sorted(t.rstrip("/").rsplit("/", 1)[-1].replace("_01_preds", "")
                     for t in zeilen.splitlines() if t.endswith("_preds/"))
     for lauf in reversed(laeufe):
         try:
             _lauf(["gcloud", "storage", "ls",
-                   "--billing-project=" + ABRECHNUNG,
+                   "--billing-project=" + abrechnung(),
                    "%s/%s_01_preds/success" % (BUCKET, lauf)])
             return lauf
         except RuntimeError:
@@ -571,8 +587,14 @@ def main():
     p.add_argument("--budget-mb", type=int, default=BUDGET_MB,
                    help="Obergrenze ausserhalb von %s; bewusst zu setzen, "
                         "denn jenseits davon kostet es Geld" % REGION)
+    p.add_argument("--projekt",
+                   help="GCP-Abrechnungsprojekt (sonst WN3_PROJEKT); Pflicht")
     a = p.parse_args()
 
+    global ABRECHNUNG
+    if a.projekt:
+        ABRECHNUNG = a.projekt
+    abrechnung()                    # Pflichtangabe vor dem ersten Abruf
     lauf = a.lauf or neuester_lauf()
     frei = in_region()
     print("Lauf: %s" % lauf)
