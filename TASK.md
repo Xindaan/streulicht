@@ -185,6 +185,214 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
 
 ## Backlog
 
+### Befunde aus dem Aufraeumlauf vom 21.11.2026 (T-0090 bis T-0096)
+Lesepass ueber den ganzen Code, danach selbst nachgemessen, was sich
+ausfuehren liess. Behoben ist, was belegbar war und nicht auf dem Versand-
+oder Push-Pfad liegt (Branch `aufraeumen-fable-2026-11`). Die folgenden
+Punkte sind bewusst NUR Befund: Versand-, Push- und Schwellenpfade, oder
+ohne Messung nicht entscheidbar. Zeilen beziehen sich auf den Stand des
+Branches; `alarm.py`, `erinnerung.py`, `ausliefern.py` und `tools/` sind dort
+unveraendert.
+
+### T-0090 Versandpfad: Alarm kann doppelt gesendet oder still verschluckt werden (21.11.2026)
+Nur gelesen, nicht reproduziert (jeder Beleg braeuchte einen Test mit
+erfundenem Netz auf dem Versandpfad). Latent, solange nur ein Ort konfiguriert ist.
+- [ ] `alarm.py:1392-1400`, `:784`, `:1563`: Ort 1 sendet (`:1473`) und haelt
+      den Alarm nur im Speicher; bricht danach Ort 2 am Kontingent oder am
+      fehlenden Wind ab, laeuft `aktualisiere()` nie - der naechste Lauf
+      sendet Ort 1 noch einmal. Akzeptanz: Test mit zwei Orten, zweiter wirft
+      `Kontingent`; nach dem Lauf steht der Alarm von Ort 1 im Zustand.
+- [ ] `alarm.py:1297-1300`, `:1447`: "je Abend hoechstens ein Alarm" prueft
+      gegen den Stand vom Laufbeginn, gelesen ohne Sperre; ein Handlauf neben
+      dem Agentenlauf sendet doppelt.
+- [ ] `alarm.py:1473`: fehlt `ntfy_alarm` in `konfig_geheim.json`, wird der
+      KeyError als "Push FEHLGESCHLAGEN" geloggt, Exitcode 0, jeder Lauf
+      erneut; `erinnerung.py:144-148` hat dafuer einen Rueckfall mit Warnung.
+- [ ] `alarm.py:1286-1290`: kaputte `konfig_geheim.json` beendet den Lauf vor
+      jeder Rechnung (`erinnerung.py:112-128` faengt denselben Fall ab).
+- [ ] `alarm.py:1043-1053` und `erinnerung.py:151-158`: zwei Sendefunktionen,
+      der Titel-Header ist verschieden kodiert (latin-1-Ersatz gegen UTF-8).
+- [ ] `alarm.py:1302`, `erinnerung.py:177`: `--jetzt` mit Offset wird
+      ueberschrieben statt umgerechnet. Gemessen: `2026-07-01T20:00+02:00`
+      wird zu `20:00+00:00` (`fromisoformat(...).replace(tzinfo=utc)`).
+- [ ] `alarm.py:1406`, `:1447`, `:1518`, `:1538`: `setdefault` greift nur,
+      wenn der Ort ganz fehlt; ein Ortseintrag ohne `alarme` gaebe KeyError.
+
+### T-0091 Push-Pfad: Guard laesst bei technischem Fehler durch, Auslieferung ohne Prognoseseite (21.11.2026)
+- [ ] `tools/public_push_guard.sh:91`, `:98-100`, `:119`: `git grep ...
+      2>/dev/null | head -25 || true` macht einen git-grep-Fehler
+      ununterscheidbar von "kein Treffer". Gemessen: `git grep -nIE '(' HEAD`
+      endet mit Exitcode 128 ("unmatched ( for expression group"), der
+      Treffertext ist leer - der Guard meldete "sauber". Der Kopf (`:10-11`)
+      verspricht das Gegenteil. Dieselbe Form bei `git rev-list ... || neu=""`
+      (`:50`, `:57`): schlaegt die Bereichsbestimmung fehl, wird nichts
+      geprueft. Akzeptanz: Guard mit `LM_HART_RE='('` gegen einen
+      Wegwerf-Remote verweigert den Push.
+- [ ] `tools/public_push_guard.sh:85-91`, `:109`: je Commit der ganze Baum
+      statt des Diffs; Aufwand waechst mit Commits x Dateien.
+- [ ] `ausliefern.py:204-211`, `:243-256`: `gh-pages` wird mit genau den
+      Seiten neu geschrieben, die in `web/` liegen. Fehlt `web/index.html`
+      (frischer Klon; die Datei ist gitignoriert), wird trotzdem gepusht und
+      die Prognoseseite ist aus dem Netz. Abbruch nur bei ganz leerer Liste.
+- [ ] `ausliefern.py:224-228`: der Fingerabdruck hasht nur Inhalte, keine
+      Dateinamen. `:257-258`: der Stempel wird nicht atomar geschrieben.
+- [ ] `ausliefern.py:85`, `:315`: Parameter `trocken` von `baue()` ungenutzt,
+      Rueckgabe `prognose` verworfen. `:219` ("Seit der Agent stuendlich
+      laeuft ... 24 Force-Pushs am Tag") ist falsch: der Seiten-Agent laeuft
+      alle 10 Minuten (`betrieb/...seite.plist`, 144 Termine), `:48` sagt es
+      richtig.
+
+### T-0092 Alarmkern: Deckel 320 gegen 200, UTC- gegen Ortsdatum, Dopplungen (21.11.2026)
+- [ ] `alarm.py:648-660`: der Kommentar begruendet `PASS2_MAX_ZELLEN = 320`
+      ("ein Deckel unter 320 wuerde schon viele Oktoberlaeufe beschneiden");
+      der Betrieb faehrt seit 13.10. mit `pass2_max_zellen: 200`
+      (`konfig.json:16-17`). Faellt der Schluessel weg, gilt still 320.
+      Entscheidung: Default und Begruendung an 200 angleichen oder den
+      Rueckfall streichen.
+- [ ] `alarm.py:707`, `:1428` (UTC-Datum) gegen `:1071`, `:1495`, `:1517`
+      (Ortsdatum): Abendliste und Verlaufszeile gegen `laeufe` und Archivname.
+      Zwischen 22:00 und 24:00 UTC meinen beide verschiedene Tage; ob ein
+      Lauffenster dort liegen kann, ist nicht gemessen.
+- [ ] `alarm.py:776-784`: der Wind wird immer geholt und sein Fehlen bricht
+      immer ab, auch bei `advektion: false`.
+- [ ] Dopplungen: Faecherpunkte `alarm.py:740-745` und
+      `sonnen/score_niveaus.py:212-217` neben `sonnen/score.py:87-97`;
+      Sonnenuntergang als UTC-Zeitpunkt siebenmal (`alarm.py:733`,
+      `:792-793`, `:1078`, `:1196-1197`, `erinnerung.py:65-66`, `:90-91`,
+      `bewertungen_holen.py:127-128`); Zustand lesen `alarm.py:1297-1300`
+      neben `zustandsdatei.lade`; atomar schreiben `sicherung.py:49-64` ohne
+      Verzeichnis-fsync neben `zustandsdatei.py:33-64`.
+- [ ] `zustandsdatei.py:44`: fester tmp-Name; Archiv (`alarm.py:174`) und
+      Blockcache (`:520`) schreiben ohne Sperre - zwei gleichzeitige Laeufe
+      teilen sich die tmp-Datei (Verdacht, nicht reproduziert).
+- [ ] Kommentare in `alarm.py`, die dem Code widersprechen: `:6` (Wind "an den
+      Fanpunkten", geholt wird nur die Heimatzelle `:748-777`), `:926`/`:934`
+      ("bester Member", seit T-0064 der Median `:576-588`), `:1412`
+      (`alt = ...` wird nie gelesen); `erinnerung.py:15-16` ("vier Stunden"
+      gegen "fuenfeinhalb" in `alarm.py:1063-1064`), `:35`/`:37` (`urllib.parse`,
+      `date` ungenutzt).
+
+### T-0093 Seiten: Widersprueche, die eine Entscheidung brauchen (21.11.2026)
+- [ ] `web/bewerten.html:423` zeigt "0 % Wahrscheinlichkeit", die
+      Prognoseseite fuer denselben Abend "< 6 %" (`seite.py` `wahrsch_text`);
+      `bewertungsseite.prognosestand()` gibt `n_member` nicht mit.
+- [ ] "Bester Abend im Fenster" (`seite.py`, `max(..., key=...["p"])`) waehlt
+      nach dem Perzentil des Medians, die Stufe seit T-0084 nach dem Anteil
+      der Modelllaeufe: ein "unauffaelliger" Abend kann "Bester Abend" heissen.
+- [ ] Prognoseseite ueberspringt Abende ohne `p` ODER ohne `median`, die
+      Bewertungsseite nur ohne `median` (`bewertungsseite.py:65`). Im
+      Zustand vom 21.11. kommt der Fall nicht vor (76 Abende, 0 mit median
+      ohne p).
+- [ ] Drei Zeitzonen-Quellen auf einer Seite: fest `Europe/Berlin`
+      (`lokalzeit`), Zone des Rechners (`astimezone()` in der Standzeile),
+      Zone aus der Konfig (Veraltet-Streifen); dazu `date.today()`. Gehoert
+      zur Ein-Ort-Grenze (T-0071).
+- [ ] `stil/tokens.css`: ohne Leser im Repo sind `--linie`, `--gitter-schwach`,
+      `--radius-tafel`, `--schatten-hover`, `--schatten-leiste`,
+      `--zeit-schnell`, `--breite`, `--breite-schmal`, `--breite-bild`,
+      `--s1` bis `--s7`; `:48` nennt eine Klasse `.achse-karte`, die es nicht
+      gibt. `seite.py` schreibt Token-Farben an sechs Stellen als feste
+      `rgba(...)`, `bisher.py` die Breite 720px. Vokabular oder Ballast?
+- [ ] `seite.py`: META traegt `wahrsch` und `vorlauf_h` in jede Seite, das
+      Seitenskript liest sie nicht; CSS-Regel `.nurklein` ohne Element.
+      `web/bewerten.html:174`: Konstante `ANZEIGE` unbenutzt, der Platzhalter
+      wird trotzdem gefuellt und geprueft.
+- [ ] `rueckschau.py`, `diagnose.py`, `absicht.py`: kein Aufrufer. Die ersten
+      beiden schreiben nicht atomar und mit eigenen Farben;
+      `rueckschau.py:101` beschriftet den Filter fest mit "0,63", gefiltert
+      wird mit s* aus der Konfig. Behalten als Handwerkzeug oder streichen?
+- [ ] `seite.py --rueckschau` schreibt nach `web/index.html`, also ueber die
+      Prognoseseite (gemessen im Sandkasten); im Betrieb ueberschreibt der
+      naechste Tick sie wieder.
+
+### T-0094 Analyse- und Abrufskripte: Fehler und Dopplungen ohne Testdeckung (21.11.2026)
+Keines dieser Skripte hat einen Test, die meisten brauchen Netz und
+Kontingent; deshalb nur Befund. Importe gegen `sonnen/` geprueft: kein Bitrot.
+- [ ] `wn3.py:43`: Vorgabe fuer das Abrechnungsprojekt ist `"gardena-wetter"`
+      - Name eines anderen Projekts, im public Repo. Entscheidung Maintainer.
+- [ ] `era5_nachtrag.py:169-170` schreibt die Klimatologie nicht atomar
+      (dieselbe Datei schreibt `klimatologie.py` atomar, T-0051);
+      `:106-113` cacht leere Ergebnisse dauerhaft.
+- [ ] Cache-Schluessel ohne Ort oder Zeitraum: `ablation.py:71`,
+      `klimatologie.py` (Blockname ohne `--breite/--laenge`),
+      `era5_nachtrag.py:83`.
+- [ ] `daten/bewertung_maintainer.json`: vier Leser (`fensterterm.py`,
+      `icond2_test.py`, `satellit.py`, `wegterm.py`), kein Schreiber.
+- [ ] Verdacht auf Absturz bei Randfaellen: `fensterterm.py:520-526` (None in
+      der Rangkorrelation), `wegterm.py:162`/`:200`/`:240`/`:246`,
+      `termanalyse.py:54`/`:82`/`:90` (Nullnenner), `aerosol.py:44-50` (jeder
+      HTTP-Fehler heisst "Kontingent").
+- [ ] Feste Messwerte im Ausgabetext: `auswertung.py:140` ("0 von 124"),
+      `abbruchtest.py`; `icond2.py:59-61` Kommentar 9/s, Code 7/s.
+- [ ] "ERA5" als Name fuer die IFS-Analysen steht noch in den Docstrings
+      von `icond2_test.py`, `diagnose.py`, `kalibriere_eis.py` und den
+      Abbruchtests (`klimatologie.py` ist angeglichen).
+- [ ] Dopplungen: Spearman viermal mit vier Randverhalten (`ablation.py`,
+      `icond2_test.py`, `termanalyse.py`, `fensterterm.py`); Tag-im-Jahr,
+      Rang und das +-21-Tage-Fenster sechsmal (das Fenster trifft Tag 366
+      nie); HTTP-Abruf mit 429-Behandlung sechsmal; Zelle/Zellmitte viermal;
+      Foto-Hilfen in `fotos_zaehlen.py` und `fotos_detail.py`; Satelliten-
+      Download in `satellit.py` und `oberkante.py`.
+- [ ] Drei Anlaeufe nebeneinander: `abbruchtest.py` -> `abbruchtest2.py` ->
+      `albumtest.py`; `kalibriere_eis.py` (laedt) / `kalibriere_eis2.py`
+      (wertet aus). Ohne jede Referenz im Repo: `abbruchtest2.py`,
+      `aerosol.py`, `era5_nachtrag.py`, `fotos_spotlight.py`, `oberkante.py`,
+      `termanalyse.py`. Archivieren oder behalten?
+- [ ] `icond2.py:146-147`: ein HTTP-Aufruf je Zelle, die anderen Abrufe
+      buendeln 40-60 Orte je Anfrage.
+
+### T-0095 Tests: Geruest, Betriebsdaten, schwache Proben (21.11.2026)
+- [ ] Die Tests brauchen gitignorierte Betriebsdaten: im nackten Worktree
+      sind 4 von 32 Dateien rot und 3 enden mit Code 2 (gemessen 21.11.);
+      `test_grib2.py` ueberspringt still (5 statt 12 Pruefungen);
+      `test_seiten_atomar.py:71` haengt das echte `daten/` per Symlink ein.
+      Der verify-Skill umgeht das mit einem Schnappschuss. Offen: ein
+      kleiner, getrackter Testdatensatz.
+- [ ] `test_wn3.py:520-534`: `negativ()` wertet JEDE Ausnahme als "schlaegt
+      an", auch einen Tippfehler in der Probe.
+- [ ] Quelltext statt Verhalten: `test_score_distanz.py:102-106`,
+      `test_logbuch.py:171-192`, `test_seiten.py` (Zeichenketten im JS).
+- [ ] `test_advektion.py:51-52`: reine Arithmetik, zaehlt als Pruefung.
+- [ ] Geruest kopiert: `pruefe()` in 29 Dateien (drei Ausgabeformen), das
+      erfundene Netz in `test_ausfall.py` und `test_kontingent.py`,
+      `basis_mit()`/`baue()` in `test_frische.py`, `test_ui_paket.py`,
+      `test_stufen.py`; `test_abruf.py` dient fuenf Tests als Bibliothek.
+- [ ] Temp-Verzeichnisse ohne Aufraeumen: `test_advektion.py`,
+      `test_bewertung_nutzlast.py`, `test_bewertungen_holen.py`,
+      `test_erinnerung.py`, `test_klima_teiljahr.py`.
+- [ ] Uhr: gemessen mit verstellter Prozessuhr (time.time, datetime.now,
+      date.today), 15 uhrabhaengige Testdateien (am 21.11. dazu
+      `test_seiten.py`), jede volle Stunde: am 21.11.2026 sowie an sechs
+      kuenftigen Tagen (Jahreswechsel, beide Zeitumstellungen 2027,
+      Sonnenwende, 29.02.2028; 2.160 Laeufe) kein einziger roter Lauf, jede
+      Datei mit derselben Pruefzahl. Rueckwaerts gestellt (29.03.
+      und 21.06.2026, also vor dem Projektstart) sind zwei Dateien zu jeder
+      Stunde rot: `test_bewertung_nutzlast.py` (Ursache: `ERSTER_ABEND`
+      15.08.2026 in `bewertungen_holen.plausibel`) und `test_frische.py`
+      (Ursache nicht untersucht). Vorwaerts tritt das nicht auf.
+      Offen bleibt die Lastabhaengigkeit von `test_ausliefern.py:73-80`
+      (echte Zeitmessung).
+
+### T-0096 README: Widersprueche und Aufbau (21.11.2026)
+Die README ist Text des Maintainers; richtiggestellt sind nur einzelne
+Tatsachen. Offen:
+- [ ] Kontingent an fuenf Stellen mit teils ueberholten Zahlen (Abschnitte
+      "Was die Grenze kostet", "Zweitens das Kontingent", "Kontingent
+      beachten", "429 ist nicht gleich 429", Troubleshooting: "210 Zellen",
+      "zwei bis drei Laeufe").
+- [ ] "97 Abendlaeufe" als Preis der 12:00-Gegenprobe ist im Repo nirgends
+      belegt.
+- [ ] Quickstart verlangt ueberall den venv-Pfad, fuenf spaetere Befehle
+      nennen blankes `python3`.
+- [ ] Abschnitt "## Stand" am Ende traegt den 09.10.2026 ("wird in T-0074
+      bis T-0083 abgearbeitet"); der Block ist seit 13.10. erledigt.
+- [ ] "Kein Test fasst Betriebsdaten an ... alle im Temp-Verzeichnis"
+      stimmt fuer das Schreiben; gelesen werden `daten/` und `web/` von
+      sieben Testdateien (siehe T-0095).
+- [ ] Korrekturgeschichte im Text ("erste Fassung", "bis zum 04.09. stand
+      dort") statt des Stands; "Betrieb" und "Satellitenwahrheit" stehen
+      zwischen Konfiguration und Troubleshooting.
+
 - T-0001 Fotoarchiv-Gate (aus Doing nach Backlog verschoben 09.10.2026,
   Review architektur#1 / T-0082). Vermerk: Der Doing-Text meldete BLOCKIERT
   (macOS-TCC), der Done-Eintrag vom 14.08.2026 meldet den Abbruchtest als
@@ -466,6 +674,33 @@ je Vorlaufstufe. BSS erst, wenn genug Archiv da ist (T-0003).
 ## Done
 
 Aeltere Done-Eintraege (vor 2026-10-01): `docs/task_done_bis_2026-Q3.md`.
+
+### 21.11.2026 &mdash; Aufraeumlauf (Branch `aufraeumen-fable-2026-11`)
+
+Lesepass ueber den ganzen Code, Befunde nachgemessen, belegbare behoben;
+alles andere steht als T-0090 bis T-0096 im Backlog. Jede Aenderung lief vor
+dem Commit durch `.claude/skills/verify` (Bau im Sandkasten + alle Tests),
+jeder Fix hat eine Negativprobe im Wegwerf-Worktree.
+- verify-Skill: ein Befehl baut die Seiten aus einem Schnappschuss der
+  Betriebsdaten und faehrt alle Tests, ohne Netz und ohne Push.
+- Fehler: "EIN ABENDE" auf der Prognoseseite; ein Ort ohne `name` kippte alle
+  Bewertungsseiten (KeyError); eine ntfy-Nachricht ohne `time` oder eine
+  JSON-Zeile, die kein Objekt ist, riss den Notenabruf ab und verwarf die
+  guten Noten derselben Antwort; `ablation.py` druckte bei leerer Menge
+  nichts statt "-".
+- Tests: `test_phantomnullen` pruefte eine Kopie des Klimatologie-Rumpfs
+  (blieb gruen, wenn der Riegel in `klimatologie.py` fehlte) - jetzt
+  `klimatologie.buche_abend()` selbst; eine immer wahre Pruefung in
+  `test_zustandsdatei` entfernt; `test_seiten` meldet eine fehlende Seite
+  als Pruefzeile.
+- Toter Code: drei Funktionen ohne Aufrufer, zehn ungenutzte Importe,
+  `skripte/ueber_nacht.sh`, der nie gelesene Schluessel `stufe_neu`.
+- Dopplungen im Seitenbau zusammengelegt (`schnitt.py`, Farbmischung und
+  Tokenzugriff in `tokens.py`); die erzeugten Seiten und SVGs sind byteweise
+  gleich geblieben.
+- Kommentare, Docstrings und README-Tatsachen an den Code angeglichen
+  (Syntaxbaum ohne Docstrings unveraendert).
+- Teststand: 917 Python-Pruefungen in 31 Dateien + 64 JS gruen.
 
 ### 13.10.2026 &mdash; Gesamtreview umgesetzt (T-0074 bis T-0087)
 
