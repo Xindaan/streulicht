@@ -27,7 +27,6 @@ Abende mit mehreren Fotos im Fenster: mehr Aufnahmen sprechen fuer Absicht.
 import json
 import math
 import os
-import sys
 from datetime import date
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -121,32 +121,25 @@ print("\n5. Dieselbe Klasse in klimatologie.py (Isomorphie-Check)")
 # Die schwerere der beiden Stellen: aus dieser Verteilung kommt s* = 0.7065.
 # Eine Phantomnull sitzt am UNTEREN Ende und verschiebt die Perzentile -
 # ein Abend ohne Daten wuerde den Schwellwert mitbestimmen, den er nie
-# gesehen hat.  Der Schleifenrumpf wird hier nachgebildet und AUSGEFUEHRT,
-# statt den Quelltext zu lesen.
+# gesehen hat.  Ausgefuehrt wird klimatologie.buche_abend() selbst - der
+# Rumpf, den main() je Abend aufruft -, nicht eine Kopie davon.  Der Import
+# hat keine Nebenwirkung (main() laeuft nur unter __main__).
+import klimatologie                                           # noqa: E402
 from sonnen.score import score as score3                     # noqa: E402
 
-
-def klima_zeile(hole):
-    """Der Rumpf aus klimatologie.py, isoliert: was landet im Ergebnis?"""
-    ergebnis, ohne = {}, []
-    s, det = score3(hole)
-    if det is None:
-        ohne.append("tag")
-    else:
-        ergebnis["tag"] = {"s": s, "schirm": det["schirm"],
-                           "A": det["A"], "B": det["B"]}
-    return ergebnis, ohne
-
-
-leer, ohne = klima_zeile(lambda d, dv, schicht: None)
-pruefe(not leer and ohne,
+leer, ohne = {}, []
+klimatologie.buche_abend(leer, ohne, "tag", lambda d, dv, schicht: None)
+pruefe(not leer and ohne == ["tag"],
        "ein Abend ohne Daten landet NICHT als 0.0 in der Klimatologie")
-voll, ohne2 = klima_zeile(lambda d, dv, schicht: 0.9)
+voll_hole = lambda d, dv, schicht: 0.9                        # noqa: E731
+voll, ohne2 = {}, []
+klimatologie.buche_abend(voll, ohne2, "tag", voll_hole)
 pruefe(bool(voll) and not ohne2,
        "ein belegter Abend landet weiterhin drin (S = %.4f)"
        % voll["tag"]["s"])
-pruefe(voll["tag"]["s"] == 0.0 or voll["tag"]["s"] > 0.0,
-       "und behaelt seinen echten Wert, auch wenn der 0.0 ist")
+pruefe(voll["tag"]["s"] == score3(voll_hole)[0],
+       "und behaelt den Wert, den sonnen.score.score liefert (%.4f)"
+       % score3(voll_hole)[0])
 
 print("\n6. Die vorliegenden Klimatologien sind nicht betroffen")
 # Ohne diese Messung waere der Fix eine Behauptung ueber s*.  `schirm: null`

@@ -9,8 +9,11 @@ rund hundert Zeilen umsetzbar.
 
 GRENZEN, damit niemand mehr erwartet als da ist:
 - NUR Packvorlage 5.0 und NUR Gittervorlage 3.90.  Alles andere wirft.
-- Keine Bitmap-Behandlung (die Wolkenmaske hat keine, Indikator 255).
-- Kein Zeitbezug, keine Ensembles, keine Mehrfachnachrichten je Datei.
+- Bitmap nur mit Indikator 255 (keine), 0 (in dieser Nachricht) und 254
+  (die vorherige, von `felder()` weitergereicht); jeder andere wirft.
+- Mehrere Nachrichten je Datei und mehrere Felder je Nachricht liest
+  `felder()` getrennt; `werte()` waehlt per `feld_nr`.
+- Kein Zeitbezug, keine Ensembles.
 Wer ein anderes GRIB2-Produkt einliest, bekommt eine Ausnahme statt stiller
 Falschwerte - genau die Fehlerklasse, die dieses Projekt viermal getroffen hat.
 
@@ -124,7 +127,7 @@ def gitter(s3):
 
 
 def werte(daten, feld_nr=0):
-    """(Wertefeld, Gitterparameter).  Nur Packvorlage 5.0.
+    """(Wertefeld, Gitterparameter, Bitmap-Maske oder None).  Nur Packvorlage 5.0.
 
     Fehlende Punkte sind NaN, nicht 0 - eine Null waere hier "Wolkenoberkante
     auf Meereshoehe" und damit eine Aussage, die die Daten nicht machen.

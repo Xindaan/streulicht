@@ -48,6 +48,11 @@ def werte():
     return d
 
 
+def tok(name):
+    """Reiner Tokenwert ohne var() - fuer Berechnungen und Verlaufsstopps."""
+    return werte()[name]
+
+
 def rgb(name):
     """Token als (r, g, b).  Nur Sechsstellen-Hex, alles andere faellt auf."""
     h = werte()[name].strip()
@@ -68,3 +73,19 @@ def mischen(name_dunkel, name_hell, anteil):
     d, h = rgb(name_dunkel), rgb(name_hell)
     return "rgb(%d,%d,%d)" % tuple(int(round(d[i] + a * (h[i] - d[i])))
                                    for i in range(3))
+
+
+def mische_hex(a, b, t):
+    """Farbmischung zweier #rrggbb, t in [0,1] -> '#rrggbb'.
+
+    Anders als mischen(): nimmt Farbwerte statt Tokennamen (das Himmelsband
+    mischt eigene Stopps, die keine Tokens sind) und liefert Hex statt
+    rgb().  Das Format steht in den erzeugten Seiten; darum bleiben es zwei
+    Funktionen.
+    """
+    t = max(0.0, min(1.0, t))
+    ha, hb = a.lstrip("#"), b.lstrip("#")
+    return "#%02x%02x%02x" % tuple(
+        round(int(ha[i:i + 2], 16)
+              + t * (int(hb[i:i + 2], 16) - int(ha[i:i + 2], 16)))
+        for i in (0, 2, 4))

@@ -1,8 +1,10 @@
 """Klimatologie des Scores und Ableitung des Schwellwerts s*.
 
-3-Schicht-Variante auf ERA5 (`archive-api`), stuendlich, zur Sonnenuntergangs-
-stunde ausgewertet.  ERA5 ist die einzige Quelle mit mehrjaehriger Tiefe -
-Druckflaechen hat sie ueber Open-Meteo nicht (siehe docs/befunde-e1.md 1.3).
+3-Schicht-Variante auf ECMWF-IFS-Analysen (`archive-api` mit
+`models=ecmwf_ifs`, rund 9 km; kein ERA5, siehe Kommentar am Abruf),
+stuendlich, zur Sonnenuntergangsstunde ausgewertet.  Das Archiv ist die
+einzige Quelle mit mehrjaehriger Tiefe - Druckflaechen hat es ueber
+Open-Meteo nicht (siehe docs/befunde-e1.md 1.3).
 
 Zeitliche Zuordnung: naechstliegende volle Stunde.  Maximaler Versatz 30 min,
 bei 30 m/s auf 300 hPa also bis 54 km.  Fuer eine Verteilungsschaetzung
@@ -14,6 +16,7 @@ import json
 import os
 import sys
 import time
+import urllib.error
 import urllib.request
 from datetime import date, timedelta
 
@@ -176,6 +179,32 @@ def hole_jahr(zellen, jahr, gesucht, block=60, ende=None, max_bloecke=None):
     return aus
 
 
+def buche_abend(ergebnis, ohne_daten, tag, hole):
+    """Score eines Abends rechnen und buchen - oder als Luecke merken.
+
+    Auf Modulebene, damit test_phantomnullen.py genau diesen Riegel ausfuehrt
+    statt einer Kopie."""
+    s, det = score(hole)
+    # T-0060: `det is None` heisst "nicht auswertbar", und score()
+    # gibt dann 0.0 zurueck.  Diese Null als Messwert abzulegen waere
+    # eine Phantomnull am UNTEREN Ende der Verteilung - und aus genau
+    # dieser Verteilung kommt s* = 0.7065.  Ein Abend ohne Daten
+    # wuerde also den Schwellwert mitbestimmen, den er nie gesehen
+    # hat.  Er wird deshalb ausgelassen, nicht als 0.0 gebucht.
+    #
+    # GEMESSEN (23.08.2026): in allen fuenf vorliegenden
+    # score_berlin_*.json steht `schirm: null` KEIN einziges Mal -
+    # die Klasse ist im Code moeglich, in den bisherigen Daten aber
+    # nie eingetreten. s* ist also nicht betroffen.  Der Riegel gilt
+    # kuenftigen Laeufen: anderer Ort, anderes Jahr, oder ein am
+    # Kontingent abgebrochener Abruf.
+    if det is None:
+        ohne_daten.append(tag)
+        return
+    ergebnis[tag] = {"s": s, "schirm": det["schirm"],
+                     "A": det["A"], "B": det["B"]}
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--von", type=int, default=2022)
@@ -207,7 +236,7 @@ def main():
 
     ergebnis = {}
 
-    ohne_daten = []                  # T-0060, siehe unten
+    ohne_daten = []                  # T-0060, siehe buche_abend()
     for jahr in range(a.von, a.bis + 1):
         gesucht = {}
         for t in tage(date(jahr, 1, 1), min(date(jahr, 12, 31), bis)):
@@ -236,25 +265,7 @@ def main():
                 v = feld[z][schicht].get(_t)
                 return None if v is None else v / 100.0
 
-            s, det = score(hole)
-            # T-0060: `det is None` heisst "nicht auswertbar", und score()
-            # gibt dann 0.0 zurueck.  Diese Null als Messwert abzulegen waere
-            # eine Phantomnull am UNTEREN Ende der Verteilung - und aus genau
-            # dieser Verteilung kommt s* = 0.7065.  Ein Abend ohne Daten
-            # wuerde also den Schwellwert mitbestimmen, den er nie gesehen
-            # hat.  Er wird deshalb ausgelassen, nicht als 0.0 gebucht.
-            #
-            # GEMESSEN (23.08.2026): in allen fuenf vorliegenden
-            # score_berlin_*.json steht `schirm: null` KEIN einziges Mal -
-            # die Klasse ist im Code moeglich, in den bisherigen Daten aber
-            # nie eingetreten. s* ist also nicht betroffen.  Der Riegel gilt
-            # kuenftigen Laeufen: anderer Ort, anderes Jahr, oder ein am
-            # Kontingent abgebrochener Abruf.
-            if det is None:
-                ohne_daten.append(tag)
-                continue
-            ergebnis[tag] = {"s": s, "schirm": det["schirm"],
-                             "A": det["A"], "B": det["B"]}
+            buche_abend(ergebnis, ohne_daten, tag, hole)   # T-0060
         del feld
     if ohne_daten:
         # Sichtbar machen, nicht wegschweigen: ein Lauf, der still die Haelfte

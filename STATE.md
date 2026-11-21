@@ -1,6 +1,6 @@
 # STATE
 
-Stand 05.11.2026. Langtext bis 13.10.: `docs/state_archiv_2026-10-21.md` (wortgleich).
+Stand 21.11.2026. Langtext bis 13.10.: `docs/state_archiv_2026-10-21.md` (wortgleich).
 
 ## Ziel
 
@@ -20,21 +20,25 @@ der Waechter es meldet.
 - Betrieb: vier launchd-Agenten (alarm, bewertung, erinnerung, seite;
   `betrieb/*.plist`, Interpreter `.venv/bin/python3`) plus GitHub-Action
   `.github/workflows/waechter.yml` (alle 6 h). Pass-2-Deckel 200, ein Lauf
-  ca. 4.160 Kontingent-Einheiten; Betrieb seit 13.10. nicht erneut geprueft.
-- Repo ist PUBLIC: Klarname im aktuellen Stand ersetzt, pre-push-Guard aktiv
-  (`tools/install_push_guard.sh`, Marker lokal in `.private/`). T-0089 erledigt:
-  Historie bleibt, Notendatei und Commit-Adresse ersetzt, Plist-Pfade und
-  launchd-Labels bewusst belassen.
+  ca. 4.160 Kontingent-Einheiten. Gesehen am 21.11.: alle vier Agenten
+  installiert, ausgelieferter Datenstand vom 21.11. 09:20 UTC.
+- Pruefung: `.claude/skills/verify` baut die Seiten im Sandkasten aus einem
+  Schnappschuss der Betriebsdaten und faehrt alle Tests (ein Befehl, rund
+  20 s, ohne Netz, ohne Push). Teststand 21.11.: 931 Python-Pruefungen in
+  32 Dateien + 64 JS gruen.
+- Aufraeumlauf + T-0091/92/94-Teile am 21.11. lokal in main gemergt, nicht
+  gepusht. Offene Befunde: T-0090 bis T-0096.
+- Repo ist PUBLIC, pre-push-Guard aktiv (`tools/install_push_guard.sh`).
 - WN3 (T-0072): s*_WN3 = 0,7144, 90-%-Intervall [0,6293; 0,8364], aus
   305 gepaarten Abenden 2026 mit 14 Ereignissen ueber ECMWF s* = 0,7065
-  (`skripte/wn3_quantil.py`). Referenz 2026 vollstaendig (305/305 Abende).
-- Teststand 05.11.: 912 Python-Pruefungen in 31 Dateien + 64 JS gruen.
+  (`skripte/wn3_quantil.py`).
 
 ## Live-Risiken / Stolpersteine
 
 - Kontingent: zwei volle Laeufe (8.320) liegen knapp unter dem Tageslimit
-  10.000; Gardena teilt die IP. Jeder Zusatzabruf (auch Klimatologie-Nachholen)
-  muss in diese Bilanz.
+  10.000; Gardena teilt die IP. Jeder Zusatzabruf muss in diese Bilanz.
+- Alarm kann bei zwei Orten doppelt gehen (T-0090); ohne `web/index.html`
+  verschwindet die Prognoseseite beim Force-Push (T-0091-Rest).
 - Agenten scheitern still (T-0040, offen; T-0075 deckt nur das Seitenalter ab).
 - s* ist modellspezifisch: kein Modellwechsel ohne neue Schwelle (T-0072).
 - Die Quantilbruecke Analyse -> ENS-Member ist nie gemessen (T-0020); fuer
@@ -42,8 +46,11 @@ der Waechter es meldet.
 
 ## Bei Dir
 
+- Push von main nach origin (Guard prueft jetzt fail-closed).
 - T-0072: Traegt s*_WN3 = 0,7144? Nur 14 Ereignisse, Intervall 0,63-0,84.
   Davon haengen Betriebsvehikel und der WN3-Weg in `alarm.py` ab.
+- `gardena-wetter` steht in der veroeffentlichten Historie (e5a2480), in
+  TASK.md und `docs/review-2026-10-09.md`: so lassen oder auch dort tilgen?
 - Optional Repo-Secret `NTFY_WAECHTER` (T-0075); neues Topic `ntfy_erinnerung`
   (T-0077); `sicherung_ordner` und Time-Machine-Ziel (T-0081).
 - Erfolgskriterium oben bestaetigen oder korrigieren.
@@ -53,6 +60,7 @@ der Waechter es meldet.
 1. T-0072: nach der Entscheidung zu s*_WN3 Betriebsvehikel und Uebergabe
    klaeren, dann zweiter Weg in `alarm.py`.
 2. T-0008 Dispersion und Skill ueber Vorlauf (nach Winter/Fruehjahr).
+3. Vorschlag: T-0090 (Versand), danach T-0091-Rest (Auslieferung).
 
 ## Termine
 
@@ -62,9 +70,9 @@ der Waechter es meldet.
 
 ## Letzte Done
 
+- 21.11.2026 T-0091/T-0092/T-0094 (Teile): Guard fail-closed, Deckel 200, `wn3.py` ohne Vorgabe.
+- 21.11.2026 Aufraeumlauf: verify-Skill, 4 Fehler, Tests, toter Code, Dopplungen.
 - 05.11.2026 T-0072 (Teil): Referenz 2026 komplett, s*_WN3 = 0,7144 [0,63; 0,84].
 - 04.11.2026 T-0089: Klarname aus dem Stand, pre-push-Guard, Option B (Notendatei, Commit-Adresse).
 - 04.11.2026 T-0072 (Teil): s*-Verfahren fuer WN3, Mitschreib-Praemisse widerlegt.
-- 13.10.2026 T-0074 bis T-0087 Review-Block (Blockcache, Deckel 200, Waechter, Stufen).
-- 04.09.2026 T-0063 bis T-0071 Fremdreview (Advektion, Median statt Bestmember).
 <!-- snapshot-ende -->

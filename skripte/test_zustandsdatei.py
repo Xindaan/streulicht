@@ -112,8 +112,10 @@ with tempfile.TemporaryDirectory() as d:
     with open(p) as f:
         ok(json.load(f) == {"stand": "gueltig"},
            "und traegt noch den ALTEN, vollstaendigen Stand")
-    ok(not [x for x in os.listdir(d) if x.endswith(".tmp")]
-       or True, "(.tmp-Rest nach SIGKILL ist erlaubt, er stoert keinen Leser)")
+    # Keine Pruefung: ein .tmp-Rest nach SIGKILL ist erlaubt, er stoert
+    # keinen Leser.  Nur zur Auskunft, zaehlt nicht mit.
+    print("   Hinweis: .tmp-Reste nach SIGKILL: %d (erlaubt)"
+          % len([x for x in os.listdir(d) if x.endswith(".tmp")]))
 
 print("\n3. Wiederholt - ein Einzeltreffer waere Zufall")
 with tempfile.TemporaryDirectory() as d:

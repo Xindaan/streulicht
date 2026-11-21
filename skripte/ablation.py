@@ -17,6 +17,7 @@ import json
 import os
 import sys
 import time
+import urllib.error
 import urllib.request
 from datetime import date, timedelta
 
@@ -199,8 +200,8 @@ def main():
     topN = {tage_[i] for i in sorted(range(n), key=lambda i: -sN[i])[:k]}
     print("Top-%d-Ueberlappung: %d von %d (%.0f %%)"
           % (k, len(top3 & topN), k, 100 * len(top3 & topN) / k))
-    print("\nnur 3-Schicht:      %s" % ", ".join(sorted(top3 - topN)) or "-")
-    print("nur niveauaufgel.:  %s" % ", ".join(sorted(topN - top3)) or "-")
+    print("\nnur 3-Schicht:      %s" % (", ".join(sorted(top3 - topN)) or "-"))
+    print("nur niveauaufgel.:  %s" % (", ".join(sorted(topN - top3)) or "-"))
 
     # Dateiname traegt das Fenster.  Vorher hiess die Datei immer
     # "ablation.json" - der zweite Lauf mit einem anderen Zeitraum

@@ -198,6 +198,23 @@ pruefe([m["note"] for _, m in erg] == [5],
        "steht die Nutzlast in Klickziel UND Text, gilt das Klickziel (%s)"
        % [m["note"] for _, m in erg])
 pruefe(holen("")[0] == [], "leere Antwort: leere Liste")
+# Eine Nachricht ohne brauchbare Zeit ist eine unlesbare Zeile: sie faellt
+# weg, die gute daneben kommt an (vorher KeyError, der Abruf war verloren).
+ohne_zeit = json.loads(ntfy(dict(OK, note=1)))
+del ohne_zeit["time"]
+erg, _ = holen(json.dumps(ohne_zeit) + "\n" + ntfy(dict(OK, note=4)))
+pruefe([(z, m["note"]) for z, m in erg] == [(EPOCHE, 4)],
+       "Nachricht ohne time wird uebersprungen, die gute kommt an (%s)"
+       % [(z, m["note"]) for z, m in erg])
+erg, _ = holen("\n".join([ntfy(dict(OK, note=1), zeit=str(EPOCHE)),
+                          ntfy(dict(OK, note=2), zeit=True)]))
+pruefe(erg == [], "time als Zeichenkette oder bool wird uebersprungen (%s)"
+       % [(z, m["note"]) for z, m in erg])
+erg, _ = holen("\n".join(['[1, 2]', '"text"', '7', 'null',
+                          ntfy(dict(OK, note=3))]))
+pruefe([m["note"] for _, m in erg] == [3],
+       "JSON-Zeilen, die kein Objekt sind, werden uebersprungen (%s)"
+       % [m["note"] for _, m in erg])
 
 print("\n2. Waechter 2 - plausibel(): kein Phantomabend (am Parser gemessen)")
 heute_p = lambda tag: mit_uhr(NACH_ALLEM, lambda: bh.plausibel(tag))  # noqa: E731

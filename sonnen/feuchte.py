@@ -118,8 +118,3 @@ def ueberlappung(bedeckungen, w: float = 0.75) -> float:
 def bedeckung_openmeteo(rh_wasser_prozent: float) -> float:
     """Open-Meteos Diagnostik, nachgebaut - nur fuer Vergleichsrechnungen."""
     return _sundqvist(rh_wasser_prozent / 100.0, 0.70, 1.00)
-
-
-def eissaettigung_bei_rh_wasser(t_c: float) -> float:
-    """Bei welcher Wasser-RH (Prozent) ist Eissaettigung erreicht?"""
-    return 100.0 * saettigungsdruck_eis(t_c) / saettigungsdruck_wasser(t_c)

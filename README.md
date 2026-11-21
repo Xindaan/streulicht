@@ -29,8 +29,12 @@ git clone https://github.com/Xindaan/streulicht.git && cd streulicht
 .venv/bin/python3 skripte/alarm.py             # rechnen und pushen
 ```
 
-Nur `numpy` und `matplotlib` werden gebraucht, und die nur fuer Kalibrierung
-und Auswertung — der Alarmlauf selbst kommt mit der Standardbibliothek aus.
+Nur `numpy` und `matplotlib` werden gebraucht, und die nur fuer Analyse und
+Tests: `numpy` fuer den GRIB2-Leser `sonnen/grib2.py` (also `satellit.py`,
+`oberkante.py`, `fensterterm.py` und `test_grib2.py`), fuer
+`kalibriere_eis2.py`, `wn3.py` und `test_wn3.py`; `matplotlib` nur fuer
+`auswertung.py` — der Alarmlauf selbst und die Auslieferung der Seiten kommen
+mit der Standardbibliothek aus (Begruendung in `betrieb/anforderungen.txt`).
 
 **Warum `.venv/bin/python3` und nicht einfach `python3`** (seit 30.08.2026,
 T-0062): die vier Agenten liefen bis dahin auf `/usr/local/bin/python3`, dem
@@ -233,7 +237,7 @@ nur gebraucht, um die Score-Formel rueckwirkend zu aendern.
 
 **Die erzeugten Seiten sind nicht im Repo.** `web/index.html`,
 `web/bewerten-*.html` und `web/bisher.html` sind Bauartefakte und
-gitignoriert &mdash; der stuendliche Agent schreibt sie neu, und schon die
+gitignoriert &mdash; der Auslieferungsagent (alle 10 Minuten) schreibt sie neu, und schon die
 Sonnentafel in der Bewertungsseite wandert dabei taeglich um einen Eintrag.
 Getrackt erzeugten sie jeden Tag einen Diff, der nichts bedeutet. Quelle
 sind die Vorlage `web/bewerten.html` und die Generatoren in `skripte/`;
@@ -299,7 +303,7 @@ Maintainer selbst setzen muss.
 | `lauf_morgens_utc` | Zeit des Vormittagslaufs in UTC als `"HH:MM"` (Standard `09:20`); der Lauf schickt keinen zweiten Push, er frischt nur die Seite auf |
 | `nachtlauf` | Nachhol-Lauf ab 02:00 Ortszeit nach einem Tag ganz ohne Lauf (Standard `true`, `false` = aus; siehe "Zwei Laeufe am Tag"); sendet keinen Push |
 | `advektion` | semi-Lagrangesche Zeitinterpolation an/aus (siehe unten) |
-| `pass2_max_zellen` | Obergrenze fuer Pass 2 (Standard 320, `null` = kein Deckel); darueber rechnen die fernen Abende teilweise ohne Advektion, Logzeile `ACHTUNG Pass 2 GEDECKELT` |
+| `pass2_max_zellen` | Obergrenze fuer Pass 2 (Standard 200 = Betriebswert, `null` = kein Deckel); darueber rechnen die fernen Abende teilweise ohne Advektion, Logzeile `ACHTUNG Pass 2 GEDECKELT` |
 | `seiten_basis` | Basis-URL der ausgelieferten Seiten (Wurzel des `gh-pages`-Zweigs); daraus entstehen die Klickziele der Pushs und der Quittung |
 | `bewertung_tage_pro_woche` | an wie vielen Tagen je Woche die Erinnerung fragt (1 bis 7; 7, `0` oder fehlend = jeden Abend). Die Auswahl ist eine deterministische Wochenstichprobe (gleiche Woche, gleiche Tage); unter 7 sinkt die Zahl auswertbarer Abende proportional |
 | `orte[]` | Name, Anzeigename, Koordinaten, Zeitzone, Bewertungs-Topic (oeffentlich, nur Eingang; Alarm- und Erinnerungs-Topic stehen als `ntfy_alarm` und `ntfy_erinnerung` je Ortsname in `konfig_geheim.json`) |
@@ -476,7 +480,8 @@ das Jahr um mehr als fuenfeinhalb Stunden: 21:33 am 21. Juni, 15:53 am
 Ereignis, vor dem er warnen soll. Der Agent laeuft deshalb stuendlich und
 `alarm.im_laufenster()` entscheidet - dasselbe Muster wie bei der
 Erinnerung. `skripte/test_lauffenster.py` prueft ueber ein ganzes Jahr, dass
-genau ein Termin je Tag ins Fenster faellt, keiner und keine zwei.
+in jedes der beiden Fenster (`morgens`, `abends`, siehe unten) je Tag genau
+ein Termin faellt, keiner und keine zwei.
 
 ### Zwei Laeufe am Tag
 
@@ -632,8 +637,9 @@ ECMWF-**ENS-Membern**.  Der Sprung zwischen zwei Modellen ist gemessen
 genauso gross wie der zwischen zwei Score-Varianten (Befund 33: rho 0.483
 gegen 0.504, bei den Ausloesungen 8 gegen 2).  Ob dieselbe Schwelle dieselbe
 Rate ergibt, ist **nie gemessen worden** und vorab auch nicht messbar - es
-gibt kein Ensemble-Archiv.  Der Livegang ist die Messung: `archiviere.py` ab
-Tag 1, nach 6-8 Wochen s\* und p\* nachziehen.  Bis dahin gilt die Alarmrate
+gibt kein Ensemble-Archiv.  Der Livegang ist die Messung: das Tagesarchiv
+(`daten/archiv/`, geschrieben von `alarm.py`, `schreibe_archiv()`) ab Tag 1,
+nach 6-8 Wochen s\* und p\* nachziehen.  Bis dahin gilt die Alarmrate
 als unbekannt, nicht als 18.5 pro Jahr.
 
 **Kontingent beachten.** Open-Meteo drosselt minuetlich (600), stuendlich
@@ -775,7 +781,7 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 | `skripte/logbuch.py` | Logzeilen mit Datum und Uhrzeit, Rotation unter launchd (T-0081) |
 | `skripte/sicherung.py` | Tageskopie der Zustandsdatei, optional zusaetzlich in `sicherung_ordner` (T-0081) |
 | `skripte/waechter.py` | prueft auf GitHub, ob die ausgelieferte Seite frisch ist (T-0075) |
-| `skripte/wn3.py` | WeatherNext-3-Leser, laeuft in us-east1, nicht im Betrieb (T-0072) |
+| `skripte/wn3.py` | WeatherNext-3-Leser, laeuft in us-east1, nicht im Betrieb (T-0072); Abrechnungsprojekt Pflicht per `--projekt` oder `WN3_PROJEKT` |
 | `skripte/wn3_vergleich.py` | Vorfrage: weicht WN3 ueberhaupt von ECMWF ab? Nur Auswertung, nicht im Betrieb |
 | `skripte/wn3_quantil.py` | s* fuer WN3 per Quantilabbildung an denselben Abenden (T-0072); `--holen` holt p50-Scores kostenlos in `daten/wn3_p50/` |
 | `skripte/icond2.py` | ICON-D2-Abruf fuer den Aufloesungstest (`test_phantomnullen.py` braucht seinen Cache) |
@@ -784,11 +790,39 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 | `skripte/fensterterm.py` | Fensterterm gegen die Maske: Phantom oder bestaetigt (T-0027) |
 | `skripte/wegterm.py` | Wegterm anders aggregiert, fuenf Varianten gegen Album/Referenz (T-0029) |
 | `skripte/sichtfaktor_messung.py` | Analyse: Sichtfaktor gleich oder raumwinkelgewichtet, Klimatologie aus `daten/roh/` neu gerechnet, Haeufigkeit des Falls, Albumprobe; aendert `score.py` nicht (T-0086) |
+| `skripte/stufen.py` | Stufe eines Abends: eine Regel fuer Prognoseseite, Bewertungsseite, Bilanz und Alarm (T-0084) |
+| `skripte/tokens.py` | Zugriff auf `stil/tokens.css`, die einzige Quelle fuer Farbe und Mass der Seiten |
+| `skripte/abbruchtest2.py` | Abbruchtest, zweiter Anlauf: Vergleich innerhalb der Draussen-Abende (Analyse, nicht im Betrieb) |
+| `skripte/absicht.py` | T-0001b: trennt der Score innerhalb der Draussen-Abende? (Analyse, nicht im Betrieb) |
+| `skripte/albumtest.py` | Validierung: kuratiertes Album gegen die Klimatologie, Presence-Only (Analyse, nicht im Betrieb) |
+| `skripte/ablation.py` | T-0006: traegt die 3-Schicht-Variante dieselbe Rangfolge wie die niveauaufgeloeste? (Analyse, nicht im Betrieb) |
+| `skripte/termanalyse.py` | aendert der Fensterterm die Rangfolge? Offline, kein Kontingent (Analyse, nicht im Betrieb) |
+| `skripte/aerosol.py` | misst den Aerosol-Term, den E0 verworfen hat (Analyse, nicht im Betrieb) |
+| `skripte/oberkante.py` | T-0028: liegt die Wolkenoberkante am Lichtweg ueber oder unter dem Strahl? (Analyse, nicht im Betrieb) |
+| `skripte/icond2_test.py` | wertet den Aufloesungstest aus: ICON-D2 gegen die Klimatologie-Daten (Analyse, nicht im Betrieb) |
+| `skripte/era5_nachtrag.py` | traegt einzelne Abende in die Klimatologie nach; Daten sind IFS-Analysen, kein ERA5 (nicht im Betrieb) |
+| `skripte/kalibriere_eis.py` | kalibriert den Eiszweig der Wolkendiagnostik gegen GFS (Analyse, nicht im Betrieb) |
+| `skripte/kalibriere_eis2.py` | Kalibrierung, zweiter Anlauf, mit Trainings-/Testtrennung (Analyse, nicht im Betrieb) |
+| `skripte/fotos_zaehlen.py` | Gate: wie viele geotaggte Abendfotos liegen in der Fotomediathek? (Analyse, nicht im Betrieb) |
+| `skripte/fotos_detail.py` | erweiterte Fotoextraktion: Favoriten, Minutenabstand zum Sonnenuntergang (Analyse, nicht im Betrieb) |
+| `skripte/fotos_spotlight.py` | Fotogate ohne Mediathek-Zugriff: geotaggte Bilder per Spotlight (Analyse, nicht im Betrieb) |
+| `skripte/rueckschau.py` | erzeugt die lokale Seite `web/rueckschau.html`: Score an vergangenen Abenden; wird nicht ausgeliefert |
+| `skripte/diagnose.py` | erzeugt die lokale Seite `web/diagnose.html`: Foto neben Vertikalschnitt; wird nicht ausgeliefert |
 | `sonnen/grib2.py` | GRIB2-Leser fuer die Wolkenmaske, ohne Fremdbibliothek |
 | `betrieb/*.plist` | Vorlagen der vier launchd-Agenten (Kopie dessen, was installiert ist) |
 | `betrieb/anforderungen.txt` | die zwei Fremdpakete, mit Begruendung wofuer |
 
 ### Tests
+
+Alles auf einmal, im Sandkasten und ohne Netz (Seiten aus einem Schnappschuss
+der Betriebsdaten bauen, dann jede Testdatei einzeln; rund 20 Sekunden,
+Beschreibung in `.claude/skills/verify/SKILL.md`):
+
+```bash
+.venv/bin/python3 .claude/skills/verify/verify.py
+```
+
+Einzeln:
 
 ```bash
 .venv/bin/python3 skripte/test_member.py      # Member-Verdichtung, Faecher, Deckung
@@ -796,7 +830,7 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 .venv/bin/python3 skripte/test_grib2.py       # GRIB2-Leser, Vorzeichen-Betrag, Sektionen
 .venv/bin/python3 skripte/test_seiten.py      # erzeugte Seiten und die neuen Grafiken
 .venv/bin/python3 skripte/test_seiten_atomar.py  # Absturz beim Schreiben laesst die alte Seite stehen
-.venv/bin/python3 skripte/test_lauffenster.py # ein Lauf je Tag, ueber ein ganzes Jahr
+.venv/bin/python3 skripte/test_lauffenster.py # je Tag genau ein Lauf morgens und einer abends, ueber ein ganzes Jahr
 .venv/bin/python3 skripte/test_nachtlauf.py   # Nachtlauf nach Ausfalltag, ohne Push (T-0087)
 .venv/bin/python3 skripte/test_abruf.py       # Wind nur am Ort, Advektion trotzdem aktiv
 .venv/bin/python3 skripte/test_wn3.py         # WeatherNext-3-Leser, Zeitachse, Negativproben
@@ -825,7 +859,7 @@ Holt `curl` die Seite gar nicht, liegt es an GitHub Pages.
 node   skripte/test_bewertungsseite.js   # Warteschlange und Freilegung
 ```
 
-Stand 09.10.2026 (nach T-0084): **887 Python-Pruefungen in 29 Dateien + 64 JS, alle gruen**
+Stand 21.11.2026: **917 Python-Pruefungen in 31 Dateien + 64 JS, alle gruen**
 (gezaehlt als Ausgabezeilen `ok` je Datei, ohne Netz; `test_phantomnullen.py`
 mit ICON-Cache, `test_seiten.py` und `test_seiten_atomar.py` mit `daten/`
 mitgezaehlt; `test_advektion.py` zaehlt seine `ok`-Zeilen jetzt mit). Vorher, am 04.09.2026:

@@ -45,11 +45,21 @@ def hole(topic, seit="12h"):
             n = json.loads(zeile)
         except ValueError:
             continue
-        if n.get("event") != "message":
+        # Gueltiges JSON, aber kein Objekt ([1, 2], "x", 7): ebenfalls eine
+        # unlesbare Zeile, sonst kippt n.get() den Abruf wie ein fehlendes time.
+        if not isinstance(n, dict) or n.get("event") != "message":
+            continue
+        # Die Zeit landet als bewertung_zeit im Zustand (Epochensekunde von
+        # ntfy).  Fehlt sie oder ist sie keine Zahl, gilt die Nachricht als
+        # unlesbar wie eine kaputte Zeile - sonst reisst ein KeyError den
+        # ganzen Abruf ab und die guten Noten daneben gehen verloren.
+        # bool ist in Python ein int, aber keine Zeit.
+        zeit = n.get("time")
+        if isinstance(zeit, bool) or not isinstance(zeit, (int, float)):
             continue
         m = _nutzlast_klick(n.get("click", "")) or _nutzlast(n.get("message", ""))
         if m is not None:
-            aus.append((n["time"], m))
+            aus.append((zeit, m))
     return aus
 
 
@@ -144,7 +154,12 @@ def plausibel(tag):
         d = date.fromisoformat(tag)
     except ValueError:
         return False
-    # Ein Tag Luft nach vorn: die Seite rechnet in Ortszeit, der Poller in UTC.
+    # Obergrenze ist das lokale Systemdatum des Pollers (date.today()) plus
+    # ein Tag.  Die Seite vergibt einen Abend erst nach dessen
+    # Sonnenuntergang (abendVonJetzt in web/bewerten.html), ein echter Tag
+    # liegt also nie nach dem heutigen.  Der eine Tag Luft faengt ab, dass
+    # Systemdatum des Pollers und Kalenderdatum der Seite auseinanderliegen
+    # (anderes Zeitzonen-Setting des Rechners, Lauf kurz nach Mitternacht).
     return ERSTER_ABEND <= d <= date.today() + timedelta(days=1)
 
 

@@ -26,8 +26,8 @@ import argparse
 import json
 import math
 import os
-import sys
 import time
+import urllib.error
 import urllib.request
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -645,19 +645,19 @@ def naechster_schritt(zeiten, ziel_dt):
 # Obergrenze fuer Pass 2 (T-0074, Review alarm#2), ueberschreibbar per
 # `pass2_max_zellen` in konfig.json (null = kein Deckel).
 #
-# WARUM 320.  Gemessen im Log: Pass 2 hatte im August 110-150 Zellen, Anfang
-# Oktober 290-320 (Hoechstwert im ganzen Log 319, am 07.10.).  Dazu kommen 72
-# Zellen Pass 1 und eine Windzelle; mit Deckel ist ein Lauf also hoechstens
-# rund 390 Ortsabrufe gross - so gross wie die groessten Laeufe, die
-# nachweislich in einer Uhrstunde durchgingen (378 und 383 am 08.10.2026).
-# Heute schneidet der Deckel nichts ab.  Er faengt, was die Messung nicht
-# abdeckt: eine Starkwindlage im Maerz oder Juni, wenn dt wieder gross ist,
-# koennte Pass 2 ueber jeden beobachteten Lauf treiben, und dann riss bisher
-# der ganze Lauf am Limit, statt nur die fernen Abende ungenauer zu machen.
-# Ein Deckel unter 320 wuerde schon viele Oktoberlaeufe beschneiden, ohne
-# dass belegt ist, dass er das Stundenlimit verhindert (siehe LAST: das
-# Gewicht ist offen).
-PASS2_MAX_ZELLEN = 320
+# WARUM 200.  Der Wert ist der Betriebswert aus konfig.json (seit 13.10.2026,
+# T-0092); faellt der Schluessel weg, aendert sich das Verhalten also nicht.
+# Ein voller Lauf kostet rund 15,3 Kontingent-Einheiten je Ort (Member
+# zaehlen mit).  Mit 320 Zellen waren es rund 5.900 Einheiten, mehr als das
+# Stundenlimit 5.000, zwei Laeufe mehr als das Tageslimit 10.000 (Log
+# 10.10.).  Mit 120 lief alles durch, aber schon der uebernaechste Abend
+# verlor die Advektion.  200 sind rund 4.160 Einheiten je Lauf, zwei volle
+# Laeufe 8.320.  Gemessen hatte Pass 2 im August 110-150 Zellen, Anfang
+# Oktober 290-320 (Hoechstwert 319); darueber behaelt der Lauf die Zellen
+# der naechsten Abende und rechnet die fernen ohne Advektion (T-0085: dort
+# ohnehin nur Tendenz), statt am Limit ganz zu reissen.  Verlauf der
+# Entscheidung: `_hinweis_pass2` in konfig.json.
+PASS2_MAX_ZELLEN = 200
 
 
 def deckle_pass2(neu, karte, abende, grenze):

@@ -36,6 +36,7 @@ sys.path.insert(0, os.path.join(BASIS, "skripte"))
 sys.path.insert(0, BASIS)
 
 import alarm  # noqa: E402
+import bewertungsseite  # noqa: E402
 import bisher  # noqa: E402
 import faecher  # noqa: E402
 import schnitt  # noqa: E402
@@ -217,6 +218,45 @@ pruefe(seite.wahrsch_text(1 / 51.0, 51) == "2 %"
        and seite.wahrsch_text(0.57, 51) == "57 %",
        "von null verschiedene Werte bleiben Prozent")
 pruefe(seite.wahrsch_text(None, 51) is None, "Rueckschau (None) bleibt None")
+# --- Einzahl: "EIN ABEND", nicht "EIN ABENDE" --------------------------------
+pruefe(seite.abende_wort(1) == "ABEND" and seite.ANZAHL_WORT[1] == "EIN ABEND",
+       "ein Abend in der Einzahl ('%s')" % seite.ANZAHL_WORT[1])
+pruefe([seite.abende_wort(k) for k in (0, 2, 13)] == ["ABENDE"] * 3
+       and seite.ANZAHL_WORT[0] == "NULL ABENDE"
+       and seite.ANZAHL_WORT[2] == "ZWEI ABENDE",
+       "null, zwei und dreizehn Abende bleiben Mehrzahl")
+
+# --- Bewertungsseite: ein Ort ohne name kippt nicht alle Seiten ---------------
+d_bew = tempfile.mkdtemp(prefix="uipaket_bew_")
+try:
+    os.makedirs(os.path.join(d_bew, "web"))
+    with open(os.path.join(BASIS, "konfig.json")) as f:
+        kfg_bew = json.load(f)
+    berlin = [o for o in kfg_bew["orte"] if o.get("name") == "berlin"]
+    kfg_bew["orte"] = berlin + [{"anzeige": "Ohne Name", "breite": 50.0,
+                                 "laenge": 10.0, "zeitzone": "Europe/Berlin",
+                                 "ntfy_bewertung": "topic-ohne-name"}]
+    with open(os.path.join(d_bew, "konfig.json"), "w") as f:
+        json.dump(kfg_bew, f)
+    alt = (bewertungsseite.BASIS, sys.argv)
+    bewertungsseite.BASIS = d_bew
+    sys.argv = ["bewertungsseite.py", "--konfig",
+                os.path.join(d_bew, "konfig.json")]
+    puffer, absturz = io.StringIO(), None
+    try:
+        with contextlib.redirect_stdout(puffer):
+            bewertungsseite.main()
+    except Exception as e:                      # vorher: KeyError 'name'
+        absturz = repr(e)
+    finally:
+        bewertungsseite.BASIS, sys.argv = alt
+    bew_da = os.path.exists(os.path.join(d_bew, "web", "bewerten-berlin.html"))
+finally:
+    shutil.rmtree(d_bew, ignore_errors=True)
+pruefe(len(berlin) == 1 and absturz is None and bew_da
+       and "uebersprungen" in puffer.getvalue(),
+       "bewertungsseite.main(): Ort ohne name wird uebersprungen, Berlin "
+       "bekommt seine Seite (Absturz: %s)" % absturz)
 
 # --- Vorauswahl nach Sonnenuntergang (uiux#2) ---------------------------------
 E = [{"tag": "2026-10-09", "unter": 1000}, {"tag": "2026-10-10", "unter": 2000},

@@ -20,7 +20,9 @@ Hauptgeraet unlesbar.  Deshalb:
     kompakt=False   ausfuehrlich, 840x490, alle Diagnosezahlen.
                     Fuer diagnose.html und rueckschau.html.
     kompakt=True    420x300, grosse Grade, NUR Bild und Achsen.
-                    Fuer die Produktseite.
+                    Die Produktseite zeichnet mit schnitt_neu(); kompakt
+                    laeuft nur noch in seite.rueckschau_eintraege, das
+                    davon Score und Details nimmt, nicht das Bild.
 
 Grundsatz dahinter: Text, den man lesen muss, gehoert ins HTML, nicht ins
 SVG.  Im SVG steht nur, was von seiner Position lebt - Achsenzahlen und der
@@ -33,14 +35,16 @@ der Token-Datei und traegt die Seiten, die sie nicht inlinen.
 """
 import argparse
 import json
+import math
 import os
 import sys
+from datetime import date as _datum
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import tokens  # noqa: E402
-from sonnen.geometrie import (NIVEAU_HOEHE_KM, sonnenuntergang,  # noqa: E402
-                              strahlhoehe_km, tangentendistanz_km, zielpunkt)
+from sonnen.geometrie import (sonnenuntergang, strahlhoehe_km,  # noqa: E402
+                              tangentendistanz_km)
 from sonnen.score import (DISTANZEN_KM, GRENZE_LOW_MID_KM,  # noqa: E402
                           GRENZE_MID_HIGH_KM, SCHIRME, faecherpunkte, score)
 
@@ -57,8 +61,8 @@ FLAECHEN = {
                 hoehen=(0, 2, 4, 6, 8, 10, 12),
                 weiten=(0, 100, 200, 300, 400),
                 sonne=(9, 12, 17)),
-    # grad=15: die Produktseite deckelt das Bild auf --breite-bild und
-    # zeigt es auf dem Telefon auf rund 319 px.  420 -> 319 ist Faktor
+    # grad=15: bemessen fuer rund 319 px Anzeigebreite auf dem Telefon
+    # (keine Seite deckelt das Bild per Token).  420 -> 319 ist Faktor
     # 0.76, also landet Grad 15 bei 11.4 px - knapp ueber der Grenze, ab
     # der Beschriftung anfaengt, Dekoration zu werden.
     True: dict(vb=(420, 300), x0=40, y0=22, br=350, ho=208,
@@ -67,6 +71,13 @@ FLAECHEN = {
                weiten=(0, 200, 400),
                sonne=(7, 9, 13)),
 }
+
+# Wolkenbaender (Schicht, Unterkante km, Oberkante km), fuer beide Fassungen.
+# Realistische Teilbaender statt voller Schichtdicke: die 3-Schicht-
+# Aufloesung sagt NICHTS ueber die Maechtigkeit, also eine plausible
+# zeichnen statt der maximalen - eine 6 km dicke Cirrusplatte waere
+# sichtbar falsch und wuerde eine Genauigkeit behaupten, die es nicht gibt.
+BAENDER = (("high", 7.6, 10.4), ("mid", 2.9, 5.4), ("low", 0.25, 1.6))
 
 
 def farbe(name):
@@ -99,19 +110,15 @@ def lade_feld(tag):
     return feld
 
 
-def svg(tag, feld, kompakt=False):
-    from datetime import date as _d
-    fl = FLAECHEN[bool(kompakt)]
-    X0, Y0, BR, HO = fl["x0"], fl["y0"], fl["br"], fl["ho"]
-    VBW, VBH = fl["vb"]
+def _feldzugriff(feld, breite, laenge, azimut):
+    """hole(d, dv, schicht) -> Bedeckung 0..1 oder None, wie score() es will.
 
-    def px(d_km, z_km):
-        return (X0 + BR * d_km / XMAX, Y0 + HO * (1.0 - z_km / YMAX))
-
-    t = _d.fromisoformat(tag)
-    stunde, azimut = sonnenuntergang(t, BREITE, LAENGE)
+    Beide Fassungen brauchen denselben Zugriff; eine Kopie je Fassung liefe
+    auseinander, und dann zeigten Diagnose- und Produktbild verschiedene
+    Wolken fuer denselben Abend.
+    """
     punkte = {(d, dv): (la, lo) for d, dv, la, lo in
-              faecherpunkte(BREITE, LAENGE, azimut)}
+              faecherpunkte(breite, laenge, azimut)}
 
     def hole(d, dv, schicht):
         p = punkte.get((d, dv))
@@ -121,6 +128,37 @@ def svg(tag, feld, kompakt=False):
         if e is None or e.get(schicht) is None:
             return None
         return e[schicht] / 100.0
+    return hole
+
+
+def _deckung(hole, d, schicht):
+    """Linear zwischen den Fanstuetzstellen - das Feld ist stetig.  Ohne das
+    rasten die Baender auf die 0.5-Grad-Zelle und bekommen Treppenkanten, die
+    wie Struktur aussehen und keine sind."""
+    vs = [(x, hole(x, 0.0, schicht)) for x in DISTANZEN_KM]
+    vs = [(x, c) for x, c in vs if c is not None]
+    if not vs:
+        return 0.0
+    if d <= vs[0][0]:
+        return vs[0][1]
+    for (x0, c0), (x1, c1) in zip(vs, vs[1:]):
+        if x0 <= d <= x1:
+            f = (d - x0) / (x1 - x0) if x1 > x0 else 0.0
+            return c0 + f * (c1 - c0)
+    return vs[-1][1] if d <= vs[-1][0] + 60 else 0.0
+
+
+def svg(tag, feld, kompakt=False):
+    fl = FLAECHEN[bool(kompakt)]
+    X0, Y0, BR, HO = fl["x0"], fl["y0"], fl["br"], fl["ho"]
+    VBW, VBH = fl["vb"]
+
+    def px(d_km, z_km):
+        return (X0 + BR * d_km / XMAX, Y0 + HO * (1.0 - z_km / YMAX))
+
+    t = _datum.fromisoformat(tag)
+    stunde, azimut = sonnenuntergang(t, BREITE, LAENGE)
+    hole = _feldzugriff(feld, BREITE, LAENGE, azimut)
 
     s, det = score(hole)
 
@@ -142,26 +180,8 @@ def svg(tag, feld, kompakt=False):
                  % (X0, _y, X0 + BR, _y, farbe("--achse"), fl["strich"]))
 
     # Wolkenbaender: je Schicht ein Polygon aus den Fanwerten laengs d
-    # Realistische Teilbaender statt voller Schichtdicke: die 3-Schicht-
-    # Aufloesung sagt NICHTS ueber die Maechtigkeit, also eine plausible
-    # zeichnen statt der maximalen - eine 6 km dicke Cirrusplatte waere
-    # sichtbar falsch und wuerde eine Genauigkeit behaupten, die es nicht gibt.
-    BAENDER = (("high", 7.6, 10.4), ("mid", 2.9, 5.4), ("low", 0.25, 1.6))
+    # (Baenderhoehen: BAENDER).
     SCHRITT = 6.0                      # km, Spaltenbreite fuer weiche Uebergaenge
-
-    def wert(schicht, d):
-        """Linear zwischen den Fanstuetzstellen - das Feld ist stetig."""
-        vs = [(x, hole(x, 0.0, schicht)) for x in DISTANZEN_KM]
-        vs = [(x, c) for x, c in vs if c is not None]
-        if not vs:
-            return 0.0
-        if d <= vs[0][0]:
-            return vs[0][1]
-        for (x0, c0), (x1, c1) in zip(vs, vs[1:]):
-            if x0 <= d <= x1:
-                f = (d - x0) / (x1 - x0) if x1 > x0 else 0.0
-                return c0 + f * (c1 - c0)
-        return vs[-1][1] if d <= vs[-1][0] + 60 else 0.0
 
     # Ein Rechteck je Schicht mit horizontalem UND vertikalem Verlauf.
     # Gestapelte Spalten erzeugten an jedem Spaltenrand doppelte Opazitaet
@@ -171,7 +191,7 @@ def svg(tag, feld, kompakt=False):
         stops = []
         d = 0.0
         while d <= XMAX:
-            c = wert(schicht, d) or 0.0
+            c = _deckung(hole, d, schicht) or 0.0
             stops.append('<stop offset="%.4f" stop-color="%s" '
                          'stop-opacity="%.3f"/>'
                          % (d / XMAX, farbe("--wolke"), min(0.80, 0.62 * c)))
@@ -248,7 +268,6 @@ def svg(tag, feld, kompakt=False):
     o.append('<circle cx="%.1f" cy="%.1f" r="%d" fill="%s"/>'
              % (xs, ys, r_kern, farbe("--akzent-tinte")))
     for a in range(0, 360, 45):
-        import math
         o.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" '
                  'stroke-width="1.5" opacity=".7"/>'
                  % (xs + r_innen * math.cos(math.radians(a)),
@@ -318,39 +337,6 @@ def svg(tag, feld, kompakt=False):
     return "\n".join(o), s, det
 
 
-def ueberhoehung(kompakt=False):
-    """Faktor, um den die Hoehenachse gestreckt ist.
-
-    Die Produktseite schreibt ihn als echten Text unter das Bild - im SVG
-    waere er auf dem Telefon 3.9 px hoch, und ohne ihn behauptet die
-    Zeichnung eine Geometrie, die sie nicht hat.
-    """
-    fl = FLAECHEN[bool(kompakt)]
-    return (fl["ho"] / YMAX) / (fl["br"] / XMAX)
-
-
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("tage", nargs="+", help="YYYY-MM-DD")
-    ap.add_argument("--kompakt", action="store_true",
-                    help="kleine Fassung fuer die Produktseite")
-    a = ap.parse_args()
-    for tag in a.tage:
-        feld = lade_feld(tag)
-        if not feld:
-            print("%s: keine Cachedaten" % tag)
-            continue
-        bild, s, det = svg(tag, feld, kompakt=a.kompakt)
-        ziel = os.path.join(BASIS, "daten", "schnitt_%s.svg" % tag)
-        with open(ziel, "w") as f:
-            f.write(bild)
-        print("%s  S=%.3f  %s" % (tag, s, ziel))
-
-
-if __name__ == "__main__":
-    main()
-
-
 # ===========================================================================
 # Neue Fassung des Vertikalschnitts (Entwurf 16.08.2026, Handoff 1.6).
 #
@@ -365,25 +351,9 @@ if __name__ == "__main__":
 # Transmission duenn und unwichtig aussieht, obwohl sie das Ereignis ist.
 # ===========================================================================
 
-from datetime import date as _datum  # noqa: E402
-
 FL_NEU = dict(vb=(420, 258), x0=44, y0=16, br=346, ho=190)
-BAENDER = (("high", 7.6, 10.4), ("mid", 2.9, 5.4), ("low", 0.25, 1.6))
-
-
-def _mische(a, b, t):
-    """Farbmischung zweier #rrggbb, t in [0,1]."""
-    t = max(0.0, min(1.0, t))
-    ha, hb = a.lstrip("#"), b.lstrip("#")
-    return "#%02x%02x%02x" % tuple(
-        round(int(ha[i:i + 2], 16) + t * (int(hb[i:i + 2], 16)
-                                          - int(ha[i:i + 2], 16)))
-        for i in (0, 2, 4))
-
-
-def _tok(name):
-    """Reiner Tokenwert ohne var() - fuer Berechnungen und Verlaufsstopps."""
-    return tokens.werte()[name]
+_mische = tokens.mische_hex
+_tok = tokens.tok
 
 
 def schnitt_neu(tag, feld, segmente=None, breite=BREITE, laenge=LAENGE,
@@ -412,33 +382,10 @@ def schnitt_neu(tag, feld, segmente=None, breite=BREITE, laenge=LAENGE,
 
     t = _datum.fromisoformat(tag) if isinstance(tag, str) else tag
     stunde, azimut = sonnenuntergang(t, breite, laenge)
-    punkte = {(d, dv): (la, lo) for d, dv, la, lo in
-              faecherpunkte(breite, laenge, azimut)}
-
-    def hole(d, dv, schicht):
-        p = punkte.get((d, dv))
-        if p is None:
-            return None
-        e = feld.get(zelle(*p))
-        if e is None or e.get(schicht) is None:
-            return None
-        return e[schicht] / 100.0
+    hole = _feldzugriff(feld, breite, laenge, azimut)
 
     def deckung(d, schicht):
-        """Linear zwischen den Stuetzstellen.  Ohne das rasten die Baender auf
-        die 0.5-Grad-Zelle und bekommen Treppenkanten, die wie Struktur
-        aussehen und keine sind."""
-        vs = [(x, hole(x, 0.0, schicht)) for x in DISTANZEN_KM]
-        vs = [(x, c) for x, c in vs if c is not None]
-        if not vs:
-            return 0.0
-        if d <= vs[0][0]:
-            return vs[0][1]
-        for (x0, c0), (x1, c1) in zip(vs, vs[1:]):
-            if x0 <= d <= x1:
-                f = (d - x0) / (x1 - x0) if x1 > x0 else 0.0
-                return c0 + f * (c1 - c0)
-        return vs[-1][1] if d <= vs[-1][0] + 60 else 0.0
+        return _deckung(hole, d, schicht)
 
     s_wert, det = score(hole)
     name = schirm or (det or {}).get("schirm") or SCHIRME[0][0]
@@ -595,3 +542,25 @@ def schnitt_neu(tag, feld, segmente=None, breite=BREITE, laenge=LAENGE,
              'fill="%s">Berlin</text>' % (gx0, gy + 46, farbe("--tinte2")))
     o.append('</svg>')
     return "".join(o), s_wert, det, d_tan
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("tage", nargs="+", help="YYYY-MM-DD")
+    ap.add_argument("--kompakt", action="store_true",
+                    help="kleine Fassung (420x300)")
+    a = ap.parse_args()
+    for tag in a.tage:
+        feld = lade_feld(tag)
+        if not feld:
+            print("%s: keine Cachedaten" % tag)
+            continue
+        bild, s, det = svg(tag, feld, kompakt=a.kompakt)
+        ziel = os.path.join(BASIS, "daten", "schnitt_%s.svg" % tag)
+        with open(ziel, "w") as f:
+            f.write(bild)
+        print("%s  S=%.3f  %s" % (tag, s, ziel))
+
+
+if __name__ == "__main__":
+    main()

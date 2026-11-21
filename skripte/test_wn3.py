@@ -417,12 +417,39 @@ try:
 except NetzVerboten:
     ok = True
 pruefe(ok, "Netzsperre: das echte in_region() erreicht urlopen nicht")
+# Erfundenes Abrechnungsprojekt, damit der Pfad bis zum gcloud-Aufruf kommt.
+os.environ["WN3_PROJEKT"] = "test-projekt-ohne-netz"
 try:
     wn3.Quelle("20260908_00hr", budget=wn3.Budget(frei=False))
     ok = False
 except NetzVerboten:
     ok = True
 pruefe(ok, "Netzsperre: ohne gestubbtes `lies` startet kein gcloud-Prozess")
+
+# T-0094: keine Vorgabe fuer das Abrechnungsprojekt im Repo.  Ohne Angabe
+# bricht der Leser mit klarer Meldung ab, BEVOR ein Prozess startet
+# (NetzVerboten hiesse: gcloud waere gestartet worden).
+del os.environ["WN3_PROJEKT"]
+wn3.ABRECHNUNG = None
+try:
+    wn3.Quelle("20260908_00hr", budget=wn3.Budget(frei=False))
+    meldung = None
+except SystemExit as e:
+    meldung = str(e)
+except NetzVerboten:
+    meldung = "gcloud gestartet"
+pruefe(meldung is not None and "WN3_PROJEKT" in meldung
+       and "--projekt" in meldung,
+       "ohne Abrechnungsprojekt: Abbruch mit Hinweis auf --projekt/WN3_PROJEKT "
+       "vor jedem gcloud-Aufruf (%s)" % meldung)
+os.environ["WN3_PROJEKT"] = "aus-der-umgebung"
+pruefe(wn3.abrechnung() == "aus-der-umgebung",
+       "Abrechnungsprojekt aus WN3_PROJEKT")
+wn3.ABRECHNUNG = "aus-dem-argument"
+pruefe(wn3.abrechnung() == "aus-dem-argument",
+       "--projekt geht vor WN3_PROJEKT")
+wn3.ABRECHNUNG = None
+del os.environ["WN3_PROJEKT"]
 pruefe(len(_ir_aufrufe) > 0,
        "und die Tests oben liefen ueber den Stub (%d Aufrufe), nicht ueber "
        "das Netz" % len(_ir_aufrufe))
