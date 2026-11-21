@@ -10,8 +10,8 @@ Album/
 web/rueckschau.html
 web/diagnose.html
 web/index.html
-# Wie index.html reine Bauartefakte: sie werden vom stuendlichen
-# Auslieferungsagenten neu geschrieben, und die Sonnentafel in der
+# Wie index.html reine Bauartefakte: sie werden vom Auslieferungsagenten
+# (alle 10 Minuten) neu geschrieben, und die Sonnentafel in der
 # Bewertungsseite wandert dabei jeden Tag um einen Eintrag. Getrackt
 # erzeugen sie taeglich einen Diff, der nichts bedeutet. Quelle sind
 # web/bewerten.html (Vorlage) und die Generatoren in skripte/.

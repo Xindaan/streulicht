@@ -1,8 +1,10 @@
 """Klimatologie des Scores und Ableitung des Schwellwerts s*.
 
-3-Schicht-Variante auf ERA5 (`archive-api`), stuendlich, zur Sonnenuntergangs-
-stunde ausgewertet.  ERA5 ist die einzige Quelle mit mehrjaehriger Tiefe -
-Druckflaechen hat sie ueber Open-Meteo nicht (siehe docs/befunde-e1.md 1.3).
+3-Schicht-Variante auf ECMWF-IFS-Analysen (`archive-api` mit
+`models=ecmwf_ifs`, rund 9 km; kein ERA5, siehe Kommentar am Abruf),
+stuendlich, zur Sonnenuntergangsstunde ausgewertet.  Das Archiv ist die
+einzige Quelle mit mehrjaehriger Tiefe - Druckflaechen hat es ueber
+Open-Meteo nicht (siehe docs/befunde-e1.md 1.3).
 
 Zeitliche Zuordnung: naechstliegende volle Stunde.  Maximaler Versatz 30 min,
 bei 30 m/s auf 300 hPa also bis 54 km.  Fuer eine Verteilungsschaetzung

@@ -14,18 +14,23 @@ nicht.  Ueber das Internet waeren das rund 27 USD je Lauf.  Innerhalb von
 us-east1, wo die Buckets liegen, kostet derselbe Verkehr NICHTS.
 
 DARAUS FOLGT DER SCHNITT.  Dieses Modul laeuft in us-east1 und darf `numpy`
-und das `zstd`-Kommando benutzen.  Es schreibt eine kleine JSON-Datei in
-GENAU der Form, die `alarm.py` von Open-Meteo kennt - Schluessel je Zelle,
-darin `time` und je Variable eine Reihe, Member als `_memberNN`.  Der Mac
-liest nur diese Datei; sein Alarmlauf bleibt damit
-standardbibliotheks-rein (siehe README).
+und das `zstd`-Kommando benutzen.  `abfrage()` liefert die Werte in GENAU
+der Form, die `alarm.py` von Open-Meteo kennt - Schluessel je Zelle, darin
+`time` und je Variable eine Reihe, Member als `_memberNN`.  Vorgesehen ist,
+daraus eine kleine JSON-Datei zu schreiben, die der Mac liest, damit sein
+Alarmlauf standardbibliotheks-rein bleibt (siehe README).  Dieser volle Lauf
+ist nicht verdrahtet (T-0072): `main()` schreibt keine Datei, und
+`alarm.py` liest keine WN3-Daten.
 
 RUECKFALL.  Faellt hier irgendetwas aus, bleibt `konfig.json` auf
 `"modell": "ecmwf_ifs025"` und der Betrieb laeuft unveraendert weiter.  Dieses
 Modul ist eine zusaetzliche Quelle, kein Ersatzteil.
 
 Lauf:   python3 skripte/wn3.py --probe          # ein Chunk, zum Nachsehen
-        python3 skripte/wn3.py --tage 10 --aus daten/wn3.json
+Argumente: --lauf (z.B. 20260908_00hr, sonst der juengste fertige Lauf),
+--probe, --budget-mb (Obergrenze ausserhalb us-east1), --aus (wird
+angenommen, aber nicht ausgewertet).  Ohne --probe zeigt `main()` Lauf, Ort
+und Init an und bricht dann mit "Voller Lauf noch nicht verdrahtet" ab.
 """
 import argparse
 import datetime as _dt

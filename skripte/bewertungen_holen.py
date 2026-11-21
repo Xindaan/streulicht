@@ -154,7 +154,12 @@ def plausibel(tag):
         d = date.fromisoformat(tag)
     except ValueError:
         return False
-    # Ein Tag Luft nach vorn: die Seite rechnet in Ortszeit, der Poller in UTC.
+    # Obergrenze ist das lokale Systemdatum des Pollers (date.today()) plus
+    # ein Tag.  Die Seite vergibt einen Abend erst nach dessen
+    # Sonnenuntergang (abendVonJetzt in web/bewerten.html), ein echter Tag
+    # liegt also nie nach dem heutigen.  Der eine Tag Luft faengt ab, dass
+    # Systemdatum des Pollers und Kalenderdatum der Seite auseinanderliegen
+    # (anderes Zeitzonen-Setting des Rechners, Lauf kurz nach Mitternacht).
     return ERSTER_ABEND <= d <= date.today() + timedelta(days=1)
 
 

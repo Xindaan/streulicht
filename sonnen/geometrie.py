@@ -100,7 +100,9 @@ def strahlhoehe_km(distanz_km: float, tangentendistanz: float) -> float:
 
 
 # Standardatmosphaere: Druckflaeche -> geometrische Hoehe (km).
-# Nur als Vorabbildung; im Betrieb kommt die Hoehe aus geopotential_height_*.
+# Genutzt von der niveauaufgeloesten Variante (score_niveaus); der Betrieb
+# (alarm.py) rechnet mit den drei Schichten cloud_cover_low/mid/high und ruft
+# keine geopotential_height_* ab.
 NIVEAU_HOEHE_KM = {
     1000: 0.111, 925: 0.762, 850: 1.457, 700: 3.012, 600: 4.206, 500: 5.574,
     400: 7.185, 300: 9.164, 250: 10.363, 200: 11.784,
