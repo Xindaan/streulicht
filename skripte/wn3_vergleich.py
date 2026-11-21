@@ -106,7 +106,6 @@ def feld_ecmwf(archiv_abend, zaehler):
 
 def feld_wn3(quelle, stunde_index, schichten=("low", "mid", "high")):
     """feld(lat, lon, schicht) aus den p50-Feldern - drei Chunks, einmal."""
-    import numpy as np
     felder = {s: quelle.feld(s, "p50", stunde_index) for s in schichten}
 
     def hole(lat, lon, schicht):

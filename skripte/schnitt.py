@@ -39,8 +39,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import tokens  # noqa: E402
-from sonnen.geometrie import (NIVEAU_HOEHE_KM, sonnenuntergang,  # noqa: E402
-                              strahlhoehe_km, tangentendistanz_km, zielpunkt)
+from sonnen.geometrie import (sonnenuntergang, strahlhoehe_km,  # noqa: E402
+                              tangentendistanz_km)
 from sonnen.score import (DISTANZEN_KM, GRENZE_LOW_MID_KM,  # noqa: E402
                           GRENZE_MID_HIGH_KM, SCHIRME, faecherpunkte, score)
 
@@ -316,17 +316,6 @@ def svg(tag, feld, kompakt=False):
                  % (X0, (HO / YMAX) / (BR / XMAX)))
     o.append("</svg>")
     return "\n".join(o), s, det
-
-
-def ueberhoehung(kompakt=False):
-    """Faktor, um den die Hoehenachse gestreckt ist.
-
-    Die Produktseite schreibt ihn als echten Text unter das Bild - im SVG
-    waere er auf dem Telefon 3.9 px hoch, und ohne ihn behauptet die
-    Zeichnung eine Geometrie, die sie nicht hat.
-    """
-    fl = FLAECHEN[bool(kompakt)]
-    return (fl["ho"] / YMAX) / (fl["br"] / XMAX)
 
 
 def main():

@@ -33,7 +33,6 @@ import json
 import math
 import os
 import subprocess
-import sys
 
 BUCKET = "gs://weathernext3_spatial/weathernext_3_0_0/zarr/2026_to_present"
 ABRECHNUNG = os.environ.get("WN3_PROJEKT", "gardena-wetter")

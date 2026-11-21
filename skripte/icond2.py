@@ -29,7 +29,6 @@ GRENZEN, die das Ergebnis von vornherein einschraenken:
 """
 import argparse
 import json
-import math
 import os
 import random
 import sys

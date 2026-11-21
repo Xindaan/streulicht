@@ -63,7 +63,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from sonnen.geometrie import (sonnenuntergang, strahlhoehe_km,  # noqa: E402
                               tangentendistanz_km)
 from sonnen.grib2 import wert_bei  # noqa: E402
-from sonnen.score import (DISTANZEN_KM, FAECHER_AZIMUTE, SCHIRME,  # noqa: E402
+from sonnen.score import (DISTANZEN_KM, FAECHER_AZIMUTE,  # noqa: E402
                           SICHT_KM, K_SEGMENT, _gewicht, _schichten_im_segment,
                           faecherpunkte, score)
 import satellit  # noqa: E402

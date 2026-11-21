@@ -105,10 +105,3 @@ NIVEAU_HOEHE_KM = {
     1000: 0.111, 925: 0.762, 850: 1.457, 700: 3.012, 600: 4.206, 500: 5.574,
     400: 7.185, 300: 9.164, 250: 10.363, 200: 11.784,
 }
-
-
-def blockierendes_niveau(distanz_km: float, tangentendistanz: float):
-    """Druckflaechen, die der Strahl im Segment um distanz_km durchlaeuft."""
-    z = strahlhoehe_km(distanz_km, tangentendistanz)
-    kandidaten = sorted(NIVEAU_HOEHE_KM, key=lambda p: abs(NIVEAU_HOEHE_KM[p] - z))
-    return kandidaten[0], z

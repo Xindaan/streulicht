@@ -9,7 +9,6 @@ saisonal).  Zielband laut Auftrag: 10-25 Ausloesungen pro Jahr, das entspricht
 import argparse
 import json
 import os
-import sys
 from collections import defaultdict
 
 BASIS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
