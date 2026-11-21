@@ -24,11 +24,10 @@ der Waechter es meldet.
   installiert, ausgelieferter Datenstand vom 21.11. 09:20 UTC.
 - Pruefung: `.claude/skills/verify` baut die Seiten im Sandkasten aus einem
   Schnappschuss der Betriebsdaten und faehrt alle Tests (ein Befehl, rund
-  20 s, ohne Netz, ohne Push). Teststand 21.11.: 917 Python-Pruefungen in
-  31 Dateien + 64 JS gruen.
-- Branch `aufraeumen-fable-2026-11` (lokal, nicht gemergt, nicht gepusht):
-  vier Fehler behoben, Tests geschaerft, toter Code und Dopplungen entfernt,
-  Kommentare und README angeglichen. Befunde ohne Fix: T-0090 bis T-0096.
+  20 s, ohne Netz, ohne Push). Teststand 21.11.: 931 Python-Pruefungen in
+  32 Dateien + 64 JS gruen.
+- Aufraeumlauf + T-0091/92/94-Teile am 21.11. lokal in main gemergt, nicht
+  gepusht. Offene Befunde: T-0090 bis T-0096.
 - Repo ist PUBLIC, pre-push-Guard aktiv (`tools/install_push_guard.sh`).
 - WN3 (T-0072): s*_WN3 = 0,7144, 90-%-Intervall [0,6293; 0,8364], aus
   305 gepaarten Abenden 2026 mit 14 Ereignissen ueber ECMWF s* = 0,7065
@@ -38,9 +37,8 @@ der Waechter es meldet.
 
 - Kontingent: zwei volle Laeufe (8.320) liegen knapp unter dem Tageslimit
   10.000; Gardena teilt die IP. Jeder Zusatzabruf muss in diese Bilanz.
-- Der pre-push-Guard laesst bei einem technischen Fehler durch: ein
-  ungueltiges Markermuster ergibt Exitcode 128 und leeren Treffertext, der
-  Guard meldet "sauber" (T-0091, gemessen 21.11.).
+- Alarm kann bei zwei Orten doppelt gehen (T-0090); ohne `web/index.html`
+  verschwindet die Prognoseseite beim Force-Push (T-0091-Rest).
 - Agenten scheitern still (T-0040, offen; T-0075 deckt nur das Seitenalter ab).
 - s* ist modellspezifisch: kein Modellwechsel ohne neue Schwelle (T-0072).
 - Die Quantilbruecke Analyse -> ENS-Member ist nie gemessen (T-0020); fuer
@@ -48,11 +46,11 @@ der Waechter es meldet.
 
 ## Bei Dir
 
-- Branch `aufraeumen-fable-2026-11` ansehen und mergen oder verwerfen.
+- Push von main nach origin (Guard prueft jetzt fail-closed).
 - T-0072: Traegt s*_WN3 = 0,7144? Nur 14 Ereignisse, Intervall 0,63-0,84.
   Davon haengen Betriebsvehikel und der WN3-Weg in `alarm.py` ab.
-- T-0094: `wn3.py` nennt als Vorgabe das Projekt `gardena-wetter` - gewollt?
-- T-0092: Pass-2-Deckel im Code 320, im Betrieb 200 - welcher Rueckfall gilt?
+- `gardena-wetter` steht in der veroeffentlichten Historie (e5a2480), in
+  TASK.md und `docs/review-2026-10-09.md`: so lassen oder auch dort tilgen?
 - Optional Repo-Secret `NTFY_WAECHTER` (T-0075); neues Topic `ntfy_erinnerung`
   (T-0077); `sicherung_ordner` und Time-Machine-Ziel (T-0081).
 - Erfolgskriterium oben bestaetigen oder korrigieren.
@@ -62,7 +60,7 @@ der Waechter es meldet.
 1. T-0072: nach der Entscheidung zu s*_WN3 Betriebsvehikel und Uebergabe
    klaeren, dann zweiter Weg in `alarm.py`.
 2. T-0008 Dispersion und Skill ueber Vorlauf (nach Winter/Fruehjahr).
-3. Vorschlag: T-0091 vorziehen (Guard fail-closed), danach T-0090 (Versand).
+3. Vorschlag: T-0090 (Versand), danach T-0091-Rest (Auslieferung).
 
 ## Termine
 
@@ -72,9 +70,9 @@ der Waechter es meldet.
 
 ## Letzte Done
 
-- 21.11.2026 Aufraeumlauf: verify-Skill, 4 Fehler, Tests, toter Code, Dopplungen (Branch).
+- 21.11.2026 T-0091/T-0092/T-0094 (Teile): Guard fail-closed, Deckel 200, `wn3.py` ohne Vorgabe.
+- 21.11.2026 Aufraeumlauf: verify-Skill, 4 Fehler, Tests, toter Code, Dopplungen.
 - 05.11.2026 T-0072 (Teil): Referenz 2026 komplett, s*_WN3 = 0,7144 [0,63; 0,84].
 - 04.11.2026 T-0089: Klarname aus dem Stand, pre-push-Guard, Option B (Notendatei, Commit-Adresse).
 - 04.11.2026 T-0072 (Teil): s*-Verfahren fuer WN3, Mitschreib-Praemisse widerlegt.
-- 13.10.2026 T-0074 bis T-0087 Review-Block (Blockcache, Deckel 200, Waechter, Stufen).
 <!-- snapshot-ende -->

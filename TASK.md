@@ -191,8 +191,9 @@ ausfuehren liess. Behoben ist, was belegbar war und nicht auf dem Versand-
 oder Push-Pfad liegt (Branch `aufraeumen-fable-2026-11`). Die folgenden
 Punkte sind bewusst NUR Befund: Versand-, Push- und Schwellenpfade, oder
 ohne Messung nicht entscheidbar. Zeilen beziehen sich auf den Stand des
-Branches; `alarm.py`, `erinnerung.py`, `ausliefern.py` und `tools/` sind dort
-unveraendert.
+Branches vor den drei Maintainer-Freigaben vom 21.11. (T-0091 Guard, T-0092
+Deckel, T-0094 `wn3.py`, je abgehakt); `erinnerung.py` und `ausliefern.py`
+sind unveraendert.
 
 ### T-0090 Versandpfad: Alarm kann doppelt gesendet oder still verschluckt werden (21.11.2026)
 Nur gelesen, nicht reproduziert (jeder Beleg braeuchte einen Test mit
@@ -219,7 +220,11 @@ erfundenem Netz auf dem Versandpfad). Latent, solange nur ein Ort konfiguriert i
       wenn der Ort ganz fehlt; ein Ortseintrag ohne `alarme` gaebe KeyError.
 
 ### T-0091 Push-Pfad: Guard laesst bei technischem Fehler durch, Auslieferung ohne Prognoseseite (21.11.2026)
-- [ ] `tools/public_push_guard.sh:91`, `:98-100`, `:119`: `git grep ...
+- [x] Erledigt 21.11.2026 (e2deb7b): der Guard verweigert, sobald eine
+      Pruefung technisch scheitert (grep/git grep >= 2, rev-list, log,
+      ls-tree, diff-tree); Test `skripte/test_push_guard.py` gegen einen
+      Wegwerf-Remote, gegen den alten Guard 5 von 8 Faellen rot.
+      Befund war: `tools/public_push_guard.sh:91`, `:98-100`, `:119`: `git grep ...
       2>/dev/null | head -25 || true` macht einen git-grep-Fehler
       ununterscheidbar von "kein Treffer". Gemessen: `git grep -nIE '(' HEAD`
       endet mit Exitcode 128 ("unmatched ( for expression group"), der
@@ -243,7 +248,10 @@ erfundenem Netz auf dem Versandpfad). Latent, solange nur ein Ort konfiguriert i
       richtig.
 
 ### T-0092 Alarmkern: Deckel 320 gegen 200, UTC- gegen Ortsdatum, Dopplungen (21.11.2026)
-- [ ] `alarm.py:648-660`: der Kommentar begruendet `PASS2_MAX_ZELLEN = 320`
+- [x] Erledigt 21.11.2026 (924720a): Rueckfall 200 = Betriebswert,
+      Kommentar mit der Kontingentrechnung; `test_kontingent` prueft
+      Rueckfall gegen `konfig.json`. Befund war:
+      `alarm.py:648-660`: der Kommentar begruendet `PASS2_MAX_ZELLEN = 320`
       ("ein Deckel unter 320 wuerde schon viele Oktoberlaeufe beschneiden");
       der Betrieb faehrt seit 13.10. mit `pass2_max_zellen: 200`
       (`konfig.json:16-17`). Faellt der Schluessel weg, gilt still 320.
@@ -252,7 +260,10 @@ erfundenem Netz auf dem Versandpfad). Latent, solange nur ein Ort konfiguriert i
 - [ ] `alarm.py:707`, `:1428` (UTC-Datum) gegen `:1071`, `:1495`, `:1517`
       (Ortsdatum): Abendliste und Verlaufszeile gegen `laeufe` und Archivname.
       Zwischen 22:00 und 24:00 UTC meinen beide verschiedene Tage; ob ein
-      Lauffenster dort liegen kann, ist nicht gemessen.
+      Lauffenster dort liegen kann, ist nicht gemessen. Einordnung 21.11.
+      (nur aus der Konfig gelesen, nicht im Log gemessen): fuer Berlin liegt
+      kein geplantes Fenster dort (Abendlauf ~3 h vor Sonnenuntergang,
+      Vormittag 09:20 UTC, Nachtlauf nie vor 00 UTC); ein Handlauf kann.
 - [ ] `alarm.py:776-784`: der Wind wird immer geholt und sein Fehlen bricht
       immer ab, auch bei `advektion: false`.
 - [ ] Dopplungen: Faecherpunkte `alarm.py:740-745` und
@@ -308,7 +319,11 @@ erfundenem Netz auf dem Versandpfad). Latent, solange nur ein Ort konfiguriert i
 ### T-0094 Analyse- und Abrufskripte: Fehler und Dopplungen ohne Testdeckung (21.11.2026)
 Keines dieser Skripte hat einen Test, die meisten brauchen Netz und
 Kontingent; deshalb nur Befund. Importe gegen `sonnen/` geprueft: kein Bitrot.
-- [ ] `wn3.py:43`: Vorgabe fuer das Abrechnungsprojekt ist `"gardena-wetter"`
+- [x] Erledigt 21.11.2026 (a17b0ae): keine Vorgabe mehr, Pflicht per
+      `--projekt` oder `WN3_PROJEKT`, sonst Abbruch vor gcloud. Der Name
+      steht weiter in der veroeffentlichten Historie (e5a2480) und in
+      TASK.md/`docs/review-2026-10-09.md`; Historie nicht umgeschrieben.
+      Befund war: `wn3.py:43`: Vorgabe fuer das Abrechnungsprojekt ist `"gardena-wetter"`
       - Name eines anderen Projekts, im public Repo. Entscheidung Maintainer.
 - [ ] `era5_nachtrag.py:169-170` schreibt die Klimatologie nicht atomar
       (dieselbe Datei schreibt `klimatologie.py` atomar, T-0051);
@@ -674,6 +689,14 @@ Tatsachen. Offen:
 ## Done
 
 Aeltere Done-Eintraege (vor 2026-10-01): `docs/task_done_bis_2026-Q3.md`.
+
+### 21.11.2026 &mdash; Maintainer-Freigaben aus dem Aufraeumlauf
+
+- T-0091 (Teil): pre-push-Guard fail-closed bei technischem Fehler, Test
+  `skripte/test_push_guard.py` (9 Pruefungen, Wegwerf-Remote). Rest offen.
+- T-0094 (Teil): `wn3.py` ohne Vorgabe `gardena-wetter`, Abrechnungsprojekt
+  Pflicht (`--projekt`/`WN3_PROJEKT`). Rest offen.
+- T-0092 (Teil): Rueckfall Pass-2-Deckel 200 = Betriebswert. Rest offen.
 
 ### 21.11.2026 &mdash; Aufraeumlauf (Branch `aufraeumen-fable-2026-11`)
 
