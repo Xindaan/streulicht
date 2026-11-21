@@ -2,7 +2,10 @@ daten/
 __pycache__/
 *.pyc
 .DS_Store
-.claude/
+# .claude/ bleibt lokal - bis auf die Skills, die zum Repo gehoeren
+# (verify: Ende-zu-Ende-Pruefung vor jedem Commit).
+.claude/*
+!.claude/skills/
 Album/
 web/rueckschau.html
 web/diagnose.html
