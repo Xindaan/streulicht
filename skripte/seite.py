@@ -140,10 +140,15 @@ def lokalzeit(tag):
     return dt.strftime("%H:%M")
 
 
+def abende_wort(n):
+    """ "ABEND" fuer genau einen, sonst "ABENDE" (auch bei null)."""
+    return "ABEND" if n == 1 else "ABENDE"
+
+
 # Ausgeschrieben liest sich die Korpuszeile wie Sprache, als Ziffer wie ein
 # Zaehlerstand.  Nur bis zwoelf - darueber wird das Wort laenger als die Zahl
 # nuetzlich ist, und ein Fenster mit mehr als zwoelf Abenden gibt es nicht.
-ANZAHL_WORT = {n: "%s ABENDE" % w for n, w in enumerate(
+ANZAHL_WORT = {n: "%s %s" % (w, abende_wort(n)) for n, w in enumerate(
     ("NULL", "EIN", "ZWEI", "DREI", "VIER", "FUENF", "SECHS", "SIEBEN",
      "ACHT", "NEUN", "ZEHN", "ELF", "ZWOELF"))}
 
@@ -1149,8 +1154,9 @@ def main():
                          % (g.strftime("%d.%m."), g.strftime("%H:%M")))
         stand_text = " &#183; ".join(teile)
 
-    korpus = "%d ABENDE %s &#183; %s BIS %s" % (
-        n, "R&Uuml;CKGERECHNET" if a.rueckschau else "VORAUSGERECHNET",
+    korpus = "%d %s %s &#183; %s BIS %s" % (
+        n, abende_wort(n),
+        "R&Uuml;CKGERECHNET" if a.rueckschau else "VORAUSGERECHNET",
         date.fromisoformat(eintraege[0]["tag"]).strftime("%d.%m."),
         date.fromisoformat(eintraege[-1]["tag"]).strftime("%d.%m."))
 
@@ -1269,7 +1275,8 @@ def main():
             .replace("__KORPUS__", korpus)
             .replace("__STAND__", stand_text)
             .replace("__VERALTET__", veraltet)
-            .replace("__ANZAHL_WORT__", ANZAHL_WORT.get(n, "%d ABENDE" % n))
+            .replace("__ANZAHL_WORT__", ANZAHL_WORT.get(
+                n, "%d %s" % (n, abende_wort(n))))
             .replace("__ACHSE_GROSS__", str(ACHSE_PX_GROSS))
             .replace("__ACHSE__", str(ACHSE_PX))
             .replace("__LINIE__", linie)

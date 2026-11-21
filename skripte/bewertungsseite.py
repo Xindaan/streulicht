@@ -136,6 +136,13 @@ def main():
     basis_url = (kfg.get("seiten_basis") or "").rstrip("/")
     s_stern = kfg["schwelle_score"]
     for ort in kfg["orte"]:
+        # Zuerst pruefen: alles darunter greift auf ort["name"] zu, ein
+        # unvollstaendiger Ort wuerde sonst mit KeyError alle Seiten kippen.
+        fehlt = [k for k in ("name", "ntfy_bewertung") if not ort.get(k)]
+        if fehlt:
+            print("   %s: uebersprungen, %s fehlt"
+                  % (ort.get("name", "?"), ", ".join(fehlt)))
+            continue
         # Klickziel der Quittung: dieselbe Seite. Leer, solange nichts
         # ausgeliefert ist - dann faellt die Seite auf location.href zurueck.
         ort["_seite"] = ("%s/bewerten-%s.html" % (basis_url, ort["name"])
@@ -145,11 +152,6 @@ def main():
                               kfg["schwelle_wahrscheinlichkeit"])
         ort["_prognose"] = json.dumps(stand, ensure_ascii=False)
         ort["_sonne"] = json.dumps(sonnentafel(ort), ensure_ascii=False)
-        fehlt = [k for k in ("name", "ntfy_bewertung") if not ort.get(k)]
-        if fehlt:
-            print("   %s: uebersprungen, %s fehlt"
-                  % (ort.get("name", "?"), ", ".join(fehlt)))
-            continue
         ziel = os.path.join(BASIS, "web", "bewerten-%s.html" % ort["name"])
         seite = erzeuge(ort, vorlage)
         schreibe_text(ziel, seite)
@@ -160,6 +162,8 @@ def main():
     # Gegenprobe: keine erzeugte Seite darf noch einen Platzhalter tragen.
     rest = []
     for ort in kfg["orte"]:
+        if not ort.get("name"):
+            continue                  # oben uebersprungen, hat keine Seite
         p = os.path.join(BASIS, "web", "bewerten-%s.html" % ort["name"])
         if os.path.exists(p):
             with open(p) as f:
