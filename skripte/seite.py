@@ -60,6 +60,7 @@ import math
 import os
 import sys
 from datetime import date, datetime, timedelta, timezone
+from html import escape
 from zoneinfo import ZoneInfo
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -69,7 +70,7 @@ import faecher  # noqa: E402
 import stufen  # noqa: E402
 import tokens  # noqa: E402
 from alarm import begruendung, satz  # noqa: E402
-from schnitt import lade_feld, schnitt_neu, svg  # noqa: E402
+from schnitt import FL_NEU, XMAX, YMAX, lade_feld, schnitt_neu, svg  # noqa: E402
 from sonnen.geometrie import sonnenuntergang, tangentendistanz_km  # noqa: E402
 from sonnen.score import SCHIRME  # noqa: E402
 from zustandsdatei import schreibe_text  # noqa: E402
@@ -128,12 +129,10 @@ ACHSE_PX_GROSS = 260
 
 def lokalzeit(tag):
     """Sonnenuntergang in Ortszeit - Sommerzeit nicht raten, sondern rechnen."""
-    from datetime import datetime, timezone
     std, _ = sonnenuntergang(date.fromisoformat(tag), 52.52, 13.405)
     dt = datetime.fromisoformat(tag + "T00:00").replace(tzinfo=timezone.utc) \
         + timedelta(hours=std)
     try:
-        from zoneinfo import ZoneInfo
         dt = dt.astimezone(ZoneInfo("Europe/Berlin"))
     except Exception:
         pass
@@ -279,7 +278,6 @@ def pushauskunft(hoechste, schwelle_p, kfg, rueckschau=False, veraltet=False,
         return ("R&uuml;ckschau: hier wurde nichts vorhergesagt und "
                 "nichts gepusht.")
     if veraltet:
-        from html import escape
         return escape(pushauskunft_veraltet(hoechste, schwelle_p, n_member),
                       quote=False)
     p = round(schwelle_p * 100)
@@ -502,8 +500,7 @@ def prognose_eintraege(ort_name, perzentil, s_stern, schwelle_p=None):
     DIE STUFE kommt seit T-0084 NICHT mehr aus dem Rang (skripte/stufen.py):
     "selten" = p >= p* (die Push-Bedingung), "auffaellig" = Memberanteil im
     obersten Fuenftel >= Q_AUFFAELLIG.  Eintraege aus der Zeit davor tragen
-    den Memberanteil nicht; fuer sie gilt die alte Stufe am Rang des Medians
-    (`stufe_neu` ist dann False).
+    den Memberanteil nicht; fuer sie gilt die alte Stufe am Rang des Medians.
 
     Die Bilder rechnen aus dem gespeicherten MEDIANFELD.  Das ist fuer das
     BILD richtig und fuer die ZAHL falsch: S ist ein Produkt nichtlinearer
@@ -537,14 +534,13 @@ def prognose_eintraege(ort_name, perzentil, s_stern, schwelle_p=None):
                 t, e["feld"], e.get("segmente"), e.get("azimut", 270.0),
                 e.get("schirm"))
         rang = perzentil(e["median"])
-        name, klasse, neu = stufen.stufe_eintrag(e, rang, schwelle_p)
+        name, klasse, _ = stufen.stufe_eintrag(e, rang, schwelle_p)
         d = date.fromisoformat(t)
         aus.append({"tag": t, "wt": WOCHENTAG[d.weekday()],
                     "kurz": kurzmarke(d, not aus),
                     "lang": "%s, %d. %s" % (WOCHENTAG_LANG[d.weekday()],
                                             d.day, MONAT[d.month - 1]),
                     "p": rang, "stufe": name, "klasse": klasse,
-                    "stufe_neu": neu,
                     "zeit": lokalzeit(t), "svg": schnitt_bild,
                     "karte": karte_bild,
                     "band": band.svg(e["median"], s_stern, len(aus)),
@@ -1093,8 +1089,7 @@ def main():
     ort = next((o for o in kfg["orte"] if o["name"] == a.ort), None)
     anzeige = (ort or {}).get("anzeige", a.ort.capitalize())
 
-    with open(os.path.join(BASIS, "daten",
-                           "score_berlin_g0.5_2022_2025.json")) as f:
+    with open(os.path.join(BASIS, "daten", stufen.KLIMA_DATEI)) as f:
         klima = json.load(f)
     alle = sorted(v["s"] for v in klima.values())
 
@@ -1238,15 +1233,13 @@ def main():
     # (FRISCHE_SKRIPT) - nur dort, wo es einen Streifen geben kann.
     pushalt = ""
     if frische and not veraltet:
-        from html import escape as _esc
-        pushalt = (' data-veraltet="%s"' % _esc(
+        pushalt = (' data-veraltet="%s"' % escape(
             pushauskunft_veraltet(hoechste, schwelle_p, n_mem), quote=True))
 
     # ANFANGSZUSTAND STEHT IM MARKUP, nicht erst im Skript.  Vorher baute
     # waehle() beim Laden Hero, Band und beide Bilder auf; bis dahin war die
     # Seite leer, und ohne JavaScript blieb sie es.  Serverseitig gefuellt
     # ist sie sofort lesbar, und das Skript aendert nur noch bei einem Klick.
-    from html import escape
     g = eintraege[gewaehlt]
     zahlen = ["%d. Perzentil des Jahres" % round(g["p"] * 100)]
     if g["wtext"] is not None:
@@ -1316,7 +1309,6 @@ def ueberhoehung_neu():
     steht als Aussage auf der Seite, und eine handnotierte Zahl neben einer
     geaenderten Geometrie ist genau die Sorte Fehler, die niemand sieht.
     """
-    from schnitt import FL_NEU, XMAX, YMAX
     px_pro_km_x = FL_NEU["br"] / XMAX
     px_pro_km_y = FL_NEU["ho"] / YMAX
     return px_pro_km_y / px_pro_km_x

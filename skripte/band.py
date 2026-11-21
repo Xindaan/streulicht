@@ -26,13 +26,8 @@ DUMPF = ("#1e1e22", "#26262a", "#2e2d2b", "#28282b", "#202024")
 GLUT = ("#1c1226", "#5e2a28", "#c8661c", "#ffb340", "#ffe6bd")
 
 
-def mische(a, b, t):
-    t = max(0.0, min(1.0, t))
-    ha, hb = a.lstrip("#"), b.lstrip("#")
-    return "#%02x%02x%02x" % tuple(
-        round(int(ha[i:i + 2], 16)
-              + t * (int(hb[i:i + 2], 16) - int(ha[i:i + 2], 16)))
-        for i in (0, 2, 4))
+# Der Name bleibt, weil test_seiten.py band.mische prueft.
+mische = tokens.mische_hex
 
 
 def svg(median, s_stern, nr=0, staerke=1.0):

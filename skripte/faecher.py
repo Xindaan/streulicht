@@ -50,8 +50,7 @@ KM_PRO_GRAD_LAT = 110.57
 KM_PRO_GRAD_LON = 111.32 * math.cos(math.radians(53.5))
 
 
-def _tok(name):
-    return tokens.werte()[name]
+_tok = tokens.tok
 
 
 def _km(lat, lon):
