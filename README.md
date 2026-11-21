@@ -303,7 +303,7 @@ Maintainer selbst setzen muss.
 | `lauf_morgens_utc` | Zeit des Vormittagslaufs in UTC als `"HH:MM"` (Standard `09:20`); der Lauf schickt keinen zweiten Push, er frischt nur die Seite auf |
 | `nachtlauf` | Nachhol-Lauf ab 02:00 Ortszeit nach einem Tag ganz ohne Lauf (Standard `true`, `false` = aus; siehe "Zwei Laeufe am Tag"); sendet keinen Push |
 | `advektion` | semi-Lagrangesche Zeitinterpolation an/aus (siehe unten) |
-| `pass2_max_zellen` | Obergrenze fuer Pass 2 (Standard 320, `null` = kein Deckel); darueber rechnen die fernen Abende teilweise ohne Advektion, Logzeile `ACHTUNG Pass 2 GEDECKELT` |
+| `pass2_max_zellen` | Obergrenze fuer Pass 2 (Standard 200 = Betriebswert, `null` = kein Deckel); darueber rechnen die fernen Abende teilweise ohne Advektion, Logzeile `ACHTUNG Pass 2 GEDECKELT` |
 | `seiten_basis` | Basis-URL der ausgelieferten Seiten (Wurzel des `gh-pages`-Zweigs); daraus entstehen die Klickziele der Pushs und der Quittung |
 | `bewertung_tage_pro_woche` | an wie vielen Tagen je Woche die Erinnerung fragt (1 bis 7; 7, `0` oder fehlend = jeden Abend). Die Auswahl ist eine deterministische Wochenstichprobe (gleiche Woche, gleiche Tage); unter 7 sinkt die Zahl auswertbarer Abende proportional |
 | `orte[]` | Name, Anzeigename, Koordinaten, Zeitzone, Bewertungs-Topic (oeffentlich, nur Eingang; Alarm- und Erinnerungs-Topic stehen als `ntfy_alarm` und `ntfy_erinnerung` je Ortsname in `konfig_geheim.json`) |

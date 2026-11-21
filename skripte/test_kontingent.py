@@ -374,6 +374,13 @@ def main():
     pruefe("GEDECKELT: 3 von 6" in puf.getvalue(), "laute Logzeile mit Zahl")
     pruefe(alarm.deckle_pass2(neu, dict(karte), abende, None) == neu,
            "null in konfig.json heisst: kein Deckel")
+    # T-0092: faellt der Schluessel weg, gilt der Rueckfall im Code.  Er muss
+    # der Betriebswert sein, sonst kippt ein fehlender Schluessel still das
+    # Kontingent (320 Zellen ~ 5.900 Einheiten > Stundenlimit 5.000).
+    betrieb = json.load(open(os.path.join(BASIS, "konfig.json")))
+    pruefe(alarm.PASS2_MAX_ZELLEN == betrieb.get("pass2_max_zellen"),
+           "Rueckfall PASS2_MAX_ZELLEN (%s) = Betriebswert in konfig.json (%s)"
+           % (alarm.PASS2_MAX_ZELLEN, betrieb.get("pass2_max_zellen")))
 
     # Und im echten Lauf.  Die Grenze wird so gesetzt, dass genau der
     # naechste Abend Platz hat: wie viele neue Zellen er braucht, liest ein
