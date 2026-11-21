@@ -483,10 +483,8 @@ const heutiger = warteschlange().find(x => x.tag === tag);
 zeigeOffen();
 if (heutiger) {
   freilegen(heutiger.note, heutiger.gesendet);
-  sendeOffene(true);
-} else {
-  sendeOffene(true);      // stiller Nachsendeversuch bei jedem Oeffnen
 }
+sendeOffene(true);        // stiller Nachsendeversuch bei jedem Oeffnen
 </script>
 </body>
 </html>
