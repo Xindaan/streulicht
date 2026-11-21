@@ -46,7 +46,9 @@ der Waechter es meldet.
 
 ## Bei Dir
 
-- Push von main nach origin (Guard prueft jetzt fail-closed).
+- `bash tools/install_push_guard.sh` im Haupt-Checkout: `.git/hooks/pre-push`
+  ist noch der alte Guard (Installation am 21.11. vom Auto-Modus geblockt).
+- Danach Push von main nach origin.
 - T-0072: Traegt s*_WN3 = 0,7144? Nur 14 Ereignisse, Intervall 0,63-0,84.
   Davon haengen Betriebsvehikel und der WN3-Weg in `alarm.py` ab.
 - `gardena-wetter` steht in der veroeffentlichten Historie (e5a2480), in
